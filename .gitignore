@@ -123,10 +123,14 @@ celerybeat.pid
 .env
 .venv
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 .idea/
 >>>>>>> 0f1eceb (first commit)
 
+=======
+.idea/
+>>>>>>> 502e60959547172d753ec095e98fe56a3837675a
 env/
 venv/
 ENV/
