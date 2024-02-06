@@ -2,19 +2,19 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
-from functions.db.get import get_employee
 from routers.start_router import START_STATES
+from supp_bot import empl_service
 
 router = Router()
 
 
 @router.message()
 async def start_handler(message: Message, dialog_manager: DialogManager):
-    userid = message.from_user.id
-    print(userid)
-    try:
-        status = get_employee(userid)['status']
-    except TypeError:
+    print(message.from_user.id)
+    print(message.from_user.full_name)
+    user = empl_service.get_employee(userid=message.from_user.id)
+    if user:
+        status = user['status']
+    else:
         status = 'customer'
-    print(status)
     await dialog_manager.start(state=START_STATES[status], mode=StartMode.RESET_STACK)
