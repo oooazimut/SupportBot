@@ -1,11 +1,21 @@
 import asyncio
+import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram_dialog import setup_dialogs
 
 import config
+from db.db_models import SqLiteDataBase
+from db.service import TaskService, EmployeeService
 from routers import start_router, finish_router
 from dialogs import customer
+
+_logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+
+db = SqLiteDataBase('Support.db')
+task_service = TaskService(db)
+empl_service = EmployeeService(db)
 
 
 async def main():
