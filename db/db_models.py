@@ -31,8 +31,6 @@ class SqLiteDataBase(DataBase):
                 for i in temp:
                     item = dict(zip(i.keys(), tuple(i)))
                     result.append(item)
-            if len(result) == 1:
-                return result[0]
             return result
 
     def post_query(self, query: str, params=None) -> None:

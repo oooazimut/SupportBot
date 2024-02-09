@@ -4,14 +4,15 @@ from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Start, Next, Cancel, Back, Button
 from aiogram_dialog.widgets.text import Const
 
-from handlers.customer_handlers import task_description_handler, customer_tasks
+from handlers import customer_handlers
 from states import TaskCreating, CustomerSG
 
 main_dialog = Dialog(
     Window(
         Const('Вас приветствует бот технической поддержки компании "Азимут"'),
         Start(Const('Создать заявку'), id='start_creating', state=TaskCreating.enter_entity),
-        Button(Const('Мои заявки'), id='customer_tasks', on_click=customer_tasks),
+        Button(Const('Активные заявки'), id='customer_tasks', on_click=customer_handlers.tasks_handler),
+        Button(Const('Архив'), id='customer_archive', on_click=customer_handlers.archive_handler),
         state=CustomerSG.main
     ),
 )
@@ -39,7 +40,7 @@ create_task_dialog = Dialog(
     ),
     Window(
         Const('Опишите вашу проблему. Это может быть текстовое, голосовое, видеосообщение или картинка.'),
-        MessageInput(task_description_handler, content_types=[ContentType.ANY]),
+        MessageInput(customer_handlers.task_description_handler, content_types=[ContentType.ANY]),
         Back(Const('Назад')),
         Cancel(Const('Отмена')),
         state=TaskCreating.enter_description

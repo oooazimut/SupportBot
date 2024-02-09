@@ -1,13 +1,17 @@
-from db.db_models import SqLiteDataBase
-from db.service import TaskService
-from db.service import EmployeeService
+from db import db
 
-db = SqLiteDataBase('Support.db')
+query = '''
+select * 
+    from entities 
+    join tasks 
+    on tasks.entity = entities.id 
+    where tasks.creator = 5963726977 
+    and tasks.entity = (select entity 
+                        from tasks 
+                        where creator = 5963726977 and status != 'opened' 
+                        order by id desc limit 1)
+'''
+data = db.select_query(query=query)
 
-ts = TaskService(db)
-# ts.save_task([datetime.datetime.now(), 'Petya', 999999, 'zopa_polnaya', 'alarm', 'opened', 'low'])
-b = ts.get_tasks()
-es = EmployeeService(db)
-# es.save_employee([1, 'Sergey', 'worker'])
-e = es.get_employees()
-print(es.get_employee(2)['id'])
+for i in data:
+    print(i)
