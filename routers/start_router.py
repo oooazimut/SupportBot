@@ -4,7 +4,7 @@ from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
 from config import START_STATES
-from supp_bot import empl_service
+from db import empl_service
 
 router = Router()
 

@@ -13,12 +13,38 @@ class TaskService:
     def get_tasks(self):
         return self.database.select_query('SELECT * FROM tasks', params=None)
 
-    def get_tasks_by_period(self, params):
-        pass
+    def get_tasks_by_status(self, status):
+        return self.database.select_query('SELECT * FROM tasks WHERE status = ?', [status])
 
-    def get_tasks_by_priority(self, params):
-        pass
+    def get_active_tasks(self, userid):
+        query = '''
+        SELECT * 
+        FROM entities 
+        JOIN tasks 
+        ON tasks.entity = entities.id 
+        WHERE tasks.creator = ?
+        AND tasks.status != 'closed'
+        AND tasks.entity = (SELECT entity 
+                            FROM tasks 
+                            WHERE creator = ? AND entity IS NOT NULL
+                            ORDER BY id DESC LIMIT 1)
+        '''
+        return self.database.select_query(query, [userid, userid])
 
+    def get_archive_tasks(self, userid):
+        query = '''
+        SELECT * 
+        FROM entities 
+        JOIN tasks 
+        ON tasks.entity = entities.id 
+        WHERE tasks.creator = ?
+        AND tasks.status = 'closed'
+        AND tasks.entity = (SELECT entity 
+                            FROM tasks 
+                            WHERE creator = ? AND entity IS NOT NULL
+                            ORDER BY id DESC LIMIT 1)
+        '''
+        return self.database.select_query(query, [userid, userid])
 
 
 class EmployeeService:
@@ -29,7 +55,9 @@ class EmployeeService:
         self.database.post_query('INSERT INTO employees(id, username, status) VALUES (?, ?, ?)', params)
 
     def get_employee(self, userid):
-        return self.database.select_query('SELECT * FROM employees WHERE id = ?', [userid])
+        employee = self.database.select_query('SELECT * FROM employees WHERE id = ?', [userid])
+        if employee:
+            return employee[0]
 
     def get_employees(self):
         data = self.database.select_query('SELECT * FROM employees', params=None)

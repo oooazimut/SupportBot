@@ -13,8 +13,8 @@ CREATE_DB_SCRIPT = '''
         );
     CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        created dttm,
-        creator TEXT,
+        created timestamp,
+        creator INTEGER,
         phone INTEGER,
         title TEXT,
         description TEXT,

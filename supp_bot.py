@@ -9,18 +9,12 @@ from aiogram_dialog.api.exceptions import UnknownIntent
 from redis.asyncio.client import Redis
 
 import config
-from db.db_models import SqLiteDataBase
-from db.service import TaskService, EmployeeService
 from dialogs import customer
 from handlers.error_handlers import ui_error_handler
 from routers import start_router, finish_router
 
 _logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
-
-db = SqLiteDataBase('Support.db')
-task_service = TaskService(db)
-empl_service = EmployeeService(db)
 
 
 async def main():
