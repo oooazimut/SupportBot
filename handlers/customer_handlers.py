@@ -48,4 +48,14 @@ async def tasks_handler(callback: CallbackQuery, button: Button, manager: Dialog
 
 async def archive_handler(callback: CallbackQuery, button: Button, manager: DialogManager):
     await callback.message.delete()
-    tasks = task_service.get_tasks_by_status('closed')
+    userid = callback.from_user.id
+    bot = manager.middleware_data['bot']
+
+    tasks = task_service.get_archive_tasks(userid=userid)
+    if tasks:
+        await callback.message.answer(f'Объект: {tasks[0]["name"]}\n Закрытые заявки: ')
+        for task in tasks:
+            await bot.send_message(chat_id=userid, text=task['created'].strftime('%x : %X') + '\n' + task['title'])
+            await bot.forward_message(chat_id=userid, from_chat_id=userid, message_id=task['description'])
+    else:
+        await callback.message.answer('Архив пустой.')

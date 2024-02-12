@@ -16,17 +16,33 @@ class TaskService:
     def get_tasks_by_status(self, status):
         return self.database.select_query('SELECT * FROM tasks WHERE status = ?', [status])
 
-    def get_active_tasks(self, userid=None):
+    def get_active_tasks(self, userid):
         query = '''
-        select * 
-        from entities 
-        join tasks 
-        on tasks.entity = entities.id 
-        where tasks.creator = ?
-        and tasks.entity = (select entity 
-                            from tasks 
-                            where creator = ? and status != 'opened'
-                            order by id desc limit 1)
+        SELECT * 
+        FROM entities 
+        JOIN tasks 
+        ON tasks.entity = entities.id 
+        WHERE tasks.creator = ?
+        AND tasks.status != 'closed'
+        AND tasks.entity = (SELECT entity 
+                            FROM tasks 
+                            WHERE creator = ? AND entity IS NOT NULL
+                            ORDER BY id DESC LIMIT 1)
+        '''
+        return self.database.select_query(query, [userid, userid])
+
+    def get_archive_tasks(self, userid):
+        query = '''
+        SELECT * 
+        FROM entities 
+        JOIN tasks 
+        ON tasks.entity = entities.id 
+        WHERE tasks.creator = ?
+        AND tasks.status = 'closed'
+        AND tasks.entity = (SELECT entity 
+                            FROM tasks 
+                            WHERE creator = ? AND entity IS NOT NULL
+                            ORDER BY id DESC LIMIT 1)
         '''
         return self.database.select_query(query, [userid, userid])
 

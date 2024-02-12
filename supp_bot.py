@@ -17,7 +17,6 @@ _logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
-
 async def main():
     bot = Bot(config.TOKEN)
     storage = RedisStorage(Redis(), key_builder=DefaultKeyBuilder(with_destiny=True))
