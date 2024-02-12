@@ -13,7 +13,9 @@ class TaskService:
     def get_tasks(self):
         return self.database.select_query('SELECT * FROM tasks', params=None)
 
-    def get_tasks_by_status(self, status):
+    def get_tasks_by_status(self, status, userid=None):
+        if userid:
+            return self.database.select_query('SELECT * FROM tasks WHERE status = ? AND slave = ?', [status, userid])
         return self.database.select_query('SELECT * FROM tasks WHERE status = ?', [status])
 
     def get_active_tasks(self, userid):
@@ -23,7 +25,7 @@ class TaskService:
         JOIN tasks 
         ON tasks.entity = entities.id 
         WHERE tasks.creator = ?
-        AND tasks.status != 'closed'
+        AND tasks.status != 'закрыто'
         AND tasks.entity = (SELECT entity 
                             FROM tasks 
                             WHERE creator = ? AND entity IS NOT NULL
@@ -38,7 +40,7 @@ class TaskService:
         JOIN tasks 
         ON tasks.entity = entities.id 
         WHERE tasks.creator = ?
-        AND tasks.status = 'closed'
+        AND tasks.status = 'закрыто'
         AND tasks.entity = (SELECT entity 
                             FROM tasks 
                             WHERE creator = ? AND entity IS NOT NULL

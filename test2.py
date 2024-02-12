@@ -1,4 +1,3 @@
-from db.db_config import CREATE_DB_SCRIPT
-from functions.db.db_creators import SqLiteDBCreator
+from db import db
 
-SqLiteDBCreator.create_db('Support.db', CREATE_DB_SCRIPT)
+db.post_query('update employees set status = "worker"')
