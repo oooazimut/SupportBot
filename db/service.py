@@ -33,6 +33,9 @@ class TaskService:
         '''
         return self.database.select_query(query, [userid, userid])
 
+    def change_priority(self, task_id, priority):
+        pass
+
     def get_archive_tasks(self, userid):
         query = '''
         SELECT * 
