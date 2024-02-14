@@ -5,7 +5,7 @@ from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
 from db import task_service
-from handlers.worker_handlers import on_assigned, on_archive, on_progress
+from handlers.worker_handlers import on_assigned, on_archive, on_progress, on_assigned_task
 from states import WorkerSG
 
 
@@ -49,7 +49,9 @@ main_dialog = Dialog(
                 Format('{item[title]} {item[priority]}'),
                 id='worker_assigned_tasks',
                 item_id_getter=operator.itemgetter('id'),
-                items='tasks'
+                items='tasks',
+                on_click=on_assigned_task
+
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),

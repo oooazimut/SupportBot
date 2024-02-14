@@ -23,7 +23,8 @@ class SqLiteDataBase(DataBase):
     def select_query(self, query, params=None) -> list[dict]:
         if params is None:
             params = []
-        with sq.connect(self.name, detect_types=sq.PARSE_COLNAMES | sq.PARSE_DECLTYPES) as con:
+        # with sq.connect(self.name, detect_types=sq.PARSE_COLNAMES | sq.PARSE_DECLTYPES) as con:
+        with sq.connect(self.name) as con:
             con.row_factory = sq.Row
             temp = con.execute(query, params).fetchall()
             result = []

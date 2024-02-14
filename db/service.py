@@ -10,6 +10,9 @@ class TaskService:
                  ' VALUES (?, ?, ?, ?, ?, ?, ?)')
         self.database.post_query(query=query, params=params)
 
+    def get_task(self, taskid):
+        return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
+
     def get_tasks(self):
         return self.database.select_query('SELECT * FROM tasks', params=None)
 
@@ -41,7 +44,6 @@ class TaskService:
         else:
             priority = '\U0001F525'
         self.database.post_query('UPDATE tasks SET priority = ? WHERE id = ?', [priority, task_id])
-
 
     def change_status(self, task_id, status):
         self.database.post_query('UPDATE tasks SET status = ? WHERE id = ?', [status, task_id])
