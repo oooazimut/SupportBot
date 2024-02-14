@@ -15,7 +15,7 @@ async def task_description_handler(message: Message, message_input: MessageInput
     title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
     description = message.message_id
     status = 'открыто'
-    priority = 'низкий'
+    priority = ''
     params = [
         curr_time,
         creator,
