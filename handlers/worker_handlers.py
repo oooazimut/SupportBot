@@ -5,7 +5,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 
 from db import task_service
-from states import WorkerSG
+from states import WorkerSG, WorkerTaskSG
 
 
 async def on_assigned(callback_query: CallbackQuery, button: Button, manager: DialogManager):
@@ -16,10 +16,6 @@ async def on_assigned(callback_query: CallbackQuery, button: Button, manager: Di
     else:
         await callback_query.message.answer('Нет назначенных заявок')
         await callback_query.message.delete()
-
-
-async def on_assigned_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    print(manager.dialog_data)
 
 
 async def on_progress(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -39,3 +35,8 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
     else:
         await callback.message.answer('Архив пустой.')
         await callback.message.delete()
+
+
+async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
+    task = task_service.get_task(item_id)[0]
+    await manager.start(WorkerTaskSG.main, data=task)

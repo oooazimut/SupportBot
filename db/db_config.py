@@ -18,6 +18,7 @@ CREATE_DB_SCRIPT = '''
         phone INTEGER,
         title TEXT,
         description TEXT,
+        client_info,
         status TEXT,
         priority TEXT,
         entity INTEGER,

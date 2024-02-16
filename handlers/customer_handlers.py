@@ -9,11 +9,11 @@ from db import task_service
 
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
-    curr_time = datetime.datetime.now()
+    curr_time = datetime.datetime.now().replace(microsecond=0)
     creator = message.from_user.id
     phone = manager.find('phone_input').get_value()
     title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
-    description = message.message_id
+    client_info = message.message_id
     status = 'открыто'
     priority = ''
     params = [
@@ -21,7 +21,7 @@ async def task_description_handler(message: Message, message_input: MessageInput
         creator,
         phone,
         title,
-        description,
+        client_info,
         status,
         priority
     ]

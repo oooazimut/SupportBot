@@ -21,3 +21,6 @@ class WorkerSG(StatesGroup):
     assigned = State()
     in_progress = State()
     archive = State()
+
+class WorkerTaskSG(StatesGroup):
+    main = State()

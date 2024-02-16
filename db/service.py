@@ -6,12 +6,20 @@ class TaskService:
         self.database = database
 
     def save_task(self, params):
-        query = ('INSERT INTO tasks(created, creator, phone, title, description, status, priority)'
+        query = ('INSERT INTO tasks(created, creator, phone, title, client_info, status, priority)'
                  ' VALUES (?, ?, ?, ?, ?, ?, ?)')
         self.database.post_query(query=query, params=params)
 
     def get_task(self, taskid):
-        return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
+        # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
+        query = '''
+        SELECT *
+        FROM tasks
+        JOIN entities
+        ON tasks.entity = entities.id 
+        WHERE tasks.id = ?
+        '''
+        return self.database.select_query(query, [taskid])
 
     def get_tasks(self):
         return self.database.select_query('SELECT * FROM tasks', params=None)

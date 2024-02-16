@@ -1,12 +1,13 @@
 import operator
 
+from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo
+from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel
 from aiogram_dialog.widgets.text import Const, Format
 
 from db import task_service
-from handlers.worker_handlers import on_assigned, on_archive, on_progress, on_assigned_task
-from states import WorkerSG
+from handlers.worker_handlers import on_assigned, on_archive, on_progress, on_task
+from states import WorkerSG, WorkerTaskSG
 
 
 async def assigned_getter(dialog_manager: DialogManager, **kwargs):
@@ -38,7 +39,7 @@ main_dialog = Dialog(
         Row(
             Button(Const('Назначенные'), id='worker_assigned', on_click=on_assigned),
             Button(Const('В работе'), id='worker_in_progress', on_click=on_progress),
-            Button(Const('Архив'), id='worker_archive', on_click=on_archive)
+            Button(Const('Архив'), id='worker_archive', on_click=on_archive),
         ),
         state=WorkerSG.main
     ),
@@ -50,7 +51,7 @@ main_dialog = Dialog(
                 id='worker_assigned_tasks',
                 item_id_getter=operator.itemgetter('id'),
                 items='tasks',
-                on_click=on_assigned_task
+                on_click=on_task
 
             )
         ),
@@ -65,7 +66,8 @@ main_dialog = Dialog(
                 Format('{item[title]} {item[priority]}'),
                 id='worker_in_progress_tasks',
                 item_id_getter=operator.itemgetter('id'),
-                items='tasks'
+                items='tasks',
+                on_click=on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
@@ -79,11 +81,35 @@ main_dialog = Dialog(
                 Format('{item[title]}'),
                 id='worker_archive_tasks',
                 item_id_getter=operator.itemgetter('id'),
-                items='tasks'
+                items='tasks',
+                on_click=on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
         state=WorkerSG.archive,
         getter=archive_getter
+    )
+)
+
+
+async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
+    task_service.change_status(manager.start_data['id'], 'принято')
+
+
+def is_opened(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'назначено'
+
+
+task_dialog = Dialog(
+    Window(
+        Format('{start_data[created]}'),
+        Format('{start_data[name]}'),
+        Format('{start_data[title]}'),
+        Format('{start_data[description]}'),
+        Format('Приоритет: {start_data[priority]}'),
+        Format('Статус: {start_data[status]}'),
+        Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
+        Cancel(Const('Назад')),
+        state=WorkerTaskSG.main
     )
 )
