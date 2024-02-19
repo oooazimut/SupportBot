@@ -10,26 +10,9 @@ from handlers.worker_handlers import on_assigned, on_archive, on_progress, on_ta
 from states import WorkerSG, WorkerTaskSG
 
 
-async def assigned_getter(dialog_manager: DialogManager, **kwargs):
-    userid = dialog_manager.middleware_data['event_from_user'].id
-    tasks = task_service.get_tasks_by_status('назначено', userid=userid)
-    return {'tasks': tasks}
-
-
-async def in_progress_getter(dialog_manager: DialogManager, **kwargs):
-    userid = dialog_manager.middleware_data['event_from_user'].id
-    tasks = task_service.get_tasks_by_status('в работе', userid=userid)
-    performed = task_service.get_tasks_by_status('выполнено', userid=userid)
-    for item in performed:
-        if item['status'] == 'выполнено':
-            item['priority'] += '\U00002705'
-    tasks.extend(performed)
-    return {'tasks': tasks}
-
-
-async def archive_getter(dialog_manager: DialogManager, **kwargs):
-    userid = dialog_manager.middleware_data['event_from_user'].id
-    tasks = task_service.get_tasks_by_status('закрыто', userid=userid)
+async def task_getter(dialog_manager: DialogManager, **kwargs):
+    userid = str(dialog_manager.middleware_data['event_from_user'].id)
+    tasks = dialog_manager.dialog_data[userid]
     return {'tasks': tasks}
 
 
@@ -57,7 +40,7 @@ main_dialog = Dialog(
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
         state=WorkerSG.assigned,
-        getter=assigned_getter
+        getter=task_getter
     ),
     Window(
         Const('Заявки в работе:'),
@@ -72,7 +55,7 @@ main_dialog = Dialog(
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
         state=WorkerSG.in_progress,
-        getter=in_progress_getter
+        getter=task_getter
     ),
     Window(
         Const('Архив заявок:'),
@@ -87,17 +70,45 @@ main_dialog = Dialog(
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
         state=WorkerSG.archive,
-        getter=archive_getter
+        getter=task_getter
     )
 )
 
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['id'], 'принято')
+    task_service.change_status(manager.start_data['id'], 'в работе')
+    await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
+
+
+async def refuse_task(callback: CallbackQuery, button: Button, manager: DialogManager):
+    task_service.change_status(manager.start_data['id'], 'открыто')
+    await callback.answer(f'Вы отказались от заявки:  {manager.start_data["title"]}')
+
+
+async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
+    task_service.change_status(manager.start_data['id'], 'выполнено')
+    await callback.answer(f'Заявка {manager.start_data["title"]} выполнена. Ожидаем потверждения от клиента.')
+
+
+async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
+    task_service.change_status(manager.start_data['id'], 'в работе')
+    await callback.answer(f'Заявка {manager.start_data["title"]} снова в работе.')
 
 
 def is_opened(data, widget, manager: DialogManager):
     return manager.start_data['status'] == 'назначено'
+
+
+def not_in_archive(data, widget, manager: DialogManager):
+    return manager.start_data['status'] != 'закрыто'
+
+
+def is_performed(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'выполнено'
+
+
+def is_in_progress(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'в работе'
 
 
 task_dialog = Dialog(
@@ -109,6 +120,9 @@ task_dialog = Dialog(
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
+        Button(Const('Отказаться'), id='refuse_task', on_click=refuse_task, when=not_in_archive),
+        Button(Const('Закрыть'), id='close_task', on_click=close_task, when=is_in_progress),
+        Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
         Cancel(Const('Назад')),
         state=WorkerTaskSG.main
     )

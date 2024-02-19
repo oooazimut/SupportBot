@@ -13,11 +13,21 @@ class TaskService:
     def get_task(self, taskid):
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
         query = '''
-        SELECT *
-        FROM tasks
-        JOIN entities
-        ON tasks.entity = entities.id 
-        WHERE tasks.id = ?
+        SELECT 
+            t.id,
+            t.created,
+            t.creator,
+            t.phone,
+            t.title,
+            t.description,
+            t.status,
+            t.priority,
+            t.slave,
+            e.name
+        FROM tasks as t
+        JOIN entities as e
+        ON e.id = t.entity
+        WHERE t.id = ?
         '''
         return self.database.select_query(query, [taskid])
 
