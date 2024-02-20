@@ -39,7 +39,7 @@ async def tasks_handler(callback: CallbackQuery, button: Button, manager: Dialog
         await callback.message.answer(f'Объект: {tasks[0]["name"]}\n Открытые заявки:')
         for task in tasks:
             await bot.send_message(chat_id=userid, text=task['created'] + '\n' + task['title'])
-            await bot.forward_message(chat_id=userid, from_chat_id=userid, message_id=task['description'])
+            await bot.forward_message(chat_id=userid, from_chat_id=userid, message_id=task['client_info'])
         manager.show_mode = ShowMode.SEND
     else:
         await callback.answer('Нет активных заявок.')
@@ -54,7 +54,7 @@ async def archive_handler(callback: CallbackQuery, button: Button, manager: Dial
         await callback.message.answer(f'Объект: {tasks[0]["name"]}\n Закрытые заявки: ')
         for task in tasks:
             await bot.send_message(chat_id=userid, text=task['created'] + '\n' + task['title'])
-            await bot.forward_message(chat_id=userid, from_chat_id=userid, message_id=task['description'])
+            await bot.forward_message(chat_id=userid, from_chat_id=userid, message_id=task['client_info'])
         manager.show_mode = ShowMode.SEND
     else:
         await callback.answer('Архив пустой.')
