@@ -94,6 +94,10 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
     task_service.change_status(manager.start_data['id'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} снова в работе.')
 
+async def client_info(callback: CallbackQuery, button: Button, manager: DialogManager):
+    pass
+
+
 
 def is_opened(data, widget, manager: DialogManager):
     return manager.start_data['status'] == 'назначено'
@@ -119,6 +123,7 @@ task_dialog = Dialog(
         Format('{start_data[description]}'),
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
+        Button(Const('Инфо от клиента'), id='client_task', on_click=client_info),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
         Button(Const('Отказаться'), id='refuse_task', on_click=refuse_task, when=not_in_archive),
         Button(Const('Закрыть'), id='close_task', on_click=close_task, when=is_in_progress),

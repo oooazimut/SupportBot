@@ -39,6 +39,21 @@ class TaskService:
             return self.database.select_query('SELECT * FROM tasks WHERE status = ? AND slave = ?', [status, userid])
         return self.database.select_query('SELECT * FROM tasks WHERE status = ?', [status])
 
+    def get_archive_tasks(self, clientid):
+        query = '''
+        SELECT * 
+        FROM entities as e
+        JOIN tasks as t
+        ON t.entity = e.id
+        WHERE t.creator = ?
+        AND t.status = 'закрыто'
+        AND t.entity = (SELECT entity
+                        FROM tasks
+                        WHERE creator = ? AND entity IS NOT NULL
+                        ORDER BY id DESC LIMIT 1)
+        '''
+        return self.database.select_query(query, [clientid, clientid])
+
     def get_active_tasks(self, userid):
         query = '''
         SELECT * 
