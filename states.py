@@ -18,3 +18,9 @@ class TaskCreating(StatesGroup):
 
 class WorkerSG(StatesGroup):
     main = State()
+    assigned = State()
+    in_progress = State()
+    archive = State()
+
+class WorkerTaskSG(StatesGroup):
+    main = State()
