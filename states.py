@@ -3,10 +3,17 @@ from aiogram.filters.state import StatesGroup, State
 
 class OperatorSG(StatesGroup):
     main = State()
+    tas = State()
+    worker = State()
+    new_task = State()
+    progress_task = State()
+    archive_task = State()
 
 
 class CustomerSG(StatesGroup):
     main = State()
+    slave = State()
+
 
 
 class TaskCreating(StatesGroup):
