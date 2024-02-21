@@ -72,3 +72,8 @@ class EmployeeService:
     def get_employees(self):
         data = self.database.select_query('SELECT * FROM employees', params=None)
         return data
+
+    def get_employees(self, status):
+        data = self.database.select_query('SELECT * FROM employees WHERE status = ?', [status])
+        if data:
+            return data[0]
