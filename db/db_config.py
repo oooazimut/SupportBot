@@ -19,6 +19,8 @@ CREATE_DB_SCRIPT = '''
         title TEXT,
         description TEXT,
         client_info TEXT,
+        media_type TEXT, 
+        media_id INTEGER,
         status TEXT,
         priority TEXT,
         entity INTEGER,

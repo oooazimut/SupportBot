@@ -1,5 +1,6 @@
 import datetime
 
+from aiogram.enums import ContentType
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
@@ -9,11 +10,28 @@ from db import task_service
 
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
+    txt = ''
+    match message.content_type:
+        case ContentType.TEXT:
+            txt = message.text
+        case ContentType.PHOTO:
+            media_id = message.photo[-1].file_id
+            txt = message.caption
+        case ContentType.VIDEO:
+            media_id = message.video.file_id
+            txt = message.caption
+        case ContentType.AUDIO:
+            media_id = message.audio.file_id
+            txt = message.caption
+        case ContentType.VOICE:
+            media_id = message.voice.file_id
+        case ContentType.VIDEO_NOTE:
+            media_id = message.video_note.file_id
     curr_time = datetime.datetime.now().replace(microsecond=0)
     creator = message.from_user.id
     phone = manager.find('phone_input').get_value()
     title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
-    client_info = message.message_id
+    client_info = txt
     status = 'открыто'
     priority = ''
     params = [
@@ -41,7 +59,7 @@ async def tasks_handler(callback: CallbackQuery, button: Button, manager: Dialog
             await bot.send_message(chat_id=userid, text=task['created'] + '\n' + task['title'])
             for mess_id in task['client_info'].split():
                 await bot.forward_message(chat_id=userid, from_chat_id=userid, message_id=mess_id)
-        manager.show_mode = ShowMode.SEND
+        manager.show_mode = ShowMode.DELETE_AND_SEND
     else:
         await callback.answer('Нет активных заявок.')
 
