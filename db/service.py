@@ -6,8 +6,19 @@ class TaskService:
         self.database = database
 
     def save_task(self, params):
-        query = ('INSERT INTO tasks(created, creator, phone, title, client_info, status, priority)'
-                 ' VALUES (?, ?, ?, ?, ?, ?, ?)')
+        query = '''
+        INSERT INTO tasks(
+                        created,
+                        creator, 
+                        phone, 
+                        title, 
+                        client_info, 
+                        media_type, 
+                        media_id, 
+                        status, 
+                        priority)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
         self.database.post_query(query=query, params=params)
 
     def get_task(self, taskid):

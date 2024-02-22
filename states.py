@@ -7,6 +7,8 @@ class OperatorSG(StatesGroup):
 
 class CustomerSG(StatesGroup):
     main = State()
+    active_tasks = State()
+    task = State()
 
 
 class TaskCreating(StatesGroup):
@@ -23,4 +25,7 @@ class WorkerSG(StatesGroup):
     archive = State()
 
 class WorkerTaskSG(StatesGroup):
+    main = State()
+
+class CustomerTaskSG(StatesGroup):
     main = State()

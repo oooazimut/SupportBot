@@ -21,8 +21,10 @@ async def main():
     bot = Bot(config.TOKEN)
     storage = RedisStorage(Redis(), key_builder=DefaultKeyBuilder(with_destiny=True))
     dp = Dispatcher(storage=storage)
-    dp.include_routers(start_router.router, customers.main_dialog, customers.create_task_dialog,
-                       finish_router.router, workers.main_dialog, workers.task_dialog)
+    dp.include_routers(start_router.router)
+    dp.include_routers(customers.main_dialog, customers.create_task_dialog, customers.task_dialog)
+    dp.include_routers(workers.main_dialog, workers.task_dialog)
+    dp.include_router(finish_router.router)
     setup_dialogs(dp)
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))
     await bot.delete_webhook(drop_pending_updates=True)

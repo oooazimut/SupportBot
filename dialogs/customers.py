@@ -1,11 +1,21 @@
+import operator
+
 from aiogram.enums import ContentType
-from aiogram_dialog import Dialog, Window
+from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import Start, Next, Cancel, Back, Button
-from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.kbd import Start, Next, Cancel, Back, Button, Select, Column
+from aiogram_dialog.widgets.text import Const, Format, Jinja
 
 from handlers import customer_handlers
-from states import TaskCreating, CustomerSG
+from handlers.customer_handlers import on_task
+from states import TaskCreating, CustomerSG, CustomerTaskSG
+
+
+async def tasks_getter(dialog_manager: DialogManager, **kwargs):
+    userid = str(dialog_manager.middleware_data['event_from_user'].id)
+    tasks = dialog_manager.dialog_data[userid]
+    return {'tasks': tasks}
+
 
 main_dialog = Dialog(
     Window(
@@ -15,6 +25,21 @@ main_dialog = Dialog(
         Button(Const('Архив'), id='customer_archive', on_click=customer_handlers.archive_handler),
         state=CustomerSG.main
     ),
+    Window(
+        Format('{tasks[0][name]}'),
+        Column(
+            Select(
+                Format('{item[title]} {item[priority]}'),
+                id='customer_active_tasks',
+                item_id_getter=operator.itemgetter('id'),
+                items='tasks',
+                on_click=on_task
+            )
+        ),
+        state=CustomerSG.active_tasks,
+        getter=tasks_getter
+    ),
+
 )
 
 create_task_dialog = Dialog(
@@ -44,5 +69,26 @@ create_task_dialog = Dialog(
         Back(Const('Назад')),
         Cancel(Const('Отмена')),
         state=TaskCreating.enter_description
+    )
+)
+
+
+async def task_getter(dialog_manager: DialogManager, **kwargs):
+    return dialog_manager.start_data
+
+
+task_dialog = Dialog(
+    Window(
+        Jinja("""
+       {{created}}
+       <b>{{title}}</b>
+       {{description}}
+       {{client_info}}
+       """),
+        Cancel(Const('Назад')),
+        parse_mode='HTML',
+        state=CustomerTaskSG.main,
+        getter=task_getter
+
     )
 )
