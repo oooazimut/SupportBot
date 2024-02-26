@@ -3,17 +3,17 @@ from typing import Any
 
 from aiogram.enums import ContentType
 from aiogram.types import Message, CallbackQuery
-from aiogram_dialog import DialogManager, ShowMode
+from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
 from db import task_service
-from states import CustomerSG, CustomerTaskSG
+from states import CustomerSG, CustomerTaskSG, TaskCreating
 
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
     txt = message.caption
-    media_id = 0
+    media_id = None
     match message.content_type:
         case ContentType.TEXT:
             txt = message.text
@@ -30,27 +30,34 @@ async def task_description_handler(message: Message, message_input: MessageInput
         case ContentType.VIDEO_NOTE:
             media_id = message.video_note.file_id
     media_type = message.content_type
-    curr_time = datetime.datetime.now().replace(microsecond=0)
-    creator = message.from_user.id
-    phone = manager.find('phone_input').get_value()
-    title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
-    client_info = txt
-    status = 'открыто'
-    priority = ''
-    params = [
-        curr_time,
-        creator,
-        phone,
-        title,
-        client_info,
-        media_type,
-        media_id,
-        status,
-        priority
-    ]
-    task_service.save_task(params=params)
-    await message.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.')
-    await manager.done()
+    manager.dialog_data['txt'] = txt
+    manager.dialog_data['mediaid'] = media_id
+    manager.dialog_data['mediatype'] = media_type
+
+    await manager.switch_to(TaskCreating.preview)
+    # curr_time = datetime.datetime.now().replace(microsecond=0)
+    # creator = message.from_user.id
+    # phone = manager.find('phone_input').get_value()
+    # title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
+    # client_info = txt
+    # status = 'открыто'
+    # priority = ''
+    # params = [
+    #     curr_time,
+    #     creator,
+    #     phone,
+    #     title,
+    #     client_info,
+    #     media_type,
+    #     media_id,
+    #     status,
+    #     priority
+    # ]
+    # task_service.save_task(params=params)
+    # await message.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.')
+    # await message.delete()
+    # await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
+
 
 
 async def tasks_handler(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -74,16 +81,12 @@ async def archive_handler(callback: CallbackQuery, button: Button, manager: Dial
             await bot.send_message(chat_id=userid, text=task['created'] + '\n' + task['title'])
             for mess_id in task['client_info'].split():
                 await bot.forward_message(chat_id=userid, from_chat_id=userid, message_id=mess_id)
-        manager.show_mode = ShowMode.SEND
     else:
         await callback.answer('Архив пустой.')
 
 
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     userid = str(callback.from_user.id)
-    print(item_id, userid)
-    print(manager.dialog_data[userid])
     task = next((t for t in manager.dialog_data[userid] if t['id'] == int(item_id)), None)
-    print(task)
     await manager.start(CustomerTaskSG.main, data=task)
 

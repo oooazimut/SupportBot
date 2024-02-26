@@ -11,12 +11,13 @@ class CustomerSG(StatesGroup):
     task = State()
 
 
+
 class TaskCreating(StatesGroup):
     enter_entity = State()
     enter_phone = State()
     enter_title = State()
     enter_description = State()
-
+    preview = State()
 
 class WorkerSG(StatesGroup):
     main = State()
