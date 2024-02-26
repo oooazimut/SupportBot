@@ -13,7 +13,7 @@ async def operator_getter(dialog_manager: DialogManager, **kwargs):
     return {'un': un}
 
 
-dialog = Dialog(
+task_dialog = Dialog(
     Window (
         Const("Главное меню:"),
         Row(
@@ -78,7 +78,8 @@ dialog = Dialog(
         state=OperatorSG.done_task,
         getter=task_service.get_done_tasks_getter
     ),
-
+)
+worker_dialog = Dialog(
     Window(
         Const('Работники:'),
         Row(
@@ -122,6 +123,5 @@ dialog = Dialog(
     Window(
       Const('')
     ),
-
 
 )
