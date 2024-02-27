@@ -33,3 +33,9 @@ class WorkerSG(StatesGroup):
 
 class WorkerTaskSG(StatesGroup):
     main = State()
+
+class AddWorkerSG(StatesGroup):
+    workerid = State()
+    name = State()
+    status = State()
+    preview = State()

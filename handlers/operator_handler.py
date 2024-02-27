@@ -46,3 +46,8 @@ async def operator_getter(dialog_manager: DialogManager, **kwargs):
 async def worker_getter(dialog_manager: DialogManager, **kwargs):
     un = empl_service.get_employee("worker")
     return {'un': un}
+
+async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
+    username = manager.find('worker_name_input').get_value()
+    userid = manager.find('worker_id_input').get_value()
+    empl_service.save_employee()
