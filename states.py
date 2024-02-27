@@ -8,6 +8,8 @@ class OperatorSG(StatesGroup):
     new_task = State()
     progress_task = State()
     archive_task = State()
+    opr = State()
+    slv = State()
 
 
 class CustomerSG(StatesGroup):

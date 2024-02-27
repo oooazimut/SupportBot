@@ -5,33 +5,31 @@ from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 from states import OperatorSG
 from db import task_service, empl_service
+import handlers.operator_handler
 
 
-async def operator_getter(dialog_manager: DialogManager, **kwargs):
-    userid = dialog_manager.middleware_data['user_id'].id
-    un = empl_service.get_employee('',userid = userid)
-    return {'un': un}
 
 
-dialog = Dialog(
+main_dialog = Dialog(
     Window (
         Const("Главное меню:"),
         Row(
-            Button(Const('Заявки'), id = 'tasks', on_click=),
-            Button(Const('Работники'), id = 'slaves', on_click=)
+            Button(Const('Заявки'), id='tasks', on_click=handlers.operator_handler.go_task),
+            Button(Const('Работники'), id='slaves', on_click=handlers.operator_handler.go_slaves),
         ),
         state = OperatorSG.main
     ),
-
+)
+task_dialog = Dialog(
     Window(
         Const('Заявки:'),
            Row(
-               Button(Const('Новые заявки'), id='assign', on_click=),
-               Button(Const('Заявки в работе'), id='done', on_click=),
-               Button(Const('Архив'), id='archive', on_click=)
+               Button(Const('Новые заявки'), id='assign', on_click=handlers.operator_handler.go_new_task),
+               Button(Const('Заявки в работе'), id='done', on_click=handlers.operator_handler.go_inw_task),
+               Button(Const('Архив'), id='archive', on_click=handlers.operator_handler.go_archive)
            ),
-        SwitchTo(Const('Назад'), id = 'to_main',state = OperatorSG.main),
-        state = OperatorSG.tas
+        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        state=OperatorSG.tas
     ),
 
     Window(
@@ -45,8 +43,8 @@ dialog = Dialog(
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state = OperatorSG.new_task,
-        getter = task_service.get_new_tasks_getter
+        state=OperatorSG.new_task,
+        getter=task_service.get_new_tasks_getter
     ),
 
     Window(
@@ -61,7 +59,7 @@ dialog = Dialog(
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
         state=OperatorSG.progress_task,
-        getter=task_service.get_in_progress_tasks_getter
+        getter=task_service.go_inw_task
     ),
 
     Window(
@@ -75,15 +73,17 @@ dialog = Dialog(
           )
       ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state=OperatorSG.done_task,
+        state=OperatorSG.archive_task,
         getter=task_service.get_done_tasks_getter
     ),
+)
 
+worker_dialog = Dialog(
     Window(
         Const('Работники:'),
         Row(
-            Button(Const('Операторы'), id='assigned', on_click=),
-            Button(Const('Исполнители'), id='worker_archive', on_click=)
+            Button(Const('Операторы'), id='assigned', on_click=handlers.operator_handler.operator_getter),
+            Button(Const('Исполнители'), id='worker_archive', on_click=handlers.operator_handler.worker_getter)
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
         state = OperatorSG.worker
@@ -96,13 +96,13 @@ dialog = Dialog(
                 Format('{item[name]} {item[surname]}'),
                 id='operators',
                 item_id_getter=operator.itemgetter('id'),
-                items=''
+                items='un'
             )
         ),
 
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
         state = OperatorSG.opr,
-        getter = operator_getter
+        getter = handlers.operator_handler.operator_getter
     ),
 
     Window(
@@ -112,16 +112,11 @@ dialog = Dialog(
               Format('{item[name]} {item[surname]}'),
               id = 'workers',
               item_id_getter = operator.itemgetter('id'),
-              items = ''
+              items = 'un'
           )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state = OperatorSG.opr,
-        getter =
+        state = OperatorSG.slv,
+        getter = handlers.operator_handler.worker_getter
     ),
-    Window(
-      Const('')
-    ),
-
-
 )
