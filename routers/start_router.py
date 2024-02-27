@@ -14,7 +14,6 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
     print(message.from_user.id)
     print(message.from_user.full_name)
     user = empl_service.get_employee(userid=message.from_user.id)
-    await message.delete()
     if user:
         status = user['status']
     else:
