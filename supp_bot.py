@@ -9,7 +9,7 @@ from aiogram_dialog.api.exceptions import UnknownIntent
 from redis.asyncio.client import Redis
 
 import config
-from dialogs import customers, workers
+from dialogs import customers, workers, operators
 from handlers.error_handlers import ui_error_handler
 from routers import start_router, finish_router
 
@@ -21,10 +21,14 @@ async def main():
     bot = Bot(config.TOKEN)
     storage = RedisStorage(Redis(), key_builder=DefaultKeyBuilder(with_destiny=True))
     dp = Dispatcher(storage=storage)
-    dp.include_routers(start_router.router)
+
+    dp.include_router(start_router.router)
     dp.include_routers(customers.main_dialog, customers.create_task_dialog, customers.task_dialog)
     dp.include_routers(workers.main_dialog, workers.task_dialog)
+    dp.include_routers(operators.main_dialog, operators.worker_dialog,
+                       operators.add_worker_dialog, operators.task_dialog)
     dp.include_router(finish_router.router)
+
     setup_dialogs(dp)
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))
     await bot.delete_webhook(drop_pending_updates=True)
