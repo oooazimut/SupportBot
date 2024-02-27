@@ -59,7 +59,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         priority
     ]
     task_service.save_task(params=params)
-    await clb.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.')
+    await clb.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.', show_alert=True)
 
 
 async def tasks_handler(callback: CallbackQuery, button: Button, manager: DialogManager):
