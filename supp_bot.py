@@ -23,7 +23,7 @@ async def main():
     dp = Dispatcher(storage=storage)
     dp.include_routers(start_router.router)
     dp.include_routers(customers.main_dialog, customers.create_task_dialog, customers.task_dialog)
-    # dp.include_routers(workers.main_dialog, workers.task_dialog)
+    dp.include_routers(workers.main_dialog, workers.task_dialog)
     dp.include_router(finish_router.router)
     setup_dialogs(dp)
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))

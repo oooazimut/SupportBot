@@ -35,29 +35,31 @@ async def task_description_handler(message: Message, message_input: MessageInput
     manager.dialog_data['mediatype'] = media_type
 
     await manager.switch_to(TaskCreating.preview)
-    # curr_time = datetime.datetime.now().replace(microsecond=0)
-    # creator = message.from_user.id
-    # phone = manager.find('phone_input').get_value()
-    # title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
-    # client_info = txt
-    # status = 'открыто'
-    # priority = ''
-    # params = [
-    #     curr_time,
-    #     creator,
-    #     phone,
-    #     title,
-    #     client_info,
-    #     media_type,
-    #     media_id,
-    #     status,
-    #     priority
-    # ]
-    # task_service.save_task(params=params)
-    # await message.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.')
-    # await message.delete()
-    # await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
+
+async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
+    mediatype = manager.dialog_data['mediatype']
+    mediaid = manager.dialog_data['mediaid']
+    curr_time = datetime.datetime.now().replace(microsecond=0)
+    creator = clb.from_user.id
+    phone = manager.find('phone_input').get_value()
+    title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
+    client_info = manager.dialog_data['txt']
+    status = 'открыто'
+    priority = ''
+    params = [
+        curr_time,
+        creator,
+        phone,
+        title,
+        client_info,
+        mediatype,
+        mediaid,
+        status,
+        priority
+    ]
+    task_service.save_task(params=params)
+    await clb.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.')
 
 
 async def tasks_handler(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -89,4 +91,3 @@ async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, 
     userid = str(callback.from_user.id)
     task = next((t for t in manager.dialog_data[userid] if t['id'] == int(item_id)), None)
     await manager.start(CustomerTaskSG.main, data=task)
-

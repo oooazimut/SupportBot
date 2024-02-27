@@ -1,9 +1,7 @@
-import datetime
 import operator
 
 from aiogram import F
 from aiogram.enums import ContentType
-from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 from aiogram_dialog.widgets.input import TextInput, MessageInput
@@ -11,9 +9,7 @@ from aiogram_dialog.widgets.kbd import Start, Cancel, Back, Button, Select, Colu
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 
-from db import task_service
-from handlers import customer_handlers
-from handlers.customer_handlers import on_task
+from handlers.customer_handlers import on_task, on_confirm, tasks_handler, archive_handler, task_description_handler
 from states import TaskCreating, CustomerSG, CustomerTaskSG
 
 
@@ -23,17 +19,13 @@ async def tasks_getter(dialog_manager: DialogManager, **kwargs):
     return {'tasks': tasks}
 
 
-async def shit_handler(message: Message, message_input: MessageInput, manager: DialogManager):
-    await message.delete()
-
 
 main_dialog = Dialog(
     Window(
         Const('Вас приветствует бот технической поддержки компании "Азимут"'),
         Start(Const('Создать заявку'), id='start_creating', state=TaskCreating.enter_entity),
-        Button(Const('Активные заявки'), id='customer_tasks', on_click=customer_handlers.tasks_handler),
-        Button(Const('Архив'), id='customer_archive', on_click=customer_handlers.archive_handler),
-        MessageInput(func=shit_handler),
+        Button(Const('Активные заявки'), id='customer_tasks', on_click=tasks_handler),
+        Button(Const('Архив'), id='customer_archive', on_click=archive_handler),
         state=CustomerSG.main,
     ),
     Window(
@@ -84,30 +76,6 @@ async def result_getter(dialog_manager: DialogManager, **kwargs):
         'media': media
     }
 
-async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
-    mediatype = manager.dialog_data['mediatype']
-    mediaid = manager.dialog_data['mediaid']
-    curr_time = datetime.datetime.now().replace(microsecond=0)
-    creator = clb.from_user.id
-    phone = manager.find('phone_input').get_value()
-    title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
-    client_info = manager.dialog_data['txt']
-    status = 'открыто'
-    priority = ''
-    params = [
-        curr_time,
-        creator,
-        phone,
-        title,
-        client_info,
-        mediatype,
-        mediaid,
-        status,
-        priority
-    ]
-    task_service.save_task(params=params)
-    await clb.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.')
-
 
 create_task_dialog = Dialog(
     Window(
@@ -135,7 +103,7 @@ create_task_dialog = Dialog(
     ),
     Window(
         Const('Опишите вашу проблему. Это может быть текстовое, голосовое, видеосообщение или картинка.'),
-        MessageInput(customer_handlers.task_description_handler, content_types=[ContentType.ANY]),
+        MessageInput(task_description_handler, content_types=[ContentType.ANY]),
         Back(Const('Назад')),
         CANCEL_EDIT,
         Cancel(Const('Отменить создание')),
