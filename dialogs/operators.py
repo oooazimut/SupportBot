@@ -120,3 +120,10 @@ worker_dialog = Dialog(
         getter=handlers.operator_handler.worker_getter
     ),
 )
+edit_task_dialog = Dialog(
+    Window(
+        Column(
+
+        )
+    ),
+)
