@@ -120,10 +120,35 @@ worker_dialog = Dialog(
         getter=handlers.operator_handler.worker_getter
     ),
 )
+def is_opened(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'назначено'
+
+
+def not_in_archive(data, widget, manager: DialogManager):
+    return manager.start_data['status'] != 'закрыто'
+
+
+def is_performed(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'выполнено'
+
+
+def is_in_progress(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'в работе'
+
 edit_task_dialog = Dialog(
     Window(
-        Column(
-
-        )
+        Format('{start_data[created]}'),
+        Format('{start_data[name]}'),
+        Format('{start_data[title]}'),
+        Format('{start_data[description]}'),
+        Format('Приоритет: {start_data[priority]}'),
+        Format('Статус: {start_data[status]}'),
+        Button(Const('Инфо от клиента'), id='client_task', on_click=client_info),
+        Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
+        Button(Const('Отказаться'), id='refuse_task', on_click=refuse_task, when=not_in_archive),
+        Button(Const('Закрыть'), id='close_task', on_click=close_task, when=is_in_progress),
+        Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
+        Cancel(Const('Назад')),
+        state=WorkerTaskSG.main
     ),
 )
