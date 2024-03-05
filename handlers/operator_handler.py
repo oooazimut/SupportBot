@@ -45,6 +45,9 @@ async def archive_getter(dialog_manager: DialogManager, **kwargs):
     tasks = task_service.get_tasks_by_status('закрыто')
     return {'tasks': tasks}
 
+async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
+    task = task_service.get_task(item_id)[0]
+    await manager.start(WorkerTaskSG.main, data=task)
 
 #Хендлеры для сотрудников
 async def go_operator(callback_query: CallbackQuery, button: Button, manager: DialogManager):
