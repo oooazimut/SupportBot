@@ -167,7 +167,7 @@ worker_send_dialog = Dialog(
                 id='workers',
                 item_id_getter=operator.itemgetter('id'),
                 items='un',
-                on_click=handlers.operator_handler.
+                on_click=handlers.operator_handler.set_workers
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),

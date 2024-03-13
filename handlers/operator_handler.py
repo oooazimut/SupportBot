@@ -64,10 +64,10 @@ async def operator_getter(dialog_manager: DialogManager, **kwargs):
     return {'un': un}
 
 async def worker_getter(dialog_manager: DialogManager, **kwargs):
-    un = empl_service.get_employee("worker")
+    un = empl_service.get_employees("worker")
     return {'un': un}
 
-#Хендлеры для обработки заявок
+
 async def client_info(callback: CallbackQuery, button: Button, manager: DialogManager):
     pass
 
@@ -75,8 +75,11 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
     pass
 async def appoint_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.switch_to(OperatorSG.tas)
-async def set_workers()
-
+async def set_workers(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
+    task_service.change_worker(manager.start_data['id'], item_id[0])
+    bot = manager.middleware_data['bot']
+    await bot.send_message(item_id[0], 'Вам назначена задача')
+    await manager.switch_to(TaskSG.new_task)
 async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     pass
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
