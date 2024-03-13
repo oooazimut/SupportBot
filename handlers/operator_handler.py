@@ -1,9 +1,11 @@
+from typing import Any
+
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 from db import task_service, empl_service
 from db import task_service
-from states import OperatorSG, TaskSG, WorkerSG
+from states import OperatorSG, TaskSG, WorkersSG
 
 
 #Хендлеры для тасков
@@ -47,14 +49,15 @@ async def archive_getter(dialog_manager: DialogManager, **kwargs):
 
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     task = task_service.get_task(item_id)[0]
-    await manager.start(WorkerTaskSG.main, data=task)
+    await manager.start(TaskSG.main, data=task)
+
 
 #Хендлеры для сотрудников
 async def go_operator(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(WorkerSG.opr)
+    await manager.switch_to(WorkersSG.opr)
 
 async def go_worker(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(WorkerSG.slv)
+    await manager.switch_to(WorkersSG.slv)
 
 async def operator_getter(dialog_manager: DialogManager, **kwargs):
     un = empl_service.get_employee("operator")
@@ -63,3 +66,21 @@ async def operator_getter(dialog_manager: DialogManager, **kwargs):
 async def worker_getter(dialog_manager: DialogManager, **kwargs):
     un = empl_service.get_employee("worker")
     return {'un': un}
+
+#Хендлеры для обработки заявок
+async def client_info(callback: CallbackQuery, button: Button, manager: DialogManager):
+    pass
+
+async def edit_task(callback: CallbackQuery, button: Button, manager: DialogManager):
+    pass
+async def appoint_task(callback: CallbackQuery, button: Button, manager: DialogManager):
+
+    pass
+
+async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
+    pass
+async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
+    pass
+async def create_task(callback: CallbackQuery, button: Button, manager: DialogManager):
+
+    pass

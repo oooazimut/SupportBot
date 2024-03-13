@@ -6,6 +6,7 @@ class OperatorSG(StatesGroup):
     tas = State()
     worker = State()
 class TaskSG(StatesGroup):
+    main = State()
     new_task = State()
     progress_task = State()
     archive_task = State()

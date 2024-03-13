@@ -39,7 +39,8 @@ task_dialog = Dialog(
                 Format('{item[title]} {item[priority]}'),
                 id='new_tasks',
                 item_id_getter=operator.itemgetter('id'),
-                items='tasks'
+                items='tasks',
+                on_click=handlers.operator_handler.on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
@@ -54,7 +55,8 @@ task_dialog = Dialog(
                 Format('{item[title]} {item[priority]}'),
                 id='in_progress_tasks',
                 item_id_getter=operator.itemgetter('id'),
-                items='tasks'
+                items='tasks',
+                on_click=handlers.operator_handler.on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
@@ -69,7 +71,8 @@ task_dialog = Dialog(
               Format('{item[title]}'),
               id='done_tasks',
               item_id_getter=operator.itemgetter('id'),
-              items='task'
+              items='task',
+              on_click=handlers.operator_handler.on_task
           )
       ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
@@ -143,12 +146,15 @@ edit_task_dialog = Dialog(
         Format('{start_data[description]}'),
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
-        Button(Const('Инфо от клиента'), id='client_task', on_click=client_info),
-        Button(Const('Редактировать'), id='accept_task', on_click=accept_task, when=is_opened),
-        Button(Const('Назначить исполнителя'), id='refuse_task', on_click=refuse_task, when=not_in_archive),
-        Button(Const('Закрыть'), id='close_task', on_click=close_task, when=is_in_progress),
-        Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
+        Button(Const('Создать'), id='open_task', on_click=handlers.operator_handler.create_task),
+        Button(Const('Инфо от клиента'), id='client_task', on_click=handlers.operator_handler.client_info),
+        Button(Const('Редактировать'), id='edit_task', on_click=handlers.operator_handler.edit_task, when=is_opened),
+        Button(Const('Назначить исполнителя'), id='appoint_task', on_click=handlers.operator_handler.appoint_task, when=not_in_archive),
+        Button(Const('Закрыть'), id='close_task', on_click=handlers.operator_handler.close_task, when=is_in_progress),
+        Button(Const('Вернуть в работу'), id='back_to_work', on_click=handlers.operator_handler.get_back, when=is_performed),
         Cancel(Const('Назад')),
-        state=WorkerTaskSG.main
+        state=TaskSG.main
     ),
 )
+
+#wizard
