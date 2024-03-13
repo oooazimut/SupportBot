@@ -6,6 +6,8 @@ from aiogram_dialog import DialogManager, StartMode
 from config import START_STATES
 from db import empl_service
 
+from pyrogram.types import CallbackQuery
+
 router = Router()
 
 
@@ -19,3 +21,5 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
     else:
         status = 'customer'
     await dialog_manager.start(state=START_STATES[status], mode=StartMode.RESET_STACK)
+@router.callback_query(Fdata = "confirm_task")
+async def confirm_task(callback: CallbackQuery, dialog_manager: DialogManager, task_id: str):

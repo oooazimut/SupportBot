@@ -1,6 +1,7 @@
 from typing import Any
-
+from aiogram import types
 from aiogram.types import CallbackQuery
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 from db import task_service, empl_service
@@ -85,8 +86,15 @@ async def set_workers(callback: CallbackQuery, widget: Any, manager: DialogManag
 async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     task_service.change_status(manager.start_data['id'], 'выполнено')
     bot = manager.middleware_data['bot']
-    await bot.send_message(manager.start_data['creator'], 'Ваша заявка выполнена, проверьте как она выполнена')
+    builder = InlineKeyboardBuilder()
+    builder.add(types.InlineKeyboardButton(
+        text='Подтвердить выполнение',
+        callback_data='confirm_task'
+    ))
+    await bot.send_message(manager.start_data['creator'], 'Ваша заявка выполнена, проверьте как она выполнена', replay_markup=builder.as_markup())
     await manager.switch_to(TaskSG.new_task)
+    #запилить кнопку для пользователя для потверждения выполнения задачи
+
 async def create_task(callback: CallbackQuery, button: Button, manager: DialogManager):
 
     pass
