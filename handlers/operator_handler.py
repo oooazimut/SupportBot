@@ -75,15 +75,18 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
     pass
 async def appoint_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.switch_to(OperatorSG.tas)
+
 async def set_workers(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     task_service.change_worker(manager.start_data['id'], item_id[0])
     bot = manager.middleware_data['bot']
     await bot.send_message(item_id[0], 'Вам назначена задача')
     await manager.switch_to(TaskSG.new_task)
+
 async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    pass
-async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
-    pass
+    task_service.change_status(manager.start_data['id'], 'выполнено')
+    bot = manager.middleware_data['bot']
+    await bot.send_message(manager.start_data['creator'], 'Ваша заявка выполнена, проверьте как она выполнена')
+    await manager.switch_to(TaskSG.new_task)
 async def create_task(callback: CallbackQuery, button: Button, manager: DialogManager):
 
     pass

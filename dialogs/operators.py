@@ -151,7 +151,6 @@ edit_task_dialog = Dialog(
         Button(Const('Редактировать'), id='edit_task', on_click=handlers.operator_handler.edit_task, when=is_opened),
         Button(Const('Назначить исполнителя'), id='appoint_task', on_click=handlers.operator_handler.appoint_task, when=not_in_archive),
         Button(Const('Закрыть'), id='close_task', on_click=handlers.operator_handler.close_task, when=is_in_progress),
-        Button(Const('Вернуть в работу'), id='back_to_work', on_click=handlers.operator_handler.get_back, when=is_performed),
         Cancel(Const('Назад')),
         state=TaskSG.main
     ),
