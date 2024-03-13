@@ -10,6 +10,7 @@ class TaskSG(StatesGroup):
     new_task = State()
     progress_task = State()
     archive_task = State()
+    set_worker = State()
 
 class WorkersSG():
     main = State()

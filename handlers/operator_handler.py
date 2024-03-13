@@ -74,8 +74,8 @@ async def client_info(callback: CallbackQuery, button: Button, manager: DialogMa
 async def edit_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     pass
 async def appoint_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-
-    pass
+    await manager.switch_to(OperatorSG.tas)
+async def set_workers()
 
 async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     pass

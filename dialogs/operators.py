@@ -158,3 +158,21 @@ edit_task_dialog = Dialog(
 )
 
 #wizard
+worker_send_dialog = Dialog(
+    Window(
+        Const('Исполнители:'),
+        Column(
+            Select(
+                Format('{item[name]} {item[surname]}'),
+                id='workers',
+                item_id_getter=operator.itemgetter('id'),
+                items='un',
+                on_click=handlers.operator_handler.
+            )
+        ),
+        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        state=TaskSG.set_worker,
+        getter=handlers.operator_handler.worker_getter
+    ),
+)
+
