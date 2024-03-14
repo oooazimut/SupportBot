@@ -95,6 +95,7 @@ class TaskService:
     def change_worker(self, task_id, slave):
         self.database.post_query('UPDATE tasks SET slave = ? WHERE id = ?', [slave, task_id])
 
+
 class EmployeeService:
     def __init__(self, database: DataBase):
         self.database = database
@@ -111,8 +112,6 @@ class EmployeeService:
         data = self.database.select_query('SELECT * FROM employees', params=None)
         return data
 
-    def get_employees(self, status):
+    def get_employees_by_status(self, status):
         data = self.database.select_query('SELECT * FROM employees WHERE status = ?', [status])
-        if data:
-            return data[0]
-
+        return data

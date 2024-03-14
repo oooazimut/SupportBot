@@ -68,6 +68,7 @@ async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, 
 
 # Хендлеры для сотрудников
 async def go_operator(callback_query: CallbackQuery, button: Button, manager: DialogManager):
+
     await manager.switch_to(WorkersSG.opr)
 
 
@@ -76,7 +77,7 @@ async def go_worker(callback_query: CallbackQuery, button: Button, manager: Dial
 
 
 async def operator_getter(dialog_manager: DialogManager, **kwargs):
-    un = empl_service.get_employee("operator")
+    un = empl_service.get_employees_by_status("operator")
     return {'un': un}
 
 

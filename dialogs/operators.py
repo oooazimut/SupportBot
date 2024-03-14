@@ -93,7 +93,7 @@ worker_dialog = Dialog(
         Const('Список операторов:'),
         Column(
             Select(
-                Format('{item[name]} {item[surname]}'),
+                Format('{item[username]}'),
                 id='operators',
                 item_id_getter=operator.itemgetter('id'),
                 items='un'
