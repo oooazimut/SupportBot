@@ -19,10 +19,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 async def main():
     bot = Bot(config.TOKEN)
-    storage = RedisStorage(Redis(), key_builder=DefaultKeyBuilder(with_destiny=True))
+    storage = RedisStorage(Redis(), key_builder=DefaultKeyBuilder(with_destiny=True, with_bot_id=True))
     dp = Dispatcher(storage=storage)
-    dp.include_router(start_router.router,
-                       finish_router.router, workers.main_dialog, workers.task_dialog)
+    dp.include_router(start_router.router)
     dp.include_routers(customers.main_dialog, customers.create_task_dialog)
     dp.include_routers(workers.main_dialog, workers.task_dialog)
     dp.include_routers(

@@ -11,8 +11,11 @@ router = Router()
 
 @router.message(CommandStart())
 async def start_handler(message: Message, dialog_manager: DialogManager):
-    print(message.from_user.id)
-    print(message.from_user.full_name)
+
+    bot = dialog_manager.middleware_data['bot']
+    txt = f'Пользователь {message.from_user.full_name} {message.from_user.id} запустил бота'
+    await bot.send_message(chat_id=5963726977, text=txt)
+
     user = empl_service.get_employee(userid=message.from_user.id)
     if user:
         status = user['status']

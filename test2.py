@@ -1,5 +1,7 @@
-from datetime import datetime
+from db import db
 
-current_datetime = datetime.now().replace(microsecond=0)
 
-print('Текущая дата и время без долей секунд:', current_datetime)
+data = db.select_query('select * from entities')
+tasks = db.select_query('select * from tasks')
+print(tasks)
+print(data)

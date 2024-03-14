@@ -6,18 +6,39 @@ class TaskService:
         self.database = database
 
     def save_task(self, params):
-        query = ('INSERT INTO tasks(created, creator, phone, title, client_info, status, priority)'
-                 ' VALUES (?, ?, ?, ?, ?, ?, ?)')
+        query = '''
+        INSERT INTO tasks(
+                        created,
+                        creator, 
+                        phone, 
+                        title, 
+                        client_info, 
+                        media_type, 
+                        media_id, 
+                        status, 
+                        priority)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
         self.database.post_query(query=query, params=params)
 
     def get_task(self, taskid):
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
         query = '''
-        SELECT *
-        FROM tasks
-        JOIN entities
-        ON tasks.entity = entities.id 
-        WHERE tasks.id = ?
+        SELECT 
+            t.id,
+            t.created,
+            t.creator,
+            t.phone,
+            t.title,
+            t.description,
+            t.status,
+            t.priority,
+            t.slave,
+            e.name
+        FROM tasks as t
+        JOIN entities as e
+        ON e.id = t.entity
+        WHERE t.id = ?
         '''
         return self.database.select_query(query, [taskid])
 
@@ -28,6 +49,21 @@ class TaskService:
         if userid:
             return self.database.select_query('SELECT * FROM tasks WHERE status = ? AND slave = ?', [status, userid])
         return self.database.select_query('SELECT * FROM tasks WHERE status = ?', [status])
+
+    def get_archive_tasks(self, clientid):
+        query = '''
+        SELECT * 
+        FROM entities as e
+        JOIN tasks as t
+        ON t.entity = e.id
+        WHERE t.creator = ?
+        AND t.status = 'закрыто'
+        AND t.entity = (SELECT entity
+                        FROM tasks
+                        WHERE creator = ? AND entity IS NOT NULL
+                        ORDER BY id DESC LIMIT 1)
+        '''
+        return self.database.select_query(query, [clientid, clientid])
 
     def get_active_tasks(self, userid):
         query = '''

@@ -1,6 +1,5 @@
-from db import task_service
+from db import db
 
+MY_ID = 5963726977
 
-data = task_service.get_task('1')[0]
-for key, value in data.items():
-    print(key, value)
+db.post_query('update tasks set status = "назначено", entity = 3, slave = ?', [MY_ID])

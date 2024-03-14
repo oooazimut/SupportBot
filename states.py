@@ -27,6 +27,9 @@ class WorkersSG(StatesGroup):
 class CustomerSG(StatesGroup):
     main = State()
     slave = State()
+    active_tasks = State()
+    task = State()
+
 
 
 class TaskCreating(StatesGroup):
@@ -34,7 +37,7 @@ class TaskCreating(StatesGroup):
     enter_phone = State()
     enter_title = State()
     enter_description = State()
-
+    preview = State()
 
 class WorkerSG(StatesGroup):
     main = State()
@@ -44,4 +47,7 @@ class WorkerSG(StatesGroup):
 
 
 class WorkerTaskSG(StatesGroup):
+    main = State()
+
+class CustomerTaskSG(StatesGroup):
     main = State()
