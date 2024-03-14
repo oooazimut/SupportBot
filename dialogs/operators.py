@@ -5,7 +5,7 @@ from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Ca
 from aiogram_dialog.widgets.text import Const, Format
 
 from handlers import operator_handler
-from states import OperatorSG, TaskSG, WorkersSG, OpTaskSG
+from states import OperatorSG, TaskSG, WorkersSG, OpTaskSG, WorkerSendSG
 
 main_dialog = Dialog(
     Window(
@@ -25,7 +25,7 @@ task_dialog = Dialog(
             Button(Const('Заявки в работе'), id='done', on_click=operator_handler.go_work_task),
             Button(Const('Архив'), id='archive', on_click=operator_handler.go_archive)
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        Cancel(Const('Назад')),
         state=OpTaskSG.tas
     ),
 
@@ -56,7 +56,7 @@ task_dialog = Dialog(
                 on_click=operator_handler.on_task
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.progress_task,
         getter=operator_handler.progress_task_getter,
     ),
@@ -68,11 +68,11 @@ task_dialog = Dialog(
                 Format('{item[title]}'),
                 id='done_tasks',
                 item_id_getter=operator.itemgetter('id'),
-                items='task',
+                items='tasks',
                 on_click=operator_handler.on_task
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.archive_task,
         getter=operator_handler.archive_getter
     ),
@@ -85,7 +85,7 @@ worker_dialog = Dialog(
             Button(Const('Операторы'), id='assigned', on_click=operator_handler.go_operator),
             Button(Const('Исполнители'), id='worker_archive', on_click=operator_handler.go_worker)
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        Cancel(Const('Назад')),
         state=WorkersSG.main
     ),
 
@@ -171,7 +171,7 @@ worker_send_dialog = Dialog(
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state=TaskSG.set_worker,
+        state=WorkerSendSG.set_worker,
         getter=operator_handler.worker_getter
     ),
 )
