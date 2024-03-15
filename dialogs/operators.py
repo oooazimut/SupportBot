@@ -1,41 +1,33 @@
 import operator
 
-from aiogram import F
-from aiogram.types import Message
 from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.input import TextInput
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Start, Cancel, Toggle, ManagedToggle
+from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 
-from handlers.operator_handler import on_confirm, go_task, go_slaves, go_archive, go_inw_task, go_new_task, \
-    worker_getter, operator_getter
-from states import OperatorSG, AddWorkerSG
-from db import task_service, empl_service
-
-
-
-
+from handlers import operator_handler
+from states import OperatorSG, TaskSG, WorkersSG, OpTaskSG, WorkerSendSG, TaskCreating
 
 main_dialog = Dialog(
-    Window (
+    Window(
         Const("Главное меню:"),
         Row(
-            Button(Const('Заявки'), id='tasks', on_click=go_task),
-            Button(Const('Работники'), id='slaves', on_click=go_slaves),
+            Button(Const('Заявки'), id='tasks', on_click=operator_handler.go_task),
+            Button(Const('Работники'), id='slaves', on_click=operator_handler.go_slaves),
         ),
-        state = OperatorSG.main
+        state=OperatorSG.main
     ),
 )
 task_dialog = Dialog(
     Window(
         Const('Заявки:'),
-           Row(
-               Button(Const('Новые заявки'), id='assign', on_click=go_new_task),
-               Button(Const('Заявки в работе'), id='done', on_click=go_inw_task),
-               Button(Const('Архив'), id='archive', on_click=go_archive)
-           ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state=OperatorSG.tas
+        Row(
+            Button(Const('Новые заявки'), id='assign', on_click=operator_handler.go_new_task),
+            Button(Const('Заявки в работе'), id='done', on_click=operator_handler.go_work_task),
+            Button(Const('Архив'), id='archive', on_click=operator_handler.go_archive)
+        ),
+        Start(Const('Создать заявку'), id='new_op_task', state=TaskCreating.enter_entity),
+        Cancel(Const('Назад')),
+        state=OpTaskSG.tas
     ),
 
     Window(
@@ -44,43 +36,46 @@ task_dialog = Dialog(
             Select(
                 Format('{item[title]} {item[priority]}'),
                 id='new_tasks',
-                item_id_getter=operator.itemgetter('id'),
-                items=''
+                item_id_getter=operator.itemgetter('taskid'),
+                items='tasks',
+                on_click=operator_handler.on_task
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state=OperatorSG.new_task,
-        getter=task_service.get_tasks
+        SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
+        state=OpTaskSG.new_task,
+        getter=operator_handler.tasks_getter
     ),
 
     Window(
         Const('Заявки в работе:'),
         Column(
             Select(
-                Format('{item[title]} {item[priority]}'),
+                Format('{item[title]} {item[priority]} {item[emoji]}'),
                 id='in_progress_tasks',
-                item_id_getter=operator.itemgetter('id'),
-                items=''
+                item_id_getter=operator.itemgetter('taskid'),
+                items='tasks',
+                on_click=operator_handler.on_task
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state=OperatorSG.progress_task,
-        getter=task_service.get_tasks
+        SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
+        state=OpTaskSG.progress_task,
+        getter=operator_handler.tasks_getter,
     ),
 
     Window(
         Const('Заявки в архиве'),
-      Column(
-          Select(
-              Format('{item[title]} {item[priority]}'),
-              id='done_tasks',
-              item_id_getter=operator.itemgetter('id'),
-              items=''
-          )
-      ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state=OperatorSG.archive_task,
-        getter=task_service.get_tasks
+        Column(
+            Select(
+                Format('{item[title]}'),
+                id='done_tasks',
+                item_id_getter=operator.itemgetter('taskid'),
+                items='tasks',
+                on_click=operator_handler.on_task
+            )
+        ),
+        SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
+        state=OpTaskSG.archive_task,
+        getter=operator_handler.tasks_getter
     ),
 )
 
@@ -88,120 +83,97 @@ worker_dialog = Dialog(
     Window(
         Const('Работники:'),
         Row(
-            Button(Const('Операторы'), id='assigned', on_click=operator_getter),
-            Button(Const('Исполнители'), id='worker_archive', on_click=worker_getter)
+            Button(Const('Операторы'), id='assigned', on_click=operator_handler.go_operator),
+            Button(Const('Исполнители'), id='worker_archive', on_click=operator_handler.go_worker)
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state = OperatorSG.worker
+        Cancel(Const('Назад')),
+        state=WorkersSG.main
     ),
 
     Window(
         Const('Список операторов:'),
         Column(
             Select(
-                Format('{item[name]} {item[surname]}'),
+                Format('{item[username]}'),
                 id='operators',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('userid'),
                 items='un'
             )
         ),
 
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        state = OperatorSG.opr,
-        getter = operator_getter
+        SwitchTo(Const('Назад'), id='to_main', state=WorkersSG.main),
+        state=WorkersSG.opr,
+        getter=operator_handler.operator_getter
     ),
 
     Window(
-      Const('Список работников:'),
+        Const('Список работников:'),
         Column(
-          Select(
-              Format('{item[name]} {item[surname]}'),
-              id = 'workers',
-              item_id_getter = operator.itemgetter('id'),
-              items = 'un'
-          )
+            Select(
+                Format('{item[name]} {item[surname]}'),
+                id='workers',
+                item_id_getter=operator.itemgetter('userid'),
+                items='un'
+            )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
-        Start(Const('Добавить работника'), id='to_add_slave', state=AddWorkerSG.name),
-        state = OperatorSG.slv,
-        getter = worker_getter
+        state=WorkersSG.slv,
+        getter=operator_handler.worker_getter
     ),
 )
 
 
-async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
-    if dialog_manager.dialog_data.get('finished'):
-        await dialog_manager.switch_to(AddWorkerSG.preview)
-    else:
-        await dialog_manager.next()
+def is_opened(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'назначено'
 
-CANCEL_EDIT = SwitchTo(
-    Const("Отменить редактирование"),
-    when=F["dialog_data"]['finished'],
-    id="cnl_edt",
-    state=AddWorkerSG.preview
-)
 
-async def user_preview_getter(dialog_manager: DialogManager, **kwargs):
-    dialog_manager.dialog_data['finished'] = True
-    return {
-        'name': dialog_manager.find('worker_name_input').get_value(),
-        'userid': dialog_manager.find('worker_id_input').get_value()
-    }
+def not_in_archive(data, widget, manager: DialogManager):
+    return manager.start_data['status'] != 'закрыто'
 
-async def statustypes_getter(**kwargs):
-    return {
-        'status_types': [
-            (1, 'Оператор'),
-            (2, 'Исполнитель')
-        ]
-    }
 
-def id_getter(status: tuple) -> int:
-    return status[0]
+def is_performed(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'выполнено'
 
-async def on_toggle_click(msg: Message, widget: ManagedToggle, manager: DialogManager, data):
-    print(data)
 
-add_worker_dialog = Dialog(
-    Window(
-        Const('Введите имя новоприбывшего:'),
-        TextInput(id='worker_name_input', on_success=next_or_end),
-        CANCEL_EDIT,
-        Cancel(Const('Отменить добавление')),
-        state=AddWorkerSG.name
-    ),
-    Window(
-        Const('Введите его ID:'),
-        TextInput(id='worker_id_input', on_success=next_or_end),
-        CANCEL_EDIT,
-        Cancel(Const('Отменить добавление')),
-        state=AddWorkerSG.workerid
-    ),
-    Window(
-        Const('Выберите тип выполняемой работы:'),
-        Toggle(
-            text=Format('{}'),
-            id='toggle_status',
-            items='status_types',
-            item_id_getter=id_getter,
-            on_click=on_toggle_click
-        ),
-        state=AddWorkerSG.status,
-        getter=statustypes_getter,
-        preview_data=statustypes_getter
-    ),
+def is_in_progress(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'в работе'
+
+
+edit_task_dialog = Dialog(
     Window(
         Jinja('''
-        Проверьте, все ли правильно:
-        <b>Имя</b>: {{name}}
-        <b>ID</b>: {{userid}}
+        {{start_data.created}}
+        {{start_data.title}}
+        Исполнитель: {{start_data.username if start_data.username}}
+        Приоритет: {{start_data.priority if start_data.priority}}
+        Статус: {{start_data.status}}
         '''),
-        Cancel(
-            Const('Подтвердить добавление'),
-            id='confirm_worker_adding',
-            on_click=on_confirm
+        Button(Const('Создать'), id='open_task', on_click=operator_handler.create_task),
+        Button(Const('Инфо от клиента'), id='client_task', on_click=operator_handler.client_info),
+        Button(Const('Редактировать'), id='edit_task', on_click=operator_handler.edit_task, when=is_opened),
+        Button(Const('Назначить исполнителя'), id='appoint_task', on_click=operator_handler.appoint_task,
+               when=not_in_archive),
+        Button(Const('Закрыть'), id='close_task', on_click=operator_handler.close_task, when=is_in_progress),
+        Cancel(Const('Назад')),
+        state=TaskSG.main
+    ),
+)
+
+# wizard
+worker_send_dialog = Dialog(
+    Window(
+        Const('Исполнители:'),
+        Column(
+            Select(
+                Format('{item[username]}'),
+                id='workers',
+                item_id_getter=operator.itemgetter('userid'),
+                items='un',
+                on_click=operator_handler.set_workers
+            )
         ),
-        state=AddWorkerSG.preview
-    )
+        Cancel(Const('Назад')),
+        state=WorkerSendSG.set_worker,
+        getter=operator_handler.worker_getter
+    ),
 )

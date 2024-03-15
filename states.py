@@ -3,20 +3,30 @@ from aiogram.filters.state import StatesGroup, State
 
 class OperatorSG(StatesGroup):
     main = State()
+
+
+class OpTaskSG(StatesGroup):
     tas = State()
-    worker = State()
     new_task = State()
     progress_task = State()
     archive_task = State()
+
+
+class TaskSG(StatesGroup):
+    main = State()
+
+
+class WorkersSG(StatesGroup):
+    main = State()
     opr = State()
     slv = State()
 
 
 class CustomerSG(StatesGroup):
     main = State()
+    slave = State()
     active_tasks = State()
     task = State()
-    slave = State()
 
 
 class TaskCreating(StatesGroup):
@@ -27,10 +37,6 @@ class TaskCreating(StatesGroup):
     preview = State()
 
 
-class WorkerTaskSG(StatesGroup):
-    main = State()
-
-
 class WorkerSG(StatesGroup):
     main = State()
     assigned = State()
@@ -38,12 +44,14 @@ class WorkerSG(StatesGroup):
     archive = State()
 
 
-class CustomerTaskSG(StatesGroup):
+class WorkerSendSG(StatesGroup):
+    set_worker = State()
+
+
+class WorkerTaskSG(StatesGroup):
     main = State()
 
 
-class AddWorkerSG(StatesGroup):
-    workerid = State()
-    name = State()
-    status = State()
-    preview = State()
+class CustomerTaskSG(StatesGroup):
+    main = State()
+

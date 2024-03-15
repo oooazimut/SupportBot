@@ -89,5 +89,5 @@ async def archive_handler(callback: CallbackQuery, button: Button, manager: Dial
 
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     userid = str(callback.from_user.id)
-    task = next((t for t in manager.dialog_data[userid] if t['id'] == int(item_id)), None)
+    task = next((t for t in manager.dialog_data[userid] if t['taskid'] == int(item_id)), None)
     await manager.start(CustomerTaskSG.main, data=task)
