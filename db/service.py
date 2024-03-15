@@ -24,21 +24,11 @@ class TaskService:
     def get_task(self, taskid):
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
         query = '''
-        SELECT 
-            t.id,
-            t.created,
-            t.creator,
-            t.phone,
-            t.title,
-            t.description,
-            t.status,
-            t.priority,
-            t.slave,
-            e.name
+        SELECT *
         FROM tasks as t
         JOIN entities as e
-        ON e.id = t.entity
-        WHERE t.id = ?
+        ON e.ent_id = t.entity
+        WHERE t.taskid = ?
         '''
         return self.database.select_query(query, [taskid])
 
@@ -46,16 +36,24 @@ class TaskService:
         return self.database.select_query('SELECT * FROM tasks', params=None)
 
     def get_tasks_by_status(self, status, userid=None) -> list:
+        query = '''
+        SELECT *
+        FROM tasks as t
+        LEFT JOIN employees as em
+        ON em.userid = t.slave
+        WHERE t.status = ? 
+        '''
         if userid:
-            return self.database.select_query('SELECT * FROM tasks WHERE status = ? AND slave = ?', [status, userid])
-        return self.database.select_query('SELECT * FROM tasks WHERE status = ?', [status])
+            query += ' AND t.slave = ?'
+            return self.database.select_query(query, [status, userid])
+        return self.database.select_query(query, [status])
 
     def get_archive_tasks(self, clientid):
         query = '''
         SELECT * 
         FROM entities as e
         JOIN tasks as t
-        ON t.entity = e.id
+        ON t.entity = e.ent_id
         WHERE t.creator = ?
         AND t.status = 'закрыто'
         AND t.entity = (SELECT entity
@@ -70,7 +68,7 @@ class TaskService:
         SELECT * 
         FROM entities 
         JOIN tasks 
-        ON tasks.entity = entities.id 
+        ON tasks.entity = entities.ent_id 
         WHERE tasks.creator = ?
         AND tasks.status != 'закрыто'
         AND tasks.entity = (SELECT entity 
@@ -81,30 +79,30 @@ class TaskService:
         return self.database.select_query(query, [userid, userid])
 
     def change_priority(self, task_id):
-        data = self.database.select_query('SELECT priority FROM tasks WHERE id = ?', [task_id])
-        print(data)
+        data = self.database.select_query('SELECT priority FROM tasks WHERE taskid = ?', [task_id])
         if data[0]['priority']:
             priority = ''
         else:
             priority = '\U0001F525'
-        self.database.post_query('UPDATE tasks SET priority = ? WHERE id = ?', [priority, task_id])
+        self.database.post_query('UPDATE tasks SET priority = ? WHERE taskid = ?', [priority, task_id])
 
     def change_status(self, task_id, status):
-        self.database.post_query('UPDATE tasks SET status = ? WHERE id = ?', [status, task_id])
+        self.database.post_query('UPDATE tasks SET status = ? WHERE taskid = ?', [status, task_id])
 
     def change_worker(self, task_id, slave):
-        self.database.post_query('UPDATE tasks SET slave = ? WHERE id = ?', [slave, task_id])
+        self.database.post_query('UPDATE tasks SET slave = ? WHERE taskid = ?', [slave, task_id])
 
 
 class EmployeeService:
     def __init__(self, database: DataBase):
         self.database = database
 
-    def save_employee(self, params):
-        self.database.post_query('INSERT INTO employees(id, username, status) VALUES (?, ?, ?)', params)
+    def save_employee(self, userid: int, username: str, position: str):
+        params = [userid, username, position]
+        self.database.post_query('INSERT INTO employees(userid, username, position) VALUES (?, ?, ?)', params)
 
     def get_employee(self, userid):
-        employee = self.database.select_query('SELECT * FROM employees WHERE id = ?', [userid])
+        employee = self.database.select_query('SELECT * FROM employees WHERE userid = ?', [userid])
         if employee:
             return employee[0]
 
@@ -112,6 +110,6 @@ class EmployeeService:
         data = self.database.select_query('SELECT * FROM employees', params=None)
         return data
 
-    def get_employees_by_status(self, status):
-        data = self.database.select_query('SELECT * FROM employees WHERE status = ?', [status])
+    def get_employees_by_position(self, position):
+        data = self.database.select_query('SELECT * FROM employees WHERE position = ?', [position])
         return data

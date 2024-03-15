@@ -1,11 +1,11 @@
 import operator
 
 from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start
+from aiogram_dialog.widgets.text import Const, Format, Jinja
 
 from handlers import operator_handler
-from states import OperatorSG, TaskSG, WorkersSG, OpTaskSG, WorkerSendSG
+from states import OperatorSG, TaskSG, WorkersSG, OpTaskSG, WorkerSendSG, TaskCreating
 
 main_dialog = Dialog(
     Window(
@@ -25,6 +25,7 @@ task_dialog = Dialog(
             Button(Const('Заявки в работе'), id='done', on_click=operator_handler.go_work_task),
             Button(Const('Архив'), id='archive', on_click=operator_handler.go_archive)
         ),
+        Start(Const('Создать заявку'), id='new_op_task', state=TaskCreating.enter_entity),
         Cancel(Const('Назад')),
         state=OpTaskSG.tas
     ),
@@ -35,30 +36,30 @@ task_dialog = Dialog(
             Select(
                 Format('{item[title]} {item[priority]}'),
                 id='new_tasks',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=operator_handler.on_task
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.new_task,
-        getter=operator_handler.go_new_task
+        getter=operator_handler.tasks_getter
     ),
 
     Window(
         Const('Заявки в работе:'),
         Column(
             Select(
-                Format('{item[title]} {item[priority]}'),
+                Format('{item[title]} {item[priority]} {item[emoji]}'),
                 id='in_progress_tasks',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=operator_handler.on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.progress_task,
-        getter=operator_handler.progress_task_getter,
+        getter=operator_handler.tasks_getter,
     ),
 
     Window(
@@ -67,14 +68,14 @@ task_dialog = Dialog(
             Select(
                 Format('{item[title]}'),
                 id='done_tasks',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=operator_handler.on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.archive_task,
-        getter=operator_handler.archive_getter
+        getter=operator_handler.tasks_getter
     ),
 )
 
@@ -95,12 +96,12 @@ worker_dialog = Dialog(
             Select(
                 Format('{item[username]}'),
                 id='operators',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('userid'),
                 items='un'
             )
         ),
 
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        SwitchTo(Const('Назад'), id='to_main', state=WorkersSG.main),
         state=WorkersSG.opr,
         getter=operator_handler.operator_getter
     ),
@@ -111,7 +112,7 @@ worker_dialog = Dialog(
             Select(
                 Format('{item[name]} {item[surname]}'),
                 id='workers',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('userid'),
                 items='un'
             )
         ),
@@ -140,12 +141,13 @@ def is_in_progress(data, widget, manager: DialogManager):
 
 edit_task_dialog = Dialog(
     Window(
-        Format('{start_data[created]}'),
-        Format('{start_data[name]}'),
-        Format('{start_data[title]}'),
-        Format('{start_data[description]}'),
-        Format('Приоритет: {start_data[priority]}'),
-        Format('Статус: {start_data[status]}'),
+        Jinja('''
+        {{start_data.created}}
+        {{start_data.title}}
+        Исполнитель: {{start_data.username if start_data.username}}
+        Приоритет: {{start_data.priority if start_data.priority}}
+        Статус: {{start_data.status}}
+        '''),
         Button(Const('Создать'), id='open_task', on_click=operator_handler.create_task),
         Button(Const('Инфо от клиента'), id='client_task', on_click=operator_handler.client_info),
         Button(Const('Редактировать'), id='edit_task', on_click=operator_handler.edit_task, when=is_opened),
@@ -163,14 +165,14 @@ worker_send_dialog = Dialog(
         Const('Исполнители:'),
         Column(
             Select(
-                Format('{item[name]} {item[surname]}'),
+                Format('{item[username]}'),
                 id='workers',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('userid'),
                 items='un',
                 on_click=operator_handler.set_workers
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        Cancel(Const('Назад')),
         state=WorkerSendSG.set_worker,
         getter=operator_handler.worker_getter
     ),

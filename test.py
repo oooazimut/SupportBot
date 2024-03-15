@@ -1,5 +1,7 @@
 from db import db
+from  db import empl_service
+
 
 MY_ID = 5963726977
 
-db.post_query('update tasks set status = "назначено", entity = 3, slave = ?', [MY_ID])
+empl_service.save_employee(MY_ID, 'Марат', 'operator')

@@ -18,13 +18,13 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
 
     user = empl_service.get_employee(userid=message.from_user.id)
     if user:
-        status = user['status']
+        position = user['position']
     else:
-        status = 'customer'
-    await dialog_manager.start(state=START_STATES[status], mode=StartMode.RESET_STACK)
+        position = 'customer'
+    await dialog_manager.start(state=START_STATES[position], mode=StartMode.RESET_STACK)
 
 
 @router.callback_query(F.data == "confirm_task")
 async def confirm_task(callback: CallbackQuery, dialog_manager: DialogManager):
-    task_service.change_task_status(dialog_manager.start_data['id'], 'выполнено')
+    task_service.change_task_status(dialog_manager.start_data['taskid'], 'выполнено')
     await callback.message.delete()

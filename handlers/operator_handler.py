@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.kbd import Button
 
 from db import empl_service
 from db import task_service
-from states import TaskSG, WorkersSG, OpTaskSG
+from states import TaskSG, WorkersSG, OpTaskSG, WorkerSendSG
 
 
 # Хендлеры для тасков
@@ -21,8 +21,9 @@ async def go_slaves(callback_query: CallbackQuery, button: Button, manager: Dial
 
 
 async def go_new_task(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    data = task_service.get_tasks_by_status('открытая')
+    data = task_service.get_tasks_by_status('открыто')
     if data:
+        manager.dialog_data['tasks'] = data
         await manager.switch_to(OpTaskSG.new_task)
     else:
         await callback_query.answer('Нет новых заявок', show_alert=True)
@@ -30,59 +31,69 @@ async def go_new_task(callback_query: CallbackQuery, button: Button, manager: Di
 
 async def go_work_task(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     data = task_service.get_tasks_by_status('в работе')
+    assigned = task_service.get_tasks_by_status('назначено')
+    if assigned:
+        for item in assigned:
+            item['emoji'] = '\U00002753'
+        data.extend(assigned)
     confirmed = task_service.get_tasks_by_status('выполнено')
-    data.extend(confirmed)
+    if confirmed:
+        for item in confirmed:
+            item['emoji'] = '\U00002705'
+        data.extend(confirmed)
     if data:
+        manager.dialog_data['tasks'] = data
         await manager.switch_to(OpTaskSG.progress_task)
     else:
         await callback_query.answer('Нет заявок в работе', show_alert=True)
 
 
-async def progress_task_getter(dialog_manager: DialogManager, **kwargs):
-    data = task_service.get_tasks_by_status('в работе')
-    tasks = task_service.get_tasks_by_status('выполнено')
-    for item in tasks:
-        if item['status'] == 'выполнено':
-            item['priority'] += '\U00002705'
-    data.extend(tasks)
-    return {'tasks': data}
+async def tasks_getter(dialog_manager: DialogManager, **kwargs):
+    tasks = dialog_manager.dialog_data['tasks']
+    return {'tasks': tasks}
 
 
 async def go_archive(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     data = task_service.get_tasks_by_status('закрыто')
     if data:
+        manager.dialog_data['tasks'] = data
         await manager.switch_to(OpTaskSG.archive_task)
     else:
         await callback_query.answer('Архив пустой.', show_alert=True)
 
 
-async def archive_getter(dialog_manager: DialogManager, **kwargs):
-    tasks = task_service.get_tasks_by_status('закрыто')
-    return {'tasks': tasks}
-
-
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    task = task_service.get_task(item_id)[0]
+    task = next((t for t in manager.dialog_data['tasks'] if t['taskid'] == int(item_id)), None)
+    manager.dialog_data['taskid'] = item_id
     await manager.start(TaskSG.main, data=task)
 
 
 # Хендлеры для сотрудников
 async def go_operator(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-
-    await manager.switch_to(WorkersSG.opr)
+    operators = empl_service.get_employees_by_position('operator')
+    if operators:
+        manager.dialog_data['operators'] = operators
+        await manager.switch_to(WorkersSG.opr)
+    else:
+        await callback_query.answer('Операторы отсутствуют.', show_alert=True)
 
 
 async def go_worker(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(WorkersSG.slv)
+    workers = empl_service.get_employees_by_position('worker')
+    if workers:
+        manager.dialog_data['workers'] = workers
+        await manager.switch_to(WorkersSG.slv)
+    else:
+        await callback_query.answer('Работники отсутствуют.', show_alert=True)
 
 
 async def operator_getter(dialog_manager: DialogManager, **kwargs):
-    un = empl_service.get_employees_by_status("operator")
+    un = dialog_manager.dialog_data['operators']
     return {'un': un}
 
 
 async def worker_getter(dialog_manager: DialogManager, **kwargs):
-    un = empl_service.get_employees("worker")
+    un = dialog_manager.start_data
     return {'un': un}
 
 
@@ -95,18 +106,23 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
 
 
 async def appoint_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(OpTaskSG.tas)
+    workers = empl_service.get_employees_by_position('worker')
+    workers.append(manager.dialog_data['taskid'])
+    if workers:
+        await manager.start(WorkerSendSG.set_worker, data=workers)
+    else:
+        await callback.answer('Работников нет.', show_alert=True)
 
 
 async def set_workers(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    task_service.change_worker(manager.start_data['id'], item_id[0])
+    task_service.change_worker(item_id, manager.start_data[-1])
     bot = manager.middleware_data['bot']
-    await bot.send_message(item_id[0], 'Вам назначена задача')
-    await manager.switch_to(OpTaskSG.new_task)
+    await bot.send_message(item_id, 'Вам назначена задача')
+    await manager.done()
 
 
 async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['id'], 'выполнено')
+    task_service.change_status(manager.start_data['taskid'], 'выполнено')
     bot = manager.middleware_data['bot']
     builder = InlineKeyboardBuilder()
     builder.add(types.InlineKeyboardButton(

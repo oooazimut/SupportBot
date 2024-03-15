@@ -1,7 +1,3 @@
 from db import db
 
-
-data = db.select_query('select * from entities')
-tasks = db.select_query('select * from tasks')
-print(tasks)
-print(data)
+db.post_query('alter table tasks add column client info text')

@@ -32,7 +32,7 @@ main_dialog = Dialog(
             Select(
                 Format('{item[title]} {item[priority]}'),
                 id='worker_assigned_tasks',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=on_task
 
@@ -48,7 +48,7 @@ main_dialog = Dialog(
             Select(
                 Format('{item[title]} {item[priority]}'),
                 id='worker_in_progress_tasks',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=on_task
             )
@@ -63,7 +63,7 @@ main_dialog = Dialog(
             Select(
                 Format('{item[title]}'),
                 id='worker_archive_tasks',
-                item_id_getter=operator.itemgetter('id'),
+                item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=on_task
             )
@@ -76,22 +76,22 @@ main_dialog = Dialog(
 
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['id'], 'в работе')
+    task_service.change_status(manager.start_data['taskid'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
 
 
 async def refuse_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['id'], 'открыто')
+    task_service.change_status(manager.start_data['taskid'], 'открыто')
     await callback.answer(f'Вы отказались от заявки:  {manager.start_data["title"]}')
 
 
 async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['id'], 'выполнено')
+    task_service.change_status(manager.start_data['taskid'], 'выполнено')
     await callback.answer(f'Заявка {manager.start_data["title"]} выполнена. Ожидаем потверждения от клиента.')
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['id'], 'в работе')
+    task_service.change_status(manager.start_data['taskid'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} снова в работе.')
 
 async def client_info(callback: CallbackQuery, button: Button, manager: DialogManager):

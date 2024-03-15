@@ -9,7 +9,7 @@ async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
     userid = dialog_manager.middleware_data['event_from_user'].id
     user = empl_service.get_employee(userid=userid)
     if user:
-        status = user['status']
+        position = user['position']
     else:
-        status = 'customer'
-    await dialog_manager.start(state=START_STATES[status], mode=StartMode.RESET_STACK)
+        position = 'customer'
+    await dialog_manager.start(state=START_STATES[position], mode=StartMode.RESET_STACK)

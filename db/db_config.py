@@ -3,16 +3,16 @@ DB_NAME = 'Support.db'
 CREATE_DB_SCRIPT = '''
     BEGIN TRANSACTION;
     CREATE TABLE IF NOT EXISTS employees (
-        id INTEGER PRIMARY KEY,
+        userid INTEGER PRIMARY KEY,
         username TEXT,
-        status TEXT
+        position TEXT
         );
     CREATE TABLE IF NOT EXISTS entities (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ent_id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT
         );
     CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        taskid INTEGER PRIMARY KEY AUTOINCREMENT,
         created timestamp,
         creator INTEGER,
         phone INTEGER,
@@ -25,8 +25,8 @@ CREATE_DB_SCRIPT = '''
         priority TEXT,
         entity INTEGER,
         slave INTEGER,
-        FOREIGN KEY (entity) REFERENCES entities (id)
-        FOREIGN KEY (slave) REFERENCES employees (id)
+        FOREIGN KEY (entity) REFERENCES entities (ent_id)
+        FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 
     COMMIT; 
     '''
