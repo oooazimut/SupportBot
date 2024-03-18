@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import sqlite3 as sq
 
-from db.db_config import CREATE_DB_SCRIPT
+from db.schema import CREATE_DB_SCRIPT
 
 
 class DataBase(ABC):

@@ -110,13 +110,13 @@ worker_dialog = Dialog(
         Const('Список работников:'),
         Column(
             Select(
-                Format('{item[name]} {item[surname]}'),
+                Format('{item[username]}'),
                 id='workers',
                 item_id_getter=operator.itemgetter('userid'),
                 items='un'
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=OperatorSG.main),
+        SwitchTo(Const('Назад'), id='to_main', state=WorkersSG.main),
         state=WorkersSG.slv,
         getter=operator_handler.worker_getter
     ),
@@ -148,9 +148,8 @@ edit_task_dialog = Dialog(
         Приоритет: {{start_data.priority if start_data.priority}}
         Статус: {{start_data.status}}
         '''),
-        Button(Const('Создать'), id='open_task', on_click=operator_handler.create_task),
         Button(Const('Инфо от клиента'), id='client_task', on_click=operator_handler.client_info),
-        Button(Const('Редактировать'), id='edit_task', on_click=operator_handler.edit_task, when=is_opened),
+        Button(Const('Редактировать'), id='edit_task', on_click=operator_handler.edit_task, when=not_in_archive),
         Button(Const('Назначить исполнителя'), id='appoint_task', on_click=operator_handler.appoint_task,
                when=not_in_archive),
         Button(Const('Закрыть'), id='close_task', on_click=operator_handler.close_task, when=is_in_progress),
