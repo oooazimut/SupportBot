@@ -34,7 +34,10 @@ class TaskCreating(StatesGroup):
     enter_phone = State()
     enter_title = State()
     enter_description = State()
+    priority = State()
     preview = State()
+    entity = State()
+    slave = State()
 
 
 class WorkerSG(StatesGroup):

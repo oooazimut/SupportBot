@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.kbd import Button
 
 from db import empl_service
 from db import task_service
-from states import TaskSG, WorkersSG, OpTaskSG, WorkerSendSG
+from states import TaskSG, WorkersSG, OpTaskSG, WorkerSendSG, TaskCreating
 
 
 # Хендлеры для тасков
@@ -93,7 +93,11 @@ async def operator_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def worker_getter(dialog_manager: DialogManager, **kwargs):
-    un = dialog_manager.start_data
+    try:
+        un = dialog_manager.dialog_data['workers']
+    except KeyError:
+        print(dialog_manager.start_data['workers'])
+        un = dialog_manager.start_data['workers']
     return {'un': un}
 
 
@@ -102,20 +106,20 @@ async def client_info(callback: CallbackQuery, button: Button, manager: DialogMa
 
 
 async def edit_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    pass
+    await manager.start(TaskCreating.preview, data=manager.start_data)
 
 
 async def appoint_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     workers = empl_service.get_employees_by_position('worker')
-    workers.append(manager.dialog_data['taskid'])
     if workers:
-        await manager.start(WorkerSendSG.set_worker, data=workers)
+        await manager.start(WorkerSendSG.set_worker, data={'workers': workers, 'task': manager.start_data})
     else:
         await callback.answer('Работников нет.', show_alert=True)
 
 
 async def set_workers(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    task_service.change_worker(item_id, manager.start_data[-1])
+    print(item_id, manager.start_data['task']['taskid'])
+    task_service.change_worker(task_id=manager.start_data['task']['taskid'], slave=item_id)
     bot = manager.middleware_data['bot']
     await bot.send_message(item_id, 'Вам назначена задача')
     await manager.done()

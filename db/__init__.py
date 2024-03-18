@@ -1,4 +1,4 @@
-from db.db_models import SqLiteDataBase
+from db.models import SqLiteDataBase
 from db.service import EmployeeService, TaskService
 
 

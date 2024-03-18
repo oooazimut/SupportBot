@@ -1,4 +1,4 @@
-from db.db_models import DataBase
+from db.models import DataBase
 
 
 class TaskService:

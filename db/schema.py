@@ -18,7 +18,6 @@ CREATE_DB_SCRIPT = '''
         phone INTEGER,
         title TEXT,
         description TEXT,
-        client_info TEXT,
         media_type TEXT, 
         media_id INTEGER,
         status TEXT,
