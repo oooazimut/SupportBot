@@ -1,40 +1,12 @@
 import datetime
 from typing import Any
 
-from aiogram.enums import ContentType
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
-from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
 from db import task_service
-from states import CustomerSG, CustomerTaskSG, TaskCreating
-
-
-async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
-    txt = message.caption
-    media_id = None
-    match message.content_type:
-        case ContentType.TEXT:
-            txt = message.text
-        case ContentType.PHOTO:
-            media_id = message.photo[-1].file_id
-        case ContentType.DOCUMENT:
-            media_id = message.document.file_id
-        case ContentType.VIDEO:
-            media_id = message.video.file_id
-        case ContentType.AUDIO:
-            media_id = message.audio.file_id
-        case ContentType.VOICE:
-            media_id = message.voice.file_id
-        case ContentType.VIDEO_NOTE:
-            media_id = message.video_note.file_id
-    media_type = message.content_type
-    manager.dialog_data['txt'] = txt
-    manager.dialog_data['mediaid'] = media_id
-    manager.dialog_data['mediatype'] = media_type
-
-    await manager.switch_to(TaskCreating.preview)
+from states import CustomerSG, CustomerTaskSG
 
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):

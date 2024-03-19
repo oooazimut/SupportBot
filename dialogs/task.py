@@ -1,15 +1,17 @@
+import operator
+
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram.types import Message
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, ScrollingGroup, Radio
+from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Jinja
+from aiogram_dialog.widgets.text import Const, Jinja, Format
 
 from db import empl_service
-from handlers.customer_handlers import task_description_handler, on_confirm
+from handlers.customer_handlers import on_confirm
 from states import TaskCreating
 
 CANCEL_EDIT = SwitchTo(
@@ -20,28 +22,63 @@ CANCEL_EDIT = SwitchTo(
 )
 
 
+async def priority_getter(dialog_manager: DialogManager, **kwargs):
+    priorities = [
+        ('низкий', ''),
+        ('высокий', '\U0001F525')
+    ]
+    return {
+        'priorities': priorities
+    }
+
+
+async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
+    def is_empl(userid):
+        user = empl_service.get_employee(userid)
+        if user:
+            return True
+
+    txt = message.caption
+    media_id = None
+    match message.content_type:
+        case ContentType.TEXT:
+            txt = message.text
+        case ContentType.PHOTO:
+            media_id = message.photo[-1].file_id
+        case ContentType.DOCUMENT:
+            media_id = message.document.file_id
+        case ContentType.VIDEO:
+            media_id = message.video.file_id
+        case ContentType.AUDIO:
+            media_id = message.audio.file_id
+        case ContentType.VOICE:
+            media_id = message.voice.file_id
+        case ContentType.VIDEO_NOTE:
+            media_id = message.video_note.file_id
+    media_type = message.content_type
+    manager.dialog_data['txt'] = txt
+    manager.dialog_data['mediaid'] = media_id
+    manager.dialog_data['mediatype'] = media_type
+
+    if is_empl(message.from_user.id):
+        await manager.next()
+    else:
+        await manager.switch_to(TaskCreating.preview)
+
+
+async def ent_name_handler(message: Message, message_input: MessageInput, manager: DialogManager):
+    pass
+
+
 async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
-    print(type(event), _)
     if dialog_manager.dialog_data.get('finished'):
         await dialog_manager.switch_to(TaskCreating.preview)
     else:
         await dialog_manager.next()
 
 
-async def op_next_end(event: Message, widget, dialog_manager: DialogManager, *_):
-    def is_empl(userid):
-        user = empl_service.get_employee(userid)
-        if user:
-            return True
-
-    if dialog_manager.dialog_data.get('finished'):
-        await dialog_manager.switch_to(TaskCreating.preview)
-    else:
-        if is_empl(event.from_user.id):
-            await dialog_manager.next()
-        else:
-            pass
-
+async def on_priority(event, select, dialog_manager: DialogManager, data: str, /):
+    dialog_manager.dialog_data['priority'] = data
 
 
 async def result_getter(dialog_manager: DialogManager, **kwargs):
@@ -70,7 +107,7 @@ create_task_dialog = Dialog(
         state=TaskCreating.enter_entity
     ),
     Window(
-        Const('Введите номер телефона, по которому с вами можно будет связаться'),
+        Const('Ваш номер телефона:'),
         TextInput(id='phone_input', on_success=next_or_end),
         Back(Const('Назад')),
         CANCEL_EDIT,
@@ -95,16 +132,26 @@ create_task_dialog = Dialog(
     ),
     Window(
         Const('Выбор приоритета:'),
+        Radio(
+            Format('🔘 {item[0]}'),
+            Format('⚪️ {item[0]}'),
+            id='ch_prior',
+            item_id_getter=operator.itemgetter(1),
+            items='priorities',
+            on_click=on_priority
+        ),
+        Button(Const('Подтвердить'), id='confirm_priority', on_click=next_or_end),
+        getter=priority_getter,
         state=TaskCreating.priority
     ),
     Window(
-        Const('Выбор объекта:'),
-        ScrollingGroup(),
-        state= TaskCreating.entity
+        Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
+        MessageInput(ent_name_handler, content_types=[ContentType.TEXT]),
+        state=TaskCreating.entity
     ),
     Window(
         Const('Назначить работника'),
-        Radio(),
+        # Radio(),
         state=TaskCreating.slave
     ),
     Window(
