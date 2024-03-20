@@ -25,7 +25,7 @@ task_dialog = Dialog(
             Button(Const('Заявки в работе'), id='done', on_click=operators.go_work_task),
             Button(Const('Архив'), id='archive', on_click=operators.go_archive)
         ),
-        Start(Const('Создать заявку'), id='new_op_task', state=TaskCreating.enter_entity),
+        Start(Const('Создать заявку'), id='new_op_task', state=TaskCreating.enter_phone),
         Cancel(Const('Назад')),
         state=OpTaskSG.tas
     ),

@@ -6,7 +6,7 @@ from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Ca
 from aiogram_dialog.widgets.text import Const, Format
 
 from db import task_service
-from handlers.worker_handlers import on_assigned, on_archive, on_progress, on_task
+from handlers.workers import on_assigned, on_archive, on_progress, on_task
 from states import WorkerSG, WorkerTaskSG
 
 

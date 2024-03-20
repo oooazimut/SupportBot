@@ -1,4 +1,3 @@
-import datetime
 from typing import Any
 
 from aiogram.types import CallbackQuery
@@ -7,31 +6,6 @@ from aiogram_dialog.widgets.kbd import Button
 
 from db import task_service
 from states import CustomerSG, CustomerTaskSG
-
-
-async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
-    mediatype = manager.dialog_data['mediatype']
-    mediaid = manager.dialog_data['mediaid']
-    curr_time = datetime.datetime.now().replace(microsecond=0)
-    creator = clb.from_user.id
-    phone = manager.find('phone_input').get_value()
-    title = manager.find('entity_input').get_value() + ': ' + manager.find('title_input').get_value()
-    client_info = manager.dialog_data['txt']
-    status = 'открыто'
-    priority = ''
-    params = [
-        curr_time,
-        creator,
-        phone,
-        title,
-        client_info,
-        mediatype,
-        mediaid,
-        status,
-        priority
-    ]
-    task_service.save_task(params=params)
-    await clb.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.', show_alert=True)
 
 
 async def tasks_handler(callback: CallbackQuery, button: Button, manager: DialogManager):

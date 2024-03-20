@@ -1,15 +1,13 @@
 import operator
 
 from aiogram import F
-from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
-from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import Start, Cancel, Back, Button, Select, Column, SwitchTo
+from aiogram_dialog.widgets.kbd import Start, Cancel, Back, Button, Select, Column
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 
-from handlers.customer_handlers import on_task, on_confirm, tasks_handler, archive_handler, task_description_handler
+from handlers.customers import on_task, tasks_handler, archive_handler
 from states import TaskCreating, CustomerSG, CustomerTaskSG
 
 
@@ -17,7 +15,6 @@ async def tasks_getter(dialog_manager: DialogManager, **kwargs):
     userid = str(dialog_manager.middleware_data['event_from_user'].id)
     tasks = dialog_manager.dialog_data[userid]
     return {'tasks': tasks}
-
 
 
 main_dialog = Dialog(
@@ -45,8 +42,6 @@ main_dialog = Dialog(
     )
 
 )
-
-
 
 
 async def media_getter(dialog_manager: DialogManager, **kwargs):
