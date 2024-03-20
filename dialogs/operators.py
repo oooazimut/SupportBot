@@ -4,15 +4,15 @@ from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 
-from handlers import operator_handler
+from handlers import operators
 from states import OperatorSG, TaskSG, WorkersSG, OpTaskSG, WorkerSendSG, TaskCreating
 
 main_dialog = Dialog(
     Window(
         Const("Главное меню:"),
         Row(
-            Button(Const('Заявки'), id='tasks', on_click=operator_handler.go_task),
-            Button(Const('Работники'), id='slaves', on_click=operator_handler.go_slaves),
+            Button(Const('Заявки'), id='tasks', on_click=operators.go_task),
+            Button(Const('Работники'), id='slaves', on_click=operators.go_slaves),
         ),
         state=OperatorSG.main
     ),
@@ -21,9 +21,9 @@ task_dialog = Dialog(
     Window(
         Const('Заявки:'),
         Row(
-            Button(Const('Новые заявки'), id='assign', on_click=operator_handler.go_new_task),
-            Button(Const('Заявки в работе'), id='done', on_click=operator_handler.go_work_task),
-            Button(Const('Архив'), id='archive', on_click=operator_handler.go_archive)
+            Button(Const('Новые заявки'), id='assign', on_click=operators.go_new_task),
+            Button(Const('Заявки в работе'), id='done', on_click=operators.go_work_task),
+            Button(Const('Архив'), id='archive', on_click=operators.go_archive)
         ),
         Start(Const('Создать заявку'), id='new_op_task', state=TaskCreating.enter_entity),
         Cancel(Const('Назад')),
@@ -38,12 +38,12 @@ task_dialog = Dialog(
                 id='new_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
-                on_click=operator_handler.on_task
+                on_click=operators.on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.new_task,
-        getter=operator_handler.tasks_getter
+        getter=operators.tasks_getter
     ),
 
     Window(
@@ -54,12 +54,12 @@ task_dialog = Dialog(
                 id='in_progress_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
-                on_click=operator_handler.on_task
+                on_click=operators.on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.progress_task,
-        getter=operator_handler.tasks_getter,
+        getter=operators.tasks_getter,
     ),
 
     Window(
@@ -70,12 +70,12 @@ task_dialog = Dialog(
                 id='done_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
-                on_click=operator_handler.on_task
+                on_click=operators.on_task
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.archive_task,
-        getter=operator_handler.tasks_getter
+        getter=operators.tasks_getter
     ),
 )
 
@@ -83,8 +83,8 @@ worker_dialog = Dialog(
     Window(
         Const('Работники:'),
         Row(
-            Button(Const('Операторы'), id='assigned', on_click=operator_handler.go_operator),
-            Button(Const('Исполнители'), id='worker_archive', on_click=operator_handler.go_worker)
+            Button(Const('Операторы'), id='assigned', on_click=operators.go_operator),
+            Button(Const('Исполнители'), id='worker_archive', on_click=operators.go_worker)
         ),
         Cancel(Const('Назад')),
         state=WorkersSG.main
@@ -103,7 +103,7 @@ worker_dialog = Dialog(
 
         SwitchTo(Const('Назад'), id='to_main', state=WorkersSG.main),
         state=WorkersSG.opr,
-        getter=operator_handler.operator_getter
+        getter=operators.operator_getter
     ),
 
     Window(
@@ -118,7 +118,7 @@ worker_dialog = Dialog(
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkersSG.main),
         state=WorkersSG.slv,
-        getter=operator_handler.worker_getter
+        getter=operators.worker_getter
     ),
 )
 
@@ -148,11 +148,11 @@ edit_task_dialog = Dialog(
         Приоритет: {{start_data.priority if start_data.priority}}
         Статус: {{start_data.status}}
         '''),
-        Button(Const('Инфо от клиента'), id='client_task', on_click=operator_handler.client_info),
-        Button(Const('Редактировать'), id='edit_task', on_click=operator_handler.edit_task, when=not_in_archive),
-        Button(Const('Назначить исполнителя'), id='appoint_task', on_click=operator_handler.appoint_task,
+        Button(Const('Инфо от клиента'), id='client_task', on_click=operators.client_info),
+        Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=not_in_archive),
+        Button(Const('Назначить исполнителя'), id='appoint_task', on_click=operators.appoint_task,
                when=not_in_archive),
-        Button(Const('Закрыть'), id='close_task', on_click=operator_handler.close_task, when=is_in_progress),
+        Button(Const('Закрыть'), id='close_task', on_click=operators.close_task, when=is_in_progress),
         Cancel(Const('Назад')),
         state=TaskSG.main
     ),
@@ -168,11 +168,11 @@ worker_send_dialog = Dialog(
                 id='workers',
                 item_id_getter=operator.itemgetter('userid'),
                 items='un',
-                on_click=operator_handler.set_workers
+                on_click=operators.set_workers
             )
         ),
         Cancel(Const('Назад')),
         state=WorkerSendSG.set_worker,
-        getter=operator_handler.worker_getter
+        getter=operators.worker_getter
     ),
 )
