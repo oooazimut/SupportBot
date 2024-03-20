@@ -104,8 +104,20 @@ class TaskService:
         WHERE e.name LIKE ? 
         '''
         self.database.select_query(query, [f'%{entity}%'])
-
-
+    def get_task_reminder(self):
+        data = self.database.select_query(
+            '''SELECT * from tasks
+             where priority="\U0001F525" 
+             AND 
+             slave is NOT NULL
+             ''', params=None)
+        return data
+    def get_task_reminder_for_morning(self):
+        data = self.database.select_query(
+            '''SELECT * from tasks
+             where slave is NOT NULL
+             ''', params=None)
+        return data
 class EmployeeService:
     def __init__(self, database: DataBase):
         self.database = database
@@ -134,3 +146,4 @@ class EntityService:
     def get_entities_by_substr(substr):
         query = 'SELECT * FROM entities WHERE MY_LOWER(name) LIKE MY_LOWER(?)'
         return db.select_query(query, [f'%{substr}%'])
+
