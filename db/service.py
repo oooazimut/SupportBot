@@ -1,4 +1,7 @@
-from db.models import DataBase
+from db.models import DataBase, SqLiteDataBase
+from db.schema import DB_NAME, CREATE_DB_SCRIPT
+
+db = SqLiteDataBase(DB_NAME, CREATE_DB_SCRIPT)
 
 
 class TaskService:
@@ -86,11 +89,21 @@ class TaskService:
             priority = '\U0001F525'
         self.database.post_query('UPDATE tasks SET priority = ? WHERE taskid = ?', [priority, task_id])
 
-    def change_status(self, task_id, status):
+    def change_status(self, task_id, status: str):
         self.database.post_query('UPDATE tasks SET status = ? WHERE taskid = ?', [status, task_id])
 
     def change_worker(self, task_id, slave):
         self.database.post_query('UPDATE tasks SET slave = ? WHERE taskid = ?', [slave, task_id])
+
+    def get_tasks_for_entity(self, entity: str):
+        query = '''
+        SELECT *
+        FROM tasks as t
+        JOIN entities as e
+        ON t.entity = e.ent_id
+        WHERE e.name LIKE ? 
+        '''
+        self.database.select_query(query, [f'%{entity}%'])
 
 
 class EmployeeService:
@@ -113,3 +126,11 @@ class EmployeeService:
     def get_employees_by_position(self, position):
         data = self.database.select_query('SELECT * FROM employees WHERE position = ?', [position])
         return data
+
+
+class EntityService:
+
+    @staticmethod
+    def get_entities_by_substr(substr):
+        query = 'SELECT * FROM entities WHERE MY_LOWER(name) LIKE MY_LOWER(?)'
+        return db.select_query(query, [f'%{substr}%'])

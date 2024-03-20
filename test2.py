@@ -1,3 +1,6 @@
-from db import db
+from db.service import EntityService
 
-db.post_query('alter table tasks add column client info text')
+data = EntityService.get_entities_by_substr('4')
+if data:
+    for i in data:
+        print(i)

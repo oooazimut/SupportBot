@@ -1,7 +1,5 @@
-from abc import ABC, abstractmethod
 import sqlite3 as sq
-
-from db.schema import CREATE_DB_SCRIPT
+from abc import ABC, abstractmethod
 
 
 class DataBase(ABC):
@@ -15,16 +13,21 @@ class DataBase(ABC):
 
 
 class SqLiteDataBase(DataBase):
-    def __init__(self, name):
+    def __init__(self, name, script):
         self.name = name
         with sq.connect(self.name) as con:
-            con.executescript(CREATE_DB_SCRIPT)
+            con.executescript(script)
+
+    @staticmethod
+    def custom_lower(some_str: str):
+        return some_str.lower()
 
     def select_query(self, query, params=None) -> list[dict]:
         if params is None:
             params = []
         # with sq.connect(self.name, detect_types=sq.PARSE_COLNAMES | sq.PARSE_DECLTYPES) as con:
         with sq.connect(self.name) as con:
+            con.create_function('my_lower', 1, self.custom_lower)
             con.row_factory = sq.Row
             temp = con.execute(query, params).fetchall()
             result = []
