@@ -7,10 +7,10 @@ from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
 from redis.asyncio.client import Redis
-from handlers import task
 import config
 from dialogs import customers, workers, operators, task
 from handlers.errors import ui_error_handler
+from handlers.task import reminders_task_to_worker, reminders_task_to_morning
 from routers import start_router, finish_router
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -35,20 +35,21 @@ async def main():
     )
     dp.include_router(finish_router.router)
 
-    sheduler=AsyncIOScheduler()
+    sheduler = AsyncIOScheduler()
     sheduler.start()
     sheduler.add_job(
-        task.reminders_task_to_worker,
+        reminders_task_to_worker,
         'interval',
         seconds=3600,
         id='send_task_to_worker',
-        kwargs={'bot': bot, 'sheduler': sheduler},
+        kwargs={'bot': bot},
     )
     sheduler.add_job(
-        task.reminders_task_to_morning,
-        'crone',
+        reminders_task_to_morning,
+        'cron',
         day_of_week='mon-fri',
-        hour=9
+        hour=9,
+        kwargs={'bot': bot}
     )
 
     setup_dialogs(dp)

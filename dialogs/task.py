@@ -11,17 +11,43 @@ from aiogram_dialog.widgets.text import Const, Jinja, Format
 from getters.task import priority_getter, result_getter, entitites_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
-    on_priority, ent_name_handler, on_confirm, on_entity
+    on_priority, ent_name_handler, on_confirm, on_entity, on_slave
 )
 from states import TaskCreating
 
 create_task_dialog = Dialog(
     Window(
-        Const('Введите название организации или объекта'),
-        TextInput(id='entity_input', on_success=next_or_end),
+        Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
+        MessageInput(ent_name_handler, content_types=[ContentType.TEXT]),
+        Back(Const('Назад')),
         CANCEL_EDIT,
-        Cancel(Const('Отменить создание')),
-        state=TaskCreating.enter_entity
+        state=TaskCreating.sub_entity
+    ),
+    Window(
+        Const('Найденные объекты:'),
+        Column(
+            Radio(
+                Format('🔘 {item[name]}'),
+                Format('⚪️ {item[name]}'),
+                id='choose_entity',
+                item_id_getter=lambda item: item,
+                items='entities',
+                on_click=on_entity
+            ),
+        ),
+        Button(Const('Подтвердить'), id='confirm_entity', on_click=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
+        state=TaskCreating.entities,
+        getter=entitites_getter
+    ),
+    Window(
+        Const('Объектов не найдено'),
+        SwitchTo(Const('Попробовать ещё раз'), id='reenter_entity', state=TaskCreating.sub_entity),
+        Button(Const('Продолжить без объекта'), id='continue', on_click=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
+        state=TaskCreating.empty_entities
     ),
     Window(
         Const('Ваш номер телефона:'),
@@ -58,39 +84,27 @@ create_task_dialog = Dialog(
             on_click=on_priority
         ),
         Button(Const('Подтвердить'), id='confirm_priority', on_click=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
         getter=priority_getter,
         state=TaskCreating.priority
     ),
+
     Window(
-        Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
-        MessageInput(ent_name_handler, content_types=[ContentType.TEXT]),
-        state=TaskCreating.sub_entity
-    ),
-    Window(
-        Const('Найденные объекты:'),
+        Const('Назначить работника'),
         Column(
             Radio(
                 Format('🔘 {item[name]}'),
                 Format('⚪️ {item[name]}'),
-                id='choose_entity',
-                item_id_getter=lambda item: item['ent_id'],
-                items='entities',
-                on_click=on_entity
+                id='choose_slave',
+                item_id_getter=lambda item: item['userid'],
+                items='slaves',
+                on_click=on_slave
             ),
         ),
-        Button(Const('Подтвердить'), id='confirm_entity', on_click=next_or_end),
-        state=TaskCreating.entities,
-        getter=entitites_getter
-    ),
-    Window(
-        Const('Объектов не найдено'),
-        SwitchTo(Const('Попробовать ещё раз'), id='reenter_entity', state=TaskCreating.sub_entity),
-        Button(Const('Продолжить без объекта'), id='continue', on_click=next_or_end),
-        state=TaskCreating.empty_entities
-    ),
-    Window(
-        Const('Назначить работника'),
-        # Radio(),
+        Button(Const('Подтвердить'), id='confirm_slave', on_click=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
         state=TaskCreating.slave
     ),
     Window(
@@ -104,7 +118,7 @@ create_task_dialog = Dialog(
         '''),
         DynamicMedia('media', when=F['dialog_data']['mediaid']),
         Cancel(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),
-        SwitchTo(Const('Изменить объект'), state=TaskCreating.enter_entity, id='to_entity'),
+        SwitchTo(Const('Изменить объект'), state=TaskCreating.sub_entity, id='to_entity'),
         SwitchTo(Const('Изменить телефон'), state=TaskCreating.enter_phone, id='to_phone'),
         SwitchTo(Const('Изменить Тему'), state=TaskCreating.enter_title, id='to_title'),
         SwitchTo(Const('Изменить описание'), state=TaskCreating.enter_description, id='to_description'),

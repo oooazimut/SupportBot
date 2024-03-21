@@ -25,7 +25,7 @@ task_dialog = Dialog(
             Button(Const('Заявки в работе'), id='done', on_click=operators.go_work_task),
             Button(Const('Архив'), id='archive', on_click=operators.go_archive)
         ),
-        Start(Const('Создать заявку'), id='new_op_task', state=TaskCreating.enter_phone),
+        Start(Const('Создать заявку'), id='new_op_task', state=TaskCreating.sub_entity),
         Cancel(Const('Назад')),
         state=OpTaskSG.tas
     ),
@@ -148,10 +148,7 @@ edit_task_dialog = Dialog(
         Приоритет: {{start_data.priority if start_data.priority}}
         Статус: {{start_data.status}}
         '''),
-        Button(Const('Инфо от клиента'), id='client_task', on_click=operators.client_info),
         Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=not_in_archive),
-        Button(Const('Назначить исполнителя'), id='appoint_task', on_click=operators.appoint_task,
-               when=not_in_archive),
         Button(Const('Закрыть'), id='close_task', on_click=operators.close_task, when=is_in_progress),
         Cancel(Const('Назад')),
         state=TaskSG.main

@@ -20,7 +20,7 @@ async def tasks_getter(dialog_manager: DialogManager, **kwargs):
 main_dialog = Dialog(
     Window(
         Const('Вас приветствует бот технической поддержки компании "Азимут"'),
-        Start(Const('Создать заявку'), id='start_creating', state=TaskCreating.enter_entity),
+        Start(Const('Создать заявку'), id='start_creating', state=TaskCreating.sub_entity),
         Button(Const('Активные заявки'), id='customer_tasks', on_click=tasks_handler),
         Button(Const('Архив'), id='customer_archive', on_click=archive_handler),
         state=CustomerSG.main,
