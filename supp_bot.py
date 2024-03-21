@@ -1,13 +1,13 @@
 import asyncio
 import logging
-
+import middlewares
 from aiogram import Bot, Dispatcher
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
 from redis.asyncio.client import Redis
-from handlers import task
+from handlers import jobs
 import config
 from dialogs import customers, workers, operators, task
 from handlers.errors import ui_error_handler
@@ -38,20 +38,21 @@ async def main():
     sheduler=AsyncIOScheduler()
     sheduler.start()
     sheduler.add_job(
-        task.reminders_task_to_worker,
+        jobs.reminders_task_to_worker,
         'interval',
         seconds=3600,
         id='send_task_to_worker',
         kwargs={'bot': bot, 'sheduler': sheduler},
     )
     sheduler.add_job(
-        task.reminders_task_to_morning,
+        jobs.reminders_task_to_morning,
         'crone',
         day_of_week='mon-fri',
         hour=9
     )
 
     setup_dialogs(dp)
+    dp.update.outer_middlewares(middlewares.DataMiddleware({'sheduler':sheduler}))
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
