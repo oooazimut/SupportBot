@@ -4,12 +4,15 @@ from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button
+from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Column
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Jinja, Format
 
-from getters.task import priority_getter, result_getter
-from handlers.task import next_or_end, CANCEL_EDIT, task_description_handler, on_priority, ent_name_handler, on_confirm
+from getters.task import priority_getter, result_getter, entitites_getter
+from handlers.task import (
+    next_or_end, CANCEL_EDIT, task_description_handler,
+    on_priority, ent_name_handler, on_confirm, on_entity
+)
 from states import TaskCreating
 
 create_task_dialog = Dialog(
@@ -61,7 +64,29 @@ create_task_dialog = Dialog(
     Window(
         Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
         MessageInput(ent_name_handler, content_types=[ContentType.TEXT]),
-        state=TaskCreating.entity
+        state=TaskCreating.sub_entity
+    ),
+    Window(
+        Const('Найденные объекты:'),
+        Column(
+            Radio(
+                Format('🔘 {item[name]}'),
+                Format('⚪️ {item[name]}'),
+                id='choose_entity',
+                item_id_getter=lambda item: item['ent_id'],
+                items='entities',
+                on_click=on_entity
+            ),
+        ),
+        Button(Const('Подтвердить'), id='confirm_entity', on_click=next_or_end),
+        state=TaskCreating.entities,
+        getter=entitites_getter
+    ),
+    Window(
+        Const('Объектов не найдено'),
+        SwitchTo(Const('Попробовать ещё раз'), id='reenter_entity', state=TaskCreating.sub_entity),
+        Button(Const('Продолжить без объекта'), id='continue', on_click=next_or_end),
+        state=TaskCreating.empty_entities
     ),
     Window(
         Const('Назначить работника'),

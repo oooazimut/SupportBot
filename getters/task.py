@@ -11,6 +11,12 @@ async def priority_getter(dialog_manager: DialogManager, **kwargs):
         'priorities': priorities
     }
 
+async def entitites_getter(dialog_manager: DialogManager, **kwargs):
+    entities = dialog_manager.dialog_data['entities']
+    return {
+        'entities': entities
+    }
+
 
 async def result_getter(dialog_manager: DialogManager, **kwargs):
     if dialog_manager.start_data:

@@ -36,7 +36,9 @@ class TaskCreating(StatesGroup):
     enter_description = State()
     priority = State()
     preview = State()
-    entity = State()
+    sub_entity = State()
+    entities = State()
+    empty_entities = State()
     slave = State()
 
 

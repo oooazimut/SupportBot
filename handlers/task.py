@@ -30,6 +30,9 @@ async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
 async def on_priority(event, select, dialog_manager: DialogManager, data: str, /):
     dialog_manager.dialog_data['priority'] = data
 
+async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
+    dialog_manager.dialog_data['entity'] = data
+
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
     def is_empl(userid):
@@ -69,9 +72,9 @@ async def ent_name_handler(message: Message, message_input: MessageInput, manage
     entities = EntityService.get_entities_by_substr(message.text)
     if entities:
         manager.dialog_data['entities'] = entities
-        print(entities)
+        await manager.switch_to(TaskCreating.entities)
     else:
-        pass
+        await manager.switch_to(TaskCreating.empty_entities)
 
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
