@@ -1,6 +1,8 @@
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
+from db import empl_service
+
 
 async def priority_getter(dialog_manager: DialogManager, **kwargs):
     priorities = [
@@ -11,10 +13,25 @@ async def priority_getter(dialog_manager: DialogManager, **kwargs):
         'priorities': priorities
     }
 
+async def entitites_getter(dialog_manager: DialogManager, **kwargs):
+    entities = dialog_manager.dialog_data['entities']
+    return {
+        'entities': entities
+    }
+
+async def slaves_getter(dialog_manager: DialogManager, **kwargs):
+    slaves = empl_service.get_employees_by_position('worker')
+    return {
+        'slaves': slaves
+    }
+
 
 async def result_getter(dialog_manager: DialogManager, **kwargs):
     if dialog_manager.start_data:
         dialog_manager.dialog_data['task'] = dialog_manager.start_data
+        dialog_manager.start_data.clear()
+        return dialog_manager.dialog_data['task']
+    dialog_manager.dialog_data['task'] = dict()
     mediatype = dialog_manager.dialog_data['mediatype']
     mediaid = dialog_manager.dialog_data['mediaid']
     media = MediaAttachment(mediatype, file_id=MediaId(mediaid))

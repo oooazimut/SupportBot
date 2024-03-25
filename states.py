@@ -30,14 +30,15 @@ class CustomerSG(StatesGroup):
 
 
 class TaskCreating(StatesGroup):
-    enter_entity = State()
+    sub_entity = State()
+    entities = State()
+    empty_entities = State()
     enter_phone = State()
     enter_title = State()
     enter_description = State()
     priority = State()
-    preview = State()
-    entity = State()
     slave = State()
+    preview = State()
 
 
 class WorkerSG(StatesGroup):
@@ -61,4 +62,3 @@ class WorkerTaskSG(StatesGroup):
 
 class CustomerTaskSG(StatesGroup):
     main = State()
-

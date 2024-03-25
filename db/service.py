@@ -8,19 +8,13 @@ class TaskService:
     def __init__(self, database: DataBase):
         self.database = database
 
-    def save_task(self, params):
+    def save_task(self, created, creator, phone, title, description, media_type, media_id, status, priority, entity,
+                  slave):
+        params = [created, creator, phone, title, description, media_type, media_id, status, priority, entity, slave]
         query = '''
-        INSERT INTO tasks(
-                        created,
-                        creator, 
-                        phone, 
-                        title, 
-                        client_info, 
-                        media_type, 
-                        media_id, 
-                        status, 
-                        priority)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO tasks(created, creator, phone, title, description, media_type, media_id, status, priority,
+                        entity, slave)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         self.database.post_query(query=query, params=params)
 
@@ -29,8 +23,10 @@ class TaskService:
         query = '''
         SELECT *
         FROM tasks as t
-        JOIN entities as e
+        LEFT JOIN entities as e
         ON e.ent_id = t.entity
+        LEFT JOIN employees as em
+        ON em.userid = t.slave
         WHERE t.taskid = ?
         '''
         return self.database.select_query(query, [taskid])
@@ -104,6 +100,7 @@ class TaskService:
         WHERE e.name LIKE ? 
         '''
         self.database.select_query(query, [f'%{entity}%'])
+
     def get_task_reminder(self):
         data = self.database.select_query(
             '''SELECT * from tasks
@@ -112,12 +109,15 @@ class TaskService:
              slave is NOT NULL
              ''', params=None)
         return data
+
     def get_task_reminder_for_morning(self):
         data = self.database.select_query(
             '''SELECT * from tasks
              where slave is NOT NULL
              ''', params=None)
         return data
+
+
 class EmployeeService:
     def __init__(self, database: DataBase):
         self.database = database

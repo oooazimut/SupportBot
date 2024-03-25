@@ -7,7 +7,6 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import SwitchTo, Button
 from aiogram_dialog.widgets.text import Const
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service, task_service
 from db.service import EntityService
@@ -22,6 +21,7 @@ CANCEL_EDIT = SwitchTo(
 
 
 async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
+    dialog_manager.dialog_data.setdefault('task', {})
     if dialog_manager.dialog_data.get('finished'):
         await dialog_manager.switch_to(TaskCreating.preview)
     else:
@@ -29,7 +29,18 @@ async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
 
 
 async def on_priority(event, select, dialog_manager: DialogManager, data: str, /):
-    dialog_manager.dialog_data['priority'] = data
+    dialog_manager.dialog_data['task']['priority'] = data
+
+
+async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
+    data = eval(data)
+    dialog_manager.dialog_data.setdefault('task', {})['entity'] = data['ent_id']
+    dialog_manager.dialog_data['task']['name'] = data['name']
+
+
+async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
+    print(data)
+    dialog_manager.dialog_data['task']['slave'] = data
 
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
@@ -70,9 +81,9 @@ async def ent_name_handler(message: Message, message_input: MessageInput, manage
     entities = EntityService.get_entities_by_substr(message.text)
     if entities:
         manager.dialog_data['entities'] = entities
-        print(entities)
+        await manager.switch_to(TaskCreating.entities)
     else:
-        pass
+        await manager.switch_to(TaskCreating.empty_entities)
 
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
@@ -85,17 +96,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     client_info = manager.dialog_data['txt']
     status = 'открыто'
     priority = ''
-    params = [
-        curr_time,
-        creator,
-        phone,
-        title,
-        client_info,
-        mediatype,
-        mediaid,
-        status,
-        priority
-    ]
-    task_service.save_task(params=params)
+    task_service.save_task()
     await clb.answer('Ваша заявка принята в обработку и скоро появится в списке ваших заявок.', show_alert=True)
+
 

@@ -35,7 +35,7 @@ async def main():
     )
     dp.include_router(finish_router.router)
 
-    sheduler=AsyncIOScheduler()
+    sheduler = AsyncIOScheduler()
     sheduler.start()
     # sheduler.add_job(
     #     jobs.reminders_task_to_worker,
@@ -46,9 +46,10 @@ async def main():
     # )
     sheduler.add_job(
         jobs.reminders_task_to_morning,
-        'crone',
+        'cron',
         day_of_week='mon-fri',
-        hour=9
+        hour=9,
+        kwargs={'bot': bot}
     )
     setup_dialogs(dp)
     dp.update.outer_middlewares(middlewares.DataMiddleware({'sheduler':sheduler}))
