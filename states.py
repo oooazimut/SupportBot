@@ -41,10 +41,14 @@ class TaskCreating(StatesGroup):
 
 
 class WorkerSG(StatesGroup):
+    tasks_entities = State()
+    enter_object = State()
+    enter_dialog = State()
     main = State()
     assigned = State()
     in_progress = State()
     archive = State()
+    entites_on_task = State()
 
 
 class WorkerSendSG(StatesGroup):

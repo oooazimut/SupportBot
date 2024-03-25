@@ -22,3 +22,4 @@ async def reminders_task_to_morning(cls, bot: Bot, scheduler: AsyncIOScheduler):
     tasks=task_service.get_task_reminder_for_morning(params=None)
     for task in tasks:
         await bot.send_message(chat_id=tasks['slave'], text='У вас еще остались не завершенные дела')
+

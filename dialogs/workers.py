@@ -1,14 +1,16 @@
 import operator
 
+from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel
 from aiogram_dialog.widgets.text import Const, Format
 
 from db import task_service
-from handlers.workers import on_assigned, on_archive, on_progress, on_task
-from states import WorkerSG, WorkerTaskSG
-
+from handlers.workers import on_assigned, on_archive, on_progress, on_task, on_object_task, entites_name_handler, tasks_for_entities
+from states import WorkerSG, WorkerTaskSG, TaskCreating
+from getters.workers import task_entities_getter
 
 async def task_getter(dialog_manager: DialogManager, **kwargs):
     userid = str(dialog_manager.middleware_data['event_from_user'].id)
@@ -23,6 +25,7 @@ main_dialog = Dialog(
             Button(Const('Назначенные'), id='worker_assigned', on_click=on_assigned),
             Button(Const('В работе'), id='worker_in_progress', on_click=on_progress),
             Button(Const('Архив'), id='worker_archive', on_click=on_archive),
+            Button(Const('Заявки по объектам'), id='task_for_object', on_click=on_object_task)
         ),
         state=WorkerSG.main
     ),
@@ -71,7 +74,39 @@ main_dialog = Dialog(
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
         state=WorkerSG.archive,
         getter=task_getter
-    )
+    ),
+    Window(
+        Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
+        MessageInput(entites_name_handler, content_types=[ContentType.TEXT]),
+        state=TaskCreating.entity
+    ),
+    Window(
+        Const('Объекты'),
+        Select(
+            Format('{item[title]}'),
+            id='objects',
+            item_id_getter=operator.itemgetter('object_id'),
+            items='objects',
+            on_click= tasks_for_entities
+        ),
+        state=WorkerSG.enter_object,
+        getter=task_entities_getter
+    ),
+    Window(
+        Const('Заявки на обьекте:'),
+        Select(
+            Format('{item[title]} {item[priority]}'),
+            id='new_tasks',
+            item_id_getter=operator.itemgetter('taskid'),
+            items='tasks',
+            on_click=
+
+        ),
+        state=WorkerSG.tasks_entities,
+        getter=
+        ),
+    ),
+
 )
 
 

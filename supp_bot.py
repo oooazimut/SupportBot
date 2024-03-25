@@ -37,20 +37,19 @@ async def main():
 
     sheduler=AsyncIOScheduler()
     sheduler.start()
-    sheduler.add_job(
-        jobs.reminders_task_to_worker,
-        'interval',
-        seconds=3600,
-        id='send_task_to_worker',
-        kwargs={'bot': bot, 'sheduler': sheduler},
-    )
+    # sheduler.add_job(
+    #     jobs.reminders_task_to_worker,
+    #     'interval',
+    #     seconds=3600,
+    #     id='send_task_to_worker',
+    #     kwargs={'bot': bot, 'sheduler': sheduler},
+    # )
     sheduler.add_job(
         jobs.reminders_task_to_morning,
         'crone',
         day_of_week='mon-fri',
         hour=9
     )
-
     setup_dialogs(dp)
     dp.update.outer_middlewares(middlewares.DataMiddleware({'sheduler':sheduler}))
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))
