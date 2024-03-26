@@ -104,9 +104,7 @@ main_dialog = Dialog(
         ),
         state=WorkerSG.tasks_entities,
         getter=
-        ),
     ),
-
 )
 
 

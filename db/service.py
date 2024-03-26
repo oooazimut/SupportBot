@@ -18,6 +18,12 @@ class TaskService:
         '''
         self.database.post_query(query=query, params=params)
 
+    def update_task(self, phone, title, description, media_type, media_id, status, priority, entity, slave, taskid):
+        params = [phone, title, description, media_type, media_id, status, priority, entity, slave, taskid]
+        query = '''UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, entity, 
+        slave) = (?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE taskid = ?'''
+        self.database.post_query(query, params)
+
     def get_task(self, taskid):
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
         query = '''
