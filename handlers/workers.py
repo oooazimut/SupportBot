@@ -66,6 +66,6 @@ async def open_tasks(callback: CallbackQuery, button: Button, manager: DialogMan
     open_task=EntityService.get_task_for_entities(manager.dialog_data['taskid'])
     if open_task:
         manager.dialog_data['tasks'] = open_task
-        await manager.switch_to(TaskCreating.preview)
+        await manager.switch_to(WorkerTaskSG.main)
     else:
         await callback.answer('Нте заявок на объекте!')
