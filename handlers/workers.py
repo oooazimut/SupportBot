@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.kbd import Button
 
 from db import task_service
 from db.service import EntityService
-from states import WorkerSG, WorkerTaskSG
+from states import WorkerSG, WorkerTaskSG, TaskCreating
 
 
 async def on_assigned(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -59,6 +59,13 @@ async def entites_name_handler(message: Message, message_input: MessageInput, ma
         print(entities)
     else:
         pass
-async def tasks_for_entities(callback: CallbackQuery, widget: Any, manager: DialogManager):
-
+async def tasks_for_entities(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.switch_to(WorkerSG.tasks_entities)
+
+async def open_tasks(callback: CallbackQuery, button: Button, manager: DialogManager):
+    open_task=EntityService.get_task_for_entities(manager.dialog_data['taskid'])
+    if open_task:
+        manager.dialog_data['tasks'] = open_task
+        await manager.switch_to(TaskCreating.preview)
+    else:
+        await callback.answer('Нте заявок на объекте!')

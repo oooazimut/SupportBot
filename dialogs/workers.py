@@ -8,9 +8,10 @@ from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Ca
 from aiogram_dialog.widgets.text import Const, Format
 
 from db import task_service
-from handlers.workers import on_assigned, on_archive, on_progress, on_task, on_object_task, entites_name_handler, tasks_for_entities
+from handlers.workers import on_assigned, on_archive, on_progress, on_task, on_object_task, entites_name_handler, tasks_for_entities, open_tasks
 from states import WorkerSG, WorkerTaskSG, TaskCreating
-from getters.workers import task_entities_getter
+from getters.workers import task_entities_getter, tasks_open_getter
+
 
 async def task_getter(dialog_manager: DialogManager, **kwargs):
     userid = str(dialog_manager.middleware_data['event_from_user'].id)
@@ -87,7 +88,7 @@ main_dialog = Dialog(
             id='objects',
             item_id_getter=operator.itemgetter('object_id'),
             items='objects',
-            on_click= tasks_for_entities
+            on_click=tasks_for_entities
         ),
         state=WorkerSG.enter_object,
         getter=task_entities_getter
@@ -96,18 +97,19 @@ main_dialog = Dialog(
         Const('Заявки на обьекте:'),
         Select(
             Format('{item[title]} {item[priority]}'),
-            id='new_tasks',
+            id='task',
             item_id_getter=operator.itemgetter('taskid'),
-            items='tasks',
-            on_click=
+            items='task',
+            on_click=open_tasks
 
         ),
         state=WorkerSG.tasks_entities,
-        getter=
-        ),
+        getter=tasks_open_getter
     ),
 
 )
+
+
 
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
