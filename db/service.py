@@ -152,6 +152,8 @@ class EntityService:
     def get_entities_by_substr(substr):
         query = 'SELECT * FROM entities WHERE MY_LOWER(name) LIKE MY_LOWER(?)'
         return db.select_query(query, [f'%{substr}%'])
+
+    @staticmethod
     def get_task_for_entities(entities):
         query = 'SELECT * FROM task WHERE entities = (?)'
         return db.select_query(query, [f'%{entities}%'])

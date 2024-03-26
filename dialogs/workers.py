@@ -3,14 +3,15 @@ import operator
 from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.input import TextInput, MessageInput
+from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel
 from aiogram_dialog.widgets.text import Const, Format
 
 from db import task_service
-from handlers.workers import on_assigned, on_archive, on_progress, on_task, on_object_task, entites_name_handler, tasks_for_entities, open_tasks
-from states import WorkerSG, WorkerTaskSG, TaskCreating
 from getters.workers import task_entities_getter, tasks_open_getter
+from handlers.workers import on_assigned, on_archive, on_progress, on_task, on_object_task, entites_name_handler, \
+    open_tasks, on_entity
+from states import WorkerSG, WorkerTaskSG
 
 
 async def task_getter(dialog_manager: DialogManager, **kwargs):
@@ -79,16 +80,16 @@ main_dialog = Dialog(
     Window(
         Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
         MessageInput(entites_name_handler, content_types=[ContentType.TEXT]),
-        state=TaskCreating.entity
+        state=WorkerSG.entities_search
     ),
     Window(
         Const('Объекты'),
         Select(
             Format('{item[title]}'),
             id='objects',
-            item_id_getter=operator.itemgetter('object_id'),
+            item_id_getter=operator.itemgetter('ent_id'),
             items='objects',
-            on_click=tasks_for_entities
+            on_click=on_entity
         ),
         state=WorkerSG.enter_object,
         getter=task_entities_getter
@@ -110,8 +111,6 @@ main_dialog = Dialog(
 )
 
 
-
-
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     task_service.change_status(manager.start_data['taskid'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
@@ -131,9 +130,9 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
     task_service.change_status(manager.start_data['taskid'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} снова в работе.')
 
+
 async def client_info(callback: CallbackQuery, button: Button, manager: DialogManager):
     pass
-
 
 
 def is_opened(data, widget, manager: DialogManager):
@@ -160,7 +159,6 @@ task_dialog = Dialog(
         Format('{start_data[description]}'),
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
-        Button(Const('Инфо от клиента'), id='client_task', on_click=client_info),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
         Button(Const('Отказаться'), id='refuse_task', on_click=refuse_task, when=not_in_archive),
         Button(Const('Закрыть'), id='close_task', on_click=close_task, when=is_in_progress),
