@@ -1,18 +1,20 @@
 import asyncio
 import logging
-import middlewares
+
 from aiogram import Bot, Dispatcher
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from redis.asyncio.client import Redis
-from handlers import jobs
+
 import config
+import jobs
+import middlewares
 from dialogs import customers, workers, operators, task
 from handlers.errors import ui_error_handler
 from routers import start_router, finish_router
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 _logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
@@ -35,24 +37,24 @@ async def main():
     )
     dp.include_router(finish_router.router)
 
-    sheduler = AsyncIOScheduler()
-    sheduler.start()
-    # sheduler.add_job(
-    #     jobs.reminders_task_to_worker,
-    #     'interval',
-    #     seconds=3600,
-    #     id='send_task_to_worker',
-    #     kwargs={'bot': bot, 'sheduler': sheduler},
-    # )
-    sheduler.add_job(
+    scheduler = AsyncIOScheduler()
+    scheduler.start()
+    scheduler.add_job(
+        func=jobs.reminders_task_to_worker,
+        trigger='interval',
+        hours=1,
+        id='send_task_to_worker',
+        kwargs={'bot': bot},
+    )
+    scheduler.add_job(
         jobs.reminders_task_to_morning,
-        'cron',
+        trigger='cron',
         day_of_week='mon-fri',
         hour=9,
         kwargs={'bot': bot}
     )
     setup_dialogs(dp)
-    dp.update.outer_middlewares(middlewares.DataMiddleware({'sheduler':sheduler}))
+    dp.update.outer_middlewares(middlewares.DataMiddleware({'scheduler': scheduler}))
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

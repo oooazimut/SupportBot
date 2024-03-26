@@ -13,11 +13,13 @@ async def priority_getter(dialog_manager: DialogManager, **kwargs):
         'priorities': priorities
     }
 
+
 async def entitites_getter(dialog_manager: DialogManager, **kwargs):
     entities = dialog_manager.dialog_data['entities']
     return {
         'entities': entities
     }
+
 
 async def slaves_getter(dialog_manager: DialogManager, **kwargs):
     slaves = empl_service.get_employees_by_position('worker')
@@ -27,20 +29,16 @@ async def slaves_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def result_getter(dialog_manager: DialogManager, **kwargs):
-    if dialog_manager.start_data:
-        dialog_manager.dialog_data['task'] = dialog_manager.start_data
-        dialog_manager.start_data.clear()
-        return dialog_manager.dialog_data['task']
-    dialog_manager.dialog_data['task'] = dict()
-    mediatype = dialog_manager.dialog_data['mediatype']
-    mediaid = dialog_manager.dialog_data['mediaid']
+
+    mediatype = dialog_manager.dialog_data['task'].get('media_type') or dialog_manager.start_data.get('media_type')
+    mediaid = dialog_manager.dialog_data['task'].get('media_id') or dialog_manager.start_data.get('media_id')
     media = MediaAttachment(mediatype, file_id=MediaId(mediaid))
     dialog_manager.dialog_data['finished'] = True
-
     return {
-        "entity": dialog_manager.find('entity_input').get_value(),
-        "phone": dialog_manager.find('phone_input').get_value(),
-        "title": dialog_manager.find('title_input').get_value(),
-        "description": dialog_manager.dialog_data['txt'],
+        'entity': dialog_manager.dialog_data['task'].get('name') or dialog_manager.start_data.get('name'),
+        'phone': dialog_manager.find('phone_input').get_value() or dialog_manager.start_data.get('phone'),
+        'title': dialog_manager.find('title_input').get_value() or dialog_manager.start_data.get('title'),
+        'description': dialog_manager.dialog_data['task'].get['description'] or dialog_manager.start_data.get(
+            'description'),
         'media': media
     }
