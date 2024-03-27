@@ -21,7 +21,6 @@ CANCEL_EDIT = SwitchTo(
 
 
 async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
-    dialog_manager.dialog_data.setdefault('task', {})
     if dialog_manager.dialog_data.get('finished'):
         await dialog_manager.switch_to(TaskCreating.preview)
     else:
@@ -34,7 +33,7 @@ async def on_priority(event, select, dialog_manager: DialogManager, data: str, /
 
 async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
     data = eval(data)
-    dialog_manager.dialog_data.setdefault('task', {})['entity'] = data['ent_id']
+    dialog_manager.dialog_data['task']['entity'] = data['ent_id']
     dialog_manager.dialog_data['task']['name'] = data['name']
 
 
@@ -107,3 +106,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         task_service.save_task(created, creator, phone, title, description, media_type, media_id, status, priority,
                                entity, slave)
         await clb.answer('Заявка принята в обработку и скоро появится в списке заявок объекта.', show_alert=True)
+
+
+async def on_start(data, manager: DialogManager):
+    manager.dialog_data['task'] = {}

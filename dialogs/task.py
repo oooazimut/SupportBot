@@ -11,7 +11,7 @@ from aiogram_dialog.widgets.text import Const, Jinja, Format
 from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
-    on_priority, ent_name_handler, on_confirm, on_entity, on_slave
+    on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start
 )
 from states import TaskCreating
 
@@ -35,19 +35,11 @@ create_task_dialog = Dialog(
                 on_click=on_entity
             ),
         ),
-        SwitchTo(Const('Потвердить'), id='go_to_phone',state=TaskCreating.enter_phone),
+        Button(Const('Потвердить'), id='confirm_entity', on_click=next_or_end),
         Back(Const('Назад')),
         CANCEL_EDIT,
         state=TaskCreating.entities,
         getter=entitites_getter
-    ),
-    Window(
-        Const('Объектов не найдено'),
-        SwitchTo(Const('Попробовать ещё раз'), id='reenter_entity', state=TaskCreating.sub_entity),
-        Button(Const('Продолжить без объекта'), id='continue', on_click=next_or_end),
-        Back(Const('Назад')),
-        CANCEL_EDIT,
-        state=TaskCreating.empty_entities
     ),
     Window(
         Const('Ваш номер телефона:'),
@@ -127,5 +119,14 @@ create_task_dialog = Dialog(
         state=TaskCreating.preview,
         getter=result_getter,
         parse_mode='html'
-    )
+    ),
+    Window(
+        Const('Объектов не найдено'),
+        SwitchTo(Const('Попробовать ещё раз'), id='reenter_entity', state=TaskCreating.sub_entity),
+        Button(Const('Продолжить без объекта'), id='continue', on_click=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
+        state=TaskCreating.empty_entities
+    ),
+    on_start=on_start
 )
