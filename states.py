@@ -49,6 +49,7 @@ class WorkerSG(StatesGroup):
     assigned = State()
     in_progress = State()
     archive = State()
+    entities_search = State()
     entites_on_task = State()
 
 

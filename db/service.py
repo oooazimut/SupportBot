@@ -157,3 +157,4 @@ class EntityService:
     def get_task_for_entities(entities):
         query = ('SELECT * FROM task WHERE entities = ?' [entities])
         return db.select_query(query)
+
