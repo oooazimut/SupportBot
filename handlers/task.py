@@ -69,7 +69,7 @@ async def task_description_handler(message: Message, message_input: MessageInput
     manager.dialog_data['task']['media_id'] = media_id
     manager.dialog_data['task']['media_type'] = media_type
 
-    if is_empl(message.from_user.id):
+    if is_empl(message.from_user.id) and not manager.dialog_data.get('finished'):
         await manager.next()
     else:
         await manager.switch_to(TaskCreating.preview)
@@ -77,8 +77,6 @@ async def task_description_handler(message: Message, message_input: MessageInput
 
 async def ent_name_handler(message: Message, message_input: MessageInput, manager: DialogManager):
     entities = EntityService.get_entities_by_substr(message.text)
-    print('start data', manager.start_data)
-    print('dialog data', manager.dialog_data)
     if entities:
         manager.dialog_data['entities'] = entities
         await manager.switch_to(TaskCreating.entities)
@@ -89,8 +87,8 @@ async def ent_name_handler(message: Message, message_input: MessageInput, manage
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
     created = manager.start_data.get('created') or datetime.datetime.now().replace(microsecond=0)
     creator = manager.start_data.get('creator') or clb.from_user.id
-    phone = manager.find('phone_input').get_value() or manager.start_data.get('phone')
-    title = manager.find('title_input').get_value() or manager.start_data.get('title')
+    phone = eval(manager.find('phone_input').get_value()) or manager.start_data.get('phone')
+    title = eval(manager.find('title_input').get_value()) or manager.start_data.get('title')
     description = manager.dialog_data['task'].get('description') or manager.start_data.get('description')
     media_type = manager.dialog_data['task'].get('media_type') or manager.start_data.get('media_type')
     media_id = manager.dialog_data['task'].get('media_id') or manager.start_data.get('media_id')

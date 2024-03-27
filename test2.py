@@ -1,6 +1,8 @@
 from db.service import EntityService
 
-a = 1
-b = 2
+a = 'None'
+print(type(eval(a)))
+b = 'a'
 c = a or b
-print(c)
+
+print(type(eval(b)))

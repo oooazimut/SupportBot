@@ -1,6 +1,5 @@
 import operator
 
-from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput, MessageInput
@@ -109,7 +108,7 @@ create_task_dialog = Dialog(
         <b>Тема</b>: {{title}}
         <b>Описание</b>: {{description if description}}
         '''),
-        DynamicMedia('media', when=F['dialog_data']['mediaid']),
+        DynamicMedia('media'),
         Cancel(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),
         SwitchTo(Const('Изменить объект'), state=TaskCreating.sub_entity, id='to_entity'),
         SwitchTo(Const('Изменить телефон'), state=TaskCreating.enter_phone, id='to_phone'),
