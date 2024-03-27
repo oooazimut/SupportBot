@@ -56,16 +56,19 @@ async def entites_name_handler(message: Message, message_input: MessageInput, ma
     entities = EntityService.get_entities_by_substr(message.text)
     if entities:
         manager.dialog_data['entities'] = entities
+        await manager.switch_to(WorkerSG.enter_object)
         print(entities)
     else:
         pass
 async def tasks_for_entities(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(WorkerSG.tasks_entities)
-
-async def open_tasks(callback: CallbackQuery, button: Button, manager: DialogManager):
-    open_task=EntityService.get_task_for_entities(manager.dialog_data['taskid'])
+    open_task = EntityService.get_task_for_entities(manager.dialog_data['entities'])
     if open_task:
         manager.dialog_data['tasks'] = open_task
         await manager.switch_to(WorkerTaskSG.main)
     else:
         await callback.answer('Нте заявок на объекте!')
+    await manager.switch_to(WorkerSG.tasks_entities)
+
+async def open_tasks(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
+    task = task_service.get_task(item_id)[0]
+    await manager.start(WorkerTaskSG.main, data=task)
