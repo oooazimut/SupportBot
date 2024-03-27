@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Co
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Jinja, Format
 
-from getters.task import priority_getter, result_getter, entitites_getter
+from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave
@@ -35,7 +35,7 @@ create_task_dialog = Dialog(
                 on_click=on_entity
             ),
         ),
-        Button(Const('Подтвердить'), id='confirm_entity', on_click=next_or_end),
+        SwitchTo(Const('Потвердить'), id='go_to_phone',state=TaskCreating.enter_phone),
         Back(Const('Назад')),
         CANCEL_EDIT,
         state=TaskCreating.entities,
@@ -105,7 +105,8 @@ create_task_dialog = Dialog(
         Button(Const('Подтвердить'), id='confirm_slave', on_click=next_or_end),
         Back(Const('Назад')),
         CANCEL_EDIT,
-        state=TaskCreating.slave
+        state=TaskCreating.slave,
+        getter=slaves_getter
     ),
     Window(
         Jinja('''

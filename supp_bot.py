@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 async def main():
     bot = Bot(config.TOKEN)
     storage = RedisStorage(Redis(), key_builder=DefaultKeyBuilder(with_destiny=True, with_bot_id=True))
-    dp = Dispatcher(storage=storage)
+    dp = Dispatcher()
     dp.include_router(start_router.router)
     dp.include_routers(customers.main_dialog)
     dp.include_router(task.create_task_dialog)
@@ -54,7 +54,7 @@ async def main():
         kwargs={'bot': bot}
     )
     setup_dialogs(dp)
-    dp.update.outer_middlewares(middlewares.DataMiddleware({'scheduler': scheduler}))
+    dp.update.outer_middleware(middlewares.DataMiddleware({'scheduler': scheduler}))
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
