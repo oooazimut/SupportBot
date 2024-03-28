@@ -4,7 +4,7 @@ from db import task_service
 
 
 async def reminders_task_to_worker(bot: Bot):
-    tasks = task_service.get_task_reminder(params=None)
+    tasks = task_service.get_task_reminder()
     for task in tasks:
         await bot.send_message(chat_id=task['slave'], text='Есть заявки с высоким приоритетом!')
 

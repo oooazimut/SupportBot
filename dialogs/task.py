@@ -2,7 +2,7 @@ import operator
 
 from aiogram import F
 from aiogram.enums import ContentType
-from aiogram_dialog import Dialog, Window
+from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Column
 from aiogram_dialog.widgets.media import DynamicMedia
@@ -14,6 +14,11 @@ from handlers.task import (
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start
 )
 from states import TaskCreating
+
+
+async def on_result(start_data, result, dialog_manager: DialogManager):
+    print('Мы вернулись')
+
 
 create_task_dialog = Dialog(
     Window(
@@ -129,5 +134,6 @@ create_task_dialog = Dialog(
         CANCEL_EDIT,
         state=TaskCreating.empty_entities
     ),
-    on_start=on_start
+    on_start=on_start,
+    on_process_result=on_result
 )
