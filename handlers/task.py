@@ -3,7 +3,7 @@ import datetime
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram.types import Message, CallbackQuery
-from aiogram_dialog import DialogManager, ShowMode
+from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import SwitchTo, Button
 from aiogram_dialog.widgets.text import Const
@@ -107,7 +107,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                                entity, slave)
         await clb.answer('Заявка принята в обработку и скоро появится в списке заявок объекта.', show_alert=True)
     await manager.done()
-    print('все кончено')
 
 
 async def on_start(data, manager: DialogManager):
