@@ -35,6 +35,7 @@ async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
     data = eval(data)
     dialog_manager.dialog_data['task']['entity'] = data['ent_id']
     dialog_manager.dialog_data['task']['name'] = data['name']
+    print(dialog_manager.dialog_data['task']['name'])
 
 
 async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
@@ -87,17 +88,17 @@ async def ent_name_handler(message: Message, message_input: MessageInput, manage
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
     created = manager.start_data.get('created') or datetime.datetime.now().replace(microsecond=0)
     creator = manager.start_data.get('creator') or clb.from_user.id
-    phone = eval(manager.find('phone_input').get_value()) or manager.start_data.get('phone')
-    title = eval(manager.find('title_input').get_value()) or manager.start_data.get('title')
-    description = manager.dialog_data['task'].get('description') or manager.start_data.get('description')
+    phone = manager.dialog_data['to_save']['phone']
+    title = manager.dialog_data['to_save']['title']
+    description = manager.dialog_data['to_save']['description']
     media_type = manager.dialog_data['task'].get('media_type') or manager.start_data.get('media_type')
     media_id = manager.dialog_data['task'].get('media_id') or manager.start_data.get('media_id')
     status = manager.start_data.get('status') or 'открыто'
-    priority = manager.dialog_data['task'].get('priority') or manager.start_data.get('priority')
+    priority = manager.dialog_data['to_save']['priority']
     entity = manager.dialog_data['task'].get('entity') or manager.start_data.get('entity')
     slave = manager.dialog_data['task'].get('slave') or manager.start_data.get('slave')
     if manager.start_data:
-        task_service.update_task(created, creator, phone, title, description, media_type, media_id, status, priority,
+        task_service.update_task(phone, title, description, media_type, media_id, status, priority,
                                  entity, slave, manager.start_data['taskid'])
         await clb.answer('Заявка отредактирована.', show_alert=True)
     else:

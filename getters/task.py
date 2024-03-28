@@ -29,18 +29,28 @@ async def slaves_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def result_getter(dialog_manager: DialogManager, **kwargs):
-    print(dialog_manager.dialog_data)
-    print(dialog_manager.start_data)
     mediatype = dialog_manager.dialog_data['task'].get('media_type') or dialog_manager.start_data.get('media_type')
     mediaid = dialog_manager.dialog_data['task'].get('media_id') or dialog_manager.start_data.get('media_id')
-    print(mediaid, mediatype)
-    media = MediaAttachment(mediatype, file_id=MediaId(mediaid))
-    print(media)
+    if mediatype and mediaid:
+        media = MediaAttachment(mediatype, file_id=MediaId(mediaid))
+    else:
+        media = None
+    entity = dialog_manager.dialog_data['task'].get('name') or dialog_manager.start_data.get('name')
+    phone = dialog_manager.find('phone_input').get_value()
+    if phone == 'None':
+        phone = dialog_manager.start_data.get('phone')
+    title = dialog_manager.find('title_input').get_value()
+    if title == 'None':
+        title = dialog_manager.start_data.get('title')
+    description = dialog_manager.dialog_data['task'].get('description') or dialog_manager.start_data.get('description')
+    priority = dialog_manager.dialog_data['task'].get('priority') or dialog_manager.start_data.get('priority')
     dialog_manager.dialog_data['finished'] = True
-    return {
-        'entity': dialog_manager.dialog_data['task'].get('name') or dialog_manager.start_data.get('name'),
-        'phone': eval(dialog_manager.find('phone_input').get_value()) or dialog_manager.start_data.get('phone'),
-        'title': eval(dialog_manager.find('title_input').get_value()) or dialog_manager.start_data.get('title'),
-        'description': dialog_manager.dialog_data['task'].get('description') or dialog_manager.start_data.get('description'),
+    dialog_manager.dialog_data['to_save'] = {
+        'entity': entity,
+        'phone': phone,
+        'title': title,
+        'description': description,
+        'priority': priority,
         'media': media
     }
+    return  dialog_manager.dialog_data['to_save']

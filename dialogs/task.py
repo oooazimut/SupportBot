@@ -1,5 +1,6 @@
 import operator
 
+from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput, MessageInput
@@ -103,12 +104,13 @@ create_task_dialog = Dialog(
         Jinja('''
         Ваша заявка:
 
-        <b>Объект</b>: {{entity}}
-        <b>Телефон</b>: {{phone}}
-        <b>Тема</b>: {{title}}
+        <b>Объект</b>: {{entity if entity}}
+        <b>Телефон</b>: {{phone if phone}}
+        <b>Тема</b>: {{title if title}}
         <b>Описание</b>: {{description if description}}
+        <b>Приоритет</b>: {{priority if priority}}
         '''),
-        DynamicMedia('media'),
+        DynamicMedia('media', when=F['media']),
         Cancel(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),
         SwitchTo(Const('Изменить объект'), state=TaskCreating.sub_entity, id='to_entity'),
         SwitchTo(Const('Изменить телефон'), state=TaskCreating.enter_phone, id='to_phone'),
@@ -122,7 +124,7 @@ create_task_dialog = Dialog(
     Window(
         Const('Объектов не найдено'),
         SwitchTo(Const('Попробовать ещё раз'), id='reenter_entity', state=TaskCreating.sub_entity),
-        Button(Const('Продолжить без объекта'), id='continue', on_click=next_or_end),
+        SwitchTo(Const('Продолжить без объекта'), id='without_entity', state=TaskCreating.enter_phone),
         Back(Const('Назад')),
         CANCEL_EDIT,
         state=TaskCreating.empty_entities

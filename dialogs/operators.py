@@ -143,7 +143,8 @@ edit_task_dialog = Dialog(
     Window(
         Jinja('''
         {{start_data.created}}
-        {{start_data.title}}
+        Тема: {{start_data.title}}
+        Описание: {{start_data.description if start_data.description}}
         Исполнитель: {{start_data.username if start_data.username}}
         Приоритет: {{start_data.priority if start_data.priority}}
         Статус: {{start_data.status}}
