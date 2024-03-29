@@ -28,6 +28,7 @@ async def slaves_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
+
 async def result_getter(dialog_manager: DialogManager, **kwargs):
     mediatype = dialog_manager.dialog_data['task'].get('media_type') or dialog_manager.start_data.get('media_type')
     mediaid = dialog_manager.dialog_data['task'].get('media_id') or dialog_manager.start_data.get('media_id')
@@ -44,6 +45,7 @@ async def result_getter(dialog_manager: DialogManager, **kwargs):
         title = dialog_manager.start_data.get('title')
     description = dialog_manager.dialog_data['task'].get('description') or dialog_manager.start_data.get('description')
     priority = dialog_manager.dialog_data['task'].get('priority') or dialog_manager.start_data.get('priority')
+    username = dialog_manager.dialog_data['task'].get('username') or dialog_manager.start_data.get('username')
     dialog_manager.dialog_data['finished'] = True
     dialog_manager.dialog_data['to_save'] = {
         'entity': entity,
@@ -51,6 +53,7 @@ async def result_getter(dialog_manager: DialogManager, **kwargs):
         'title': title,
         'description': description,
         'priority': priority,
+        'username': username,
         'media': media
     }
     return  dialog_manager.dialog_data['to_save']

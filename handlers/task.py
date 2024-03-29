@@ -35,11 +35,12 @@ async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
     data = eval(data)
     dialog_manager.dialog_data['task']['entity'] = data['ent_id']
     dialog_manager.dialog_data['task']['name'] = data['name']
-    print(dialog_manager.dialog_data['task']['name'])
 
 
 async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
     dialog_manager.dialog_data['task']['slave'] = data
+    user = empl_service.get_employee(data)
+    dialog_manager.dialog_data['task']['username'] = user['username']
 
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
@@ -47,21 +48,23 @@ async def task_description_handler(message: Message, message_input: MessageInput
         user = empl_service.get_employee(userid)
         if user:
             return True
-    print(message.caption, type(message.caption))
-    txt = message.caption or 'Нет описания'
-    print(txt)
+    txt = ''
     media_id = None
     match message.content_type:
         case ContentType.TEXT:
             txt = message.text
         case ContentType.PHOTO:
             media_id = message.photo[-1].file_id
+            txt = message.caption
         case ContentType.DOCUMENT:
             media_id = message.document.file_id
+            txt = message.caption
         case ContentType.VIDEO:
             media_id = message.video.file_id
+            txt = message.caption
         case ContentType.AUDIO:
             media_id = message.audio.file_id
+            txt = message.caption
         case ContentType.VOICE:
             media_id = message.voice.file_id
         case ContentType.VIDEO_NOTE:

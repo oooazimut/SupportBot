@@ -40,7 +40,7 @@ create_task_dialog = Dialog(
                 on_click=on_entity
             ),
         ),
-        Button(Const('Потвердить'), id='confirm_entity', on_click=next_or_end),
+        Button(Const('Подтвердить'), id='confirm_entity', on_click=next_or_end),
         Back(Const('Назад')),
         CANCEL_EDIT,
         state=TaskCreating.entities,
@@ -91,8 +91,8 @@ create_task_dialog = Dialog(
         Const('Назначить работника'),
         Column(
             Radio(
-                Format('🔘 {item[name]}'),
-                Format('⚪️ {item[name]}'),
+                Format('🔘 {item[username]}'),
+                Format('⚪️ {item[username]}'),
                 id='choose_slave',
                 item_id_getter=lambda item: item['userid'],
                 items='slaves',
@@ -114,6 +114,7 @@ create_task_dialog = Dialog(
         <b>Тема</b>: {{title if title}}
         <b>Описание</b>: {{description if description}}
         <b>Приоритет</b>: {{priority if priority}}
+        <b>Работник</b>: {{username if username}}
         '''),
         DynamicMedia('media', when=F['media']),
         Cancel(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),
@@ -130,7 +131,6 @@ create_task_dialog = Dialog(
         Const('Объектов не найдено'),
         SwitchTo(Const('Попробовать ещё раз'), id='reenter_entity', state=TaskCreating.sub_entity),
         SwitchTo(Const('Продолжить без объекта'), id='without_entity', state=TaskCreating.enter_phone),
-        Back(Const('Назад')),
         CANCEL_EDIT,
         state=TaskCreating.empty_entities
     ),
