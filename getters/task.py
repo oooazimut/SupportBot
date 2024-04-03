@@ -29,7 +29,7 @@ async def slaves_getter(dialog_manager: DialogManager, **kwargs):
 
 
 
-async def result_getter(dialog_manager: DialogManager, **kwargs):
+async def   result_getter(dialog_manager: DialogManager, **kwargs):
     mediatype = dialog_manager.dialog_data['task'].get('media_type') or dialog_manager.start_data.get('media_type')
     mediaid = dialog_manager.dialog_data['task'].get('media_id') or dialog_manager.start_data.get('media_id')
     if mediatype and mediaid:
