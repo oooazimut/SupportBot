@@ -11,7 +11,8 @@ from aiogram_dialog.widgets.text import Const, Jinja, Format
 from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
-    on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start
+    on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
+    to_description, cancel_edit
 )
 from states import TaskCreating
 
@@ -117,12 +118,12 @@ create_task_dialog = Dialog(
         <b>Работник</b>: {{username if username}}
         '''),
         DynamicMedia('media', when=F['media']),
-        Cancel(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),
-        SwitchTo(Const('Изменить объект'), state=TaskCreating.sub_entity, id='to_entity'),
-        SwitchTo(Const('Изменить телефон'), state=TaskCreating.enter_phone, id='to_phone'),
-        SwitchTo(Const('Изменить Тему'), state=TaskCreating.enter_title, id='to_title'),
-        SwitchTo(Const('Изменить описание'), state=TaskCreating.enter_description, id='to_description'),
-        Cancel(Const('Отменить создание')),
+        Button(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),
+        Button(Const('Изменить объект'), id='to_entity', on_click=to_entity),
+        Button(Const('Изменить телефон'), id='to_phone', on_click=to_phone),
+        Button(Const('Изменить Тему'), id='to_title', on_click=to_title),
+        Button(Const('Изменить описание'), id='to_description', on_click=to_description),
+        Button(Const('Отменить создание'), id='cancel_edit', on_click=cancel_edit),
         state=TaskCreating.preview,
         getter=result_getter,
         parse_mode='html'

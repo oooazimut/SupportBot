@@ -3,7 +3,7 @@ import datetime
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram.types import Message, CallbackQuery
-from aiogram_dialog import DialogManager
+from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import SwitchTo, Button
 from aiogram_dialog.widgets.text import Const
@@ -88,6 +88,20 @@ async def ent_name_handler(message: Message, message_input: MessageInput, manage
     else:
         await manager.switch_to(TaskCreating.empty_entities)
 
+async def to_entity(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.sub_entity, show_mode=ShowMode.SEND)
+
+async def to_phone(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.enter_phone, show_mode=ShowMode.SEND)
+
+async def to_title(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.enter_title, show_mode=ShowMode.SEND)
+
+async def to_description(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.enter_description, show_mode=ShowMode.SEND)
+
+async def cancel_edit(event, button, manager: DialogManager):
+    await manager.done(show_mode=ShowMode.SEND)
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
     created = manager.start_data.get('created') or datetime.datetime.now().replace(microsecond=0)
@@ -109,7 +123,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         task_service.save_task(created, creator, phone, title, description, media_type, media_id, status, priority,
                                entity, slave)
         await clb.answer('Заявка принята в обработку и скоро появится в списке заявок объекта.', show_alert=True)
-    await manager.done()
+    await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_start(data, manager: DialogManager):
