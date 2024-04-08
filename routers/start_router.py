@@ -5,6 +5,7 @@ from aiogram_dialog import DialogManager, StartMode
 
 from config import START_STATES
 from db import empl_service, task_service
+from handlers.operators import TaskCallbackFactory
 
 router = Router()
 
@@ -25,6 +26,13 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
 
 
 @router.callback_query(F.data == "confirm_task")
-async def confirm_task(callback: CallbackQuery, dialog_manager: DialogManager):
-    task_service.change_task_status(dialog_manager.start_data['taskid'], 'выполнено')
+async def confirm_task(callback: CallbackQuery, dialog_manager: DialogManager, *args, **kwargs):
+    print('args:', args)
+    print('kwargs:', kwargs)
+    task_service.change_status(dialog_manager.start_data['taskid'], 'закрыто')
     await callback.message.delete()
+
+
+@router.callback_query(TaskCallbackFactory.filter())
+async def return_to_work(callback: CallbackQuery, dialog_manager: DialogManager):
+    task_service.change_status()

@@ -1,6 +1,6 @@
 import datetime
 
-from aiogram import F
+from aiogram import F, Bot
 from aiogram.enums import ContentType
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, ShowMode
@@ -100,6 +100,9 @@ async def to_title(event, button, manager: DialogManager):
 async def to_description(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.enter_description, show_mode=ShowMode.SEND)
 
+async def to_slave(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.slave, show_mode=ShowMode.SEND)
+
 async def cancel_edit(event, button, manager: DialogManager):
     await manager.done(show_mode=ShowMode.SEND)
 
@@ -116,6 +119,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     entity = manager.dialog_data['task'].get('entity') or manager.start_data.get('entity')
     slave = manager.dialog_data['task'].get('slave') or manager.start_data.get('slave')
     if manager.start_data:
+
         task_service.update_task(phone, title, description, media_type, media_id, status, priority,
                                  entity, slave, manager.start_data['taskid'])
         await clb.answer('Заявка отредактирована.', show_alert=True)
@@ -123,6 +127,9 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         task_service.save_task(created, creator, phone, title, description, media_type, media_id, status, priority,
                                entity, slave)
         await clb.answer('Заявка принята в обработку и скоро появится в списке заявок объекта.', show_alert=True)
+    if manager.dialog_data['task'].get('slave'):
+        bot: Bot = manager.middleware_data['bot']
+        await bot.send_message(chat_id=manager.dialog_data['task'].get('slave'), text='У вас новая заявка!')
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 

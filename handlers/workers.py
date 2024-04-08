@@ -45,14 +45,6 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
         await callback.answer('Архив пустой.')
 
 
-async def on_object_task(callback: CallbackQuery, widget: Any, manager: DialogManager):
-    await manager.switch_to(WorkerSG.entites_on_task)
-
-
-async def next_dialog(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(WorkerSG.enter_dialog)
-
-
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     task = task_service.get_task(item_id)[0]
     await manager.start(WorkerTaskSG.main, data=task)
@@ -66,17 +58,16 @@ async def entites_name_handler(message: Message, message_input: MessageInput, ma
         print(entities)
     else:
         pass
-async def tasks_for_entities(callback: CallbackQuery, button: Button, manager: DialogManager):
-    open_task = EntityService.get_task_for_entities(manager.dialog_data['entities'])
 
 
-async def on_entity(callback: CallbackQuery, event, select, manager: DialogManager, data, /):
-    open_task = EntityService.get_task_for_entities(manager.dialog_data['taskid'])
-    if open_task:
-        manager.dialog_data['tasks'] = open_task
+async def on_entity(callback: CallbackQuery, select, manager: DialogManager, data, /):
+    tasks = EntityService.get_task_for_entity(data)
+    if tasks:
+        manager.dialog_data['tasks'] = tasks
         await manager.switch_to(WorkerSG.tasks_entities)
     else:
-        await callback.answer('Нте заявок на объекте!')
+        await callback.answer('Нет заявок на объекте!')
+
 
 async def open_tasks(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     task = task_service.get_task(item_id)[0]

@@ -10,10 +10,7 @@ class OpTaskSG(StatesGroup):
     new_task = State()
     progress_task = State()
     archive_task = State()
-
-
-class TaskSG(StatesGroup):
-    main = State()
+    preview = State()
 
 
 class WorkersSG(StatesGroup):
@@ -42,19 +39,13 @@ class TaskCreating(StatesGroup):
 
 
 class WorkerSG(StatesGroup):
-    tasks_entities = State()
-    enter_object = State()
-    enter_dialog = State()
     main = State()
     assigned = State()
     in_progress = State()
     archive = State()
     entities_search = State()
-    entites_on_task = State()
-
-
-class WorkerSendSG(StatesGroup):
-    set_worker = State()
+    enter_object = State()
+    tasks_entities = State()
 
 
 class WorkerTaskSG(StatesGroup):

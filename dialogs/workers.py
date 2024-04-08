@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from db import task_service
 from getters.workers import task_entities_getter, tasks_open_getter
-from handlers.workers import on_assigned, on_archive, on_progress, on_task, on_object_task, entites_name_handler, \
+from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
     open_tasks, on_entity
 from states import WorkerSG, WorkerTaskSG
 
@@ -27,7 +27,7 @@ main_dialog = Dialog(
             Button(Const('Назначенные'), id='worker_assigned', on_click=on_assigned),
             Button(Const('В работе'), id='worker_in_progress', on_click=on_progress),
             Button(Const('Архив'), id='worker_archive', on_click=on_archive),
-            Button(Const('Заявки по объектам'), id='task_for_object', on_click=on_object_task)
+            SwitchTo(Const('Заявки по объектам'), id='tasks_for_entity', state=WorkerSG.entities_search)
         ),
         state=WorkerSG.main
     ),

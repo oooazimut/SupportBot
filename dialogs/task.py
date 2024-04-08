@@ -12,7 +12,7 @@ from getters.task import priority_getter, result_getter, entitites_getter, slave
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
-    to_description, cancel_edit
+    to_description, cancel_edit, to_slave
 )
 from states import TaskCreating
 
@@ -124,6 +124,7 @@ create_task_dialog = Dialog(
         Button(Const('Изменить Тему'), id='to_title', on_click=to_title),
         Button(Const('Изменить описание'), id='to_description', on_click=to_description),
         Button(Const('Отменить создание'), id='cancel_edit', on_click=cancel_edit),
+        Button(Const('Изменить исполнителя'), id='to_slave', on_click=to_slave),
         state=TaskCreating.preview,
         getter=result_getter,
         parse_mode='html'

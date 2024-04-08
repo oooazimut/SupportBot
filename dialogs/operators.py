@@ -5,7 +5,20 @@ from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Ca
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 
 from handlers import operators
-from states import OperatorSG, TaskSG, WorkersSG, OpTaskSG, WorkerSendSG, TaskCreating
+from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating
+
+
+def is_opened(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'назначено'
+
+
+def not_in_archive(data, widget, manager: DialogManager):
+    return manager.start_data['status'] != 'закрыто'
+
+
+def is_performed(data, widget, manager: DialogManager):
+    return manager.start_data['status'] == 'выполнено'
+
 
 main_dialog = Dialog(
     Window(
@@ -25,7 +38,7 @@ task_dialog = Dialog(
             Button(Const('Заявки в работе'), id='done', on_click=operators.go_work_task),
             Button(Const('Архив'), id='archive', on_click=operators.go_archive)
         ),
-        Start(Const('Создать заявку'), id='new_op_task', data = {}, state=TaskCreating.sub_entity),
+        Start(Const('Создать заявку'), id='new_op_task', data={}, state=TaskCreating.sub_entity),
         Cancel(Const('Назад')),
         state=OpTaskSG.tas
     ),
@@ -77,6 +90,20 @@ task_dialog = Dialog(
         state=OpTaskSG.archive_task,
         getter=operators.tasks_getter
     ),
+    Window(
+        Jinja('''
+       {{start_data.created}}
+       Тема: {{start_data.title}}
+       Описание: {{start_data.description if start_data.description}}
+       Исполнитель: {{start_data.username if start_data.username}}
+       Приоритет: {{start_data.priority if start_data.priority}}
+       Статус: {{start_data.status}}
+       '''),
+        Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=not_in_archive),
+        Button(Const('Закрыть'), id='close_task', on_click=operators.on_close, when=not_in_archive),
+        Cancel(Const('Назад')),
+        state=OpTaskSG.preview
+    )
 )
 
 worker_dialog = Dialog(
@@ -118,59 +145,6 @@ worker_dialog = Dialog(
         ),
         SwitchTo(Const('Назад'), id='to_main', state=WorkersSG.main),
         state=WorkersSG.slv,
-        getter=operators.worker_getter
-    ),
-)
-
-
-def is_opened(data, widget, manager: DialogManager):
-    return manager.start_data['status'] == 'назначено'
-
-
-def not_in_archive(data, widget, manager: DialogManager):
-    return manager.start_data['status'] != 'закрыто'
-
-
-def is_performed(data, widget, manager: DialogManager):
-    return manager.start_data['status'] == 'выполнено'
-
-
-def is_in_progress(data, widget, manager: DialogManager):
-    return manager.start_data['status'] == 'в работе'
-
-
-edit_task_dialog = Dialog(
-    Window(
-        Jinja('''
-        {{start_data.created}}
-        Тема: {{start_data.title}}
-        Описание: {{start_data.description if start_data.description}}
-        Исполнитель: {{start_data.username if start_data.username}}
-        Приоритет: {{start_data.priority if start_data.priority}}
-        Статус: {{start_data.status}}
-        '''),
-        Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=not_in_archive),
-        Button(Const('Закрыть'), id='close_task', on_click=operators.close_task, when=is_in_progress),
-        Cancel(Const('Назад')),
-        state=TaskSG.main
-    ),
-)
-
-# wizard
-worker_send_dialog = Dialog(
-    Window(
-        Const('Исполнители:'),
-        Column(
-            Select(
-                Format('{item[username]}'),
-                id='workers',
-                item_id_getter=operator.itemgetter('userid'),
-                items='un',
-                on_click=operators.set_workers
-            )
-        ),
-        Cancel(Const('Назад')),
-        state=WorkerSendSG.set_worker,
         getter=operators.worker_getter
     ),
 )

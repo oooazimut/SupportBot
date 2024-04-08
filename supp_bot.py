@@ -32,8 +32,6 @@ async def main():
         operators.main_dialog,
         operators.task_dialog,
         operators.worker_dialog,
-        operators.edit_task_dialog,
-        operators.worker_send_dialog
     )
     dp.include_router(finish_router.router)
 

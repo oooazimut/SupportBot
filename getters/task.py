@@ -55,12 +55,4 @@ async def   result_getter(dialog_manager: DialogManager, **kwargs):
         'priority': priority,
         'username': username,
     }
-    return {
-        'entity': entity,
-        'phone': phone,
-        'title': title,
-        'description': description,
-        'priority': priority,
-        'username': username,
-        'media': media
-    }
+    return dialog_manager.dialog_data['to_save'].update({'media': media})

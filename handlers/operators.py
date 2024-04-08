@@ -1,14 +1,18 @@
+import datetime
 from typing import Any
 
-from aiogram import types
+from aiogram import Bot
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram_dialog import DialogManager, ShowMode
+from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service
 from db import task_service
-from states import TaskSG, WorkersSG, OpTaskSG, WorkerSendSG, TaskCreating
+from jobs import close_task
+from states import WorkersSG, OpTaskSG, TaskCreating
 
 
 # Хендлеры для тасков
@@ -65,7 +69,7 @@ async def go_archive(callback_query: CallbackQuery, button: Button, manager: Dia
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     task = next((t for t in manager.dialog_data['tasks'] if t['taskid'] == int(item_id)), None)
     manager.dialog_data['taskid'] = item_id
-    await manager.start(TaskSG.main, data=task)
+    await manager.start(OpTaskSG.preview, data=task)
 
 
 # Хендлеры для сотрудников
@@ -109,34 +113,27 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
     await manager.start(TaskCreating.preview, data=manager.start_data)
 
 
-async def appoint_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    workers = empl_service.get_employees_by_position('worker')
-    if workers:
-        await manager.start(WorkerSendSG.set_worker, data={'workers': workers, 'task': manager.start_data})
-    else:
-        await callback.answer('Работников нет.', show_alert=True)
+class TaskCallbackFactory(CallbackData, prefix='return_task'):
+    action: str
+    taskid: int
 
 
-async def set_workers(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    print(item_id, manager.start_data['task']['taskid'])
-    task_service.change_worker(task_id=manager.start_data['task']['taskid'], slave=item_id)
-    bot = manager.middleware_data['bot']
-    await bot.send_message(item_id, 'Вам назначена задача')
-    await manager.done()
-
-
-async def close_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['taskid'], 'выполнено')
-    bot = manager.middleware_data['bot']
+async def on_close(callback: CallbackQuery, button: Button, manager: DialogManager):
+    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+    taskid = manager.start_data['taskid']
+    task_service.change_status(taskid, 'выполнено')
+    run_date = datetime.datetime.now() + datetime.timedelta(days=3)
+    bot: Bot = manager.middleware_data['bot']
+    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid, bot], id='close_task')
     builder = InlineKeyboardBuilder()
-    builder.add(types.InlineKeyboardButton(
+    builder.button(
         text='Подтвердить выполнение',
         callback_data='confirm_task'
-    ))
-    await bot.send_message(manager.start_data['creator'], 'Ваша заявка выполнена, проверьте как она выполнена',
-                           replay_markup=builder.as_markup())
+    )
+    builder.button(
+        text='Вернуть в работу',
+        callback_data=TaskCallbackFactory(action='return_to_work', taskid=manager.start_data['taskid'])
+    )
+    await bot.send_message(manager.start_data['creator'], 'Ваша заявка закрыта.',
+                           reply_markup=builder.as_markup())
     await manager.done()
-
-
-async def create_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    pass
