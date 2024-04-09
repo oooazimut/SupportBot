@@ -15,9 +15,5 @@ async def reminders_task_to_morning(bot: Bot):
         await bot.send_message(chat_id=task['slave'], text='У вас еще остались незавершенные дела')
 
 
-async def close_task(taskid: int, bot: Bot):
-    task = task_service.get_task(taskid)[0]
-    userid = task['creator']
-    title = task['title']
+async def close_task(taskid: int):
     task_service.change_status(taskid, 'закрыто')
-    await bot.send_message(chat_id=userid, text=f'Заявка "{title}" перемещена в архив.')

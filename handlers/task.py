@@ -7,6 +7,7 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import SwitchTo, Button
 from aiogram_dialog.widgets.text import Const
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service, task_service
 from db.service import EntityService
@@ -48,6 +49,7 @@ async def task_description_handler(message: Message, message_input: MessageInput
         user = empl_service.get_employee(userid)
         if user:
             return True
+
     txt = ''
     media_id = None
     match message.content_type:
@@ -88,23 +90,30 @@ async def ent_name_handler(message: Message, message_input: MessageInput, manage
     else:
         await manager.switch_to(TaskCreating.empty_entities)
 
+
 async def to_entity(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.sub_entity, show_mode=ShowMode.SEND)
+
 
 async def to_phone(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.enter_phone, show_mode=ShowMode.SEND)
 
+
 async def to_title(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.enter_title, show_mode=ShowMode.SEND)
+
 
 async def to_description(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.enter_description, show_mode=ShowMode.SEND)
 
+
 async def to_slave(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.slave, show_mode=ShowMode.SEND)
 
+
 async def cancel_edit(event, button, manager: DialogManager):
     await manager.done(show_mode=ShowMode.SEND)
+
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
     created = manager.start_data.get('created') or datetime.datetime.now().replace(microsecond=0)
@@ -135,3 +144,27 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
 async def on_start(data, manager: DialogManager):
     manager.dialog_data['task'] = {}
+
+
+async def on_close(clb: CallbackQuery, button, manager: DialogManager):
+    task_service.change_status(manager.start_data['taskid'], 'закрыто')
+    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+    job = scheduler.get_job(manager.start_data['taskid'])
+    if job:
+        job.remove()
+        await clb.answer('Заявка перемещена в архив.', show_alert=True)
+    else:
+        await clb.answer('Заявка уже в архиве.', show_alert=True)
+    await manager.done()
+
+
+async def on_return(clb: CallbackQuery, button, manager: DialogManager):
+    task_service.change_status(manager.start_data['taskid'], 'в работе')
+    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+    job = scheduler.get_job(manager.start_data['taskid'])
+    if job:
+        job.remove()
+        await clb.answer('Заявка возвращена в работу.', show_alert=True)
+    else:
+        await clb.answer('Заявка уже в работе.', show_alert=True)
+    await manager.done()

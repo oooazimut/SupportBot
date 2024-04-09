@@ -4,7 +4,6 @@ from typing import Any
 from aiogram import Bot
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import CallbackQuery
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -12,7 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from db import empl_service
 from db import task_service
 from jobs import close_task
-from states import WorkersSG, OpTaskSG, TaskCreating
+from states import WorkersSG, OpTaskSG, TaskCreating, PerformedTaskSG
 
 
 # Хендлеры для тасков
@@ -119,21 +118,14 @@ class TaskCallbackFactory(CallbackData, prefix='return_task'):
 
 
 async def on_close(callback: CallbackQuery, button: Button, manager: DialogManager):
-    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
     taskid = manager.start_data['taskid']
-    task_service.change_status(taskid, 'выполнено')
+    user = manager.start_data['creator']
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)
+    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
     bot: Bot = manager.middleware_data['bot']
-    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid, bot], id='close_task')
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text='Подтвердить выполнение',
-        callback_data='confirm_task'
-    )
-    builder.button(
-        text='Вернуть в работу',
-        callback_data=TaskCallbackFactory(action='return_to_work', taskid=manager.start_data['taskid'])
-    )
-    await bot.send_message(manager.start_data['creator'], 'Ваша заявка закрыта.',
-                           reply_markup=builder.as_markup())
+    bg = manager.bg(user_id=user, chat_id=user)
+
+    task_service.change_status(taskid, 'выполнено')
+    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid, bot], id=taskid)
     await manager.done()
+    await bg.start(state=PerformedTaskSG.main, data={'taskid': taskid})

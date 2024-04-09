@@ -1,7 +1,7 @@
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
-from db import empl_service
+from db import empl_service, task_service
 
 
 async def priority_getter(dialog_manager: DialogManager, **kwargs):
@@ -28,8 +28,7 @@ async def slaves_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
-
-async def   result_getter(dialog_manager: DialogManager, **kwargs):
+async def result_getter(dialog_manager: DialogManager, **kwargs):
     mediatype = dialog_manager.dialog_data['task'].get('media_type') or dialog_manager.start_data.get('media_type')
     mediaid = dialog_manager.dialog_data['task'].get('media_id') or dialog_manager.start_data.get('media_id')
     if mediatype and mediaid:
@@ -56,3 +55,8 @@ async def   result_getter(dialog_manager: DialogManager, **kwargs):
         'username': username,
     }
     return dialog_manager.dialog_data['to_save'].update({'media': media})
+
+
+async def performed_getter(dialog_manager: DialogManager, **kwargs):
+    task = task_service.get_task(dialog_manager.start_data['taskid'])[0]
+    return task
