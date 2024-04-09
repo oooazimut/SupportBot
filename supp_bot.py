@@ -26,7 +26,7 @@ async def main():
     dp = Dispatcher(storage=storage)
     dp.include_router(start_router.router)
     dp.include_routers(customers.main_dialog)
-    dp.include_router(task.create_task_dialog)
+    dp.include_routers(task.create_task_dialog, task.performed_task)
     dp.include_routers(workers.main_dialog, workers.task_dialog)
     dp.include_routers(
         operators.main_dialog,

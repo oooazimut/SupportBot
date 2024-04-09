@@ -126,6 +126,5 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
     bg = manager.bg(user_id=user, chat_id=user)
 
     task_service.change_status(taskid, 'выполнено')
-    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid, bot], id=taskid)
-    await manager.done()
+    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid], id=str(taskid))
     await bg.start(state=PerformedTaskSG.main, data={'taskid': taskid})

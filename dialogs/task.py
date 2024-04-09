@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Co
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Jinja, Format
 
-from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter
+from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter, performed_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
@@ -140,6 +140,7 @@ performed_task = Dialog(
                'архив.'),
         Button(Const('Подтвердить выполнение'), id='confirm_performing', on_click=on_close),
         Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return),
-        state=PerformedTaskSG.main
+        state=PerformedTaskSG.main,
+        getter=performed_getter
     )
 )

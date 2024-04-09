@@ -149,7 +149,7 @@ async def on_start(data, manager: DialogManager):
 async def on_close(clb: CallbackQuery, button, manager: DialogManager):
     task_service.change_status(manager.start_data['taskid'], 'закрыто')
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-    job = scheduler.get_job(manager.start_data['taskid'])
+    job = scheduler.get_job(str(manager.start_data['taskid']))
     if job:
         job.remove()
         await clb.answer('Заявка перемещена в архив.', show_alert=True)
@@ -159,9 +159,14 @@ async def on_close(clb: CallbackQuery, button, manager: DialogManager):
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
-    task_service.change_status(manager.start_data['taskid'], 'в работе')
+    taskid = manager.start_data['taskid']
+    task = task_service.get_task(taskid)[0]
+    if task['slave']:
+        task_service.change_status(taskid, 'в работе')
+    else:
+        task_service.change_status(taskid, 'открыто')
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-    job = scheduler.get_job(manager.start_data['taskid'])
+    job = scheduler.get_job(str(manager.start_data['taskid']))
     if job:
         job.remove()
         await clb.answer('Заявка возвращена в работу.', show_alert=True)
