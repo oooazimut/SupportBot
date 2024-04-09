@@ -24,6 +24,9 @@ CREATE_DB_SCRIPT = '''
         priority TEXT,
         entity INTEGER,
         slave INTEGER,
+        result TEXT,
+        resulttype TEXT,
+        resultid INTEGER,
         FOREIGN KEY (entity) REFERENCES entities (ent_id)
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 
