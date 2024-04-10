@@ -1,13 +1,13 @@
 import operator
 
 from aiogram.enums import ContentType
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel
+from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Back
 from aiogram_dialog.widgets.text import Const, Format
 
-from db import task_service
+from db import task_service, empl_service
 from getters.workers import task_entities_getter, tasks_open_getter
 from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
     open_tasks, on_entity
@@ -151,6 +151,36 @@ def is_in_progress(data, widget, manager: DialogManager):
     return manager.start_data['status'] == 'в работе'
 
 
+async def media_pin_task(message: Message, message_input: MessageInput, manager: DialogManager):
+    txt = ''
+    media_id = None
+    match message.content_type:
+        case ContentType.TEXT:
+            txt = message.text
+        case ContentType.PHOTO:
+            media_id = message.photo[-1].file_id
+            txt = message.caption
+        case ContentType.DOCUMENT:
+            media_id = message.document.file_id
+            txt = message.caption
+        case ContentType.VIDEO:
+            media_id = message.video.file_id
+            txt = message.caption
+        case ContentType.AUDIO:
+            media_id = message.audio.file_id
+            txt = message.caption
+        case ContentType.VOICE:
+            media_id = message.voice.file_id
+        case ContentType.VIDEO_NOTE:
+            media_id = message.video_note.file_id
+    media_type = message.content_type
+    manager.dialog_data['task']['result'] = txt
+    manager.dialog_data['task']['media_id'] = media_id
+    manager.dialog_data['task']['media_type'] = media_type
+
+
+
+
 task_dialog = Dialog(
     Window(
         Format('{start_data[created]}'),
@@ -165,5 +195,12 @@ task_dialog = Dialog(
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
         Cancel(Const('Назад')),
         state=WorkerTaskSG.main
+    ),
+    Window(
+       Const('Требуется отчет о проделанной работе'),
+        MessageInput(media_pin_task, content_types=[ContentType.ANY]),
+
+        statet=WorkerTaskSG.media_pin,
+
     )
 )

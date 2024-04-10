@@ -54,6 +54,7 @@ class WorkerSG(StatesGroup):
 
 class WorkerTaskSG(StatesGroup):
     main = State()
+    media_pin = State()
 
 
 class CustomerTaskSG(StatesGroup):
