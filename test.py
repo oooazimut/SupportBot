@@ -1,5 +1,3 @@
-import datetime
-
 from db import task_service
 
 MY_ID = 5963726977
