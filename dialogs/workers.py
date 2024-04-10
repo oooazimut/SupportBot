@@ -175,11 +175,10 @@ async def media_pin_task(message: Message, message_input: MessageInput, manager:
             media_id = message.video_note.file_id
     media_type = message.content_type
     manager.dialog_data['task']['result'] = txt
-    manager.dialog_data['task']['media_id'] = media_id
-    manager.dialog_data['task']['media_type'] = media_type
-
-
-
+    manager.dialog_data['task']['resultid'] = media_id
+    manager.dialog_data['task']['resulttype'] = media_type
+    task_service.save_result(manager.dialog_data['result'], manager.dialog_data['resultid'], manager.dialog_data['resulttype'], manager.start_data['taskid'])
+    await manager.switch_to(WorkerSG.main)
 
 task_dialog = Dialog(
     Window(
@@ -199,8 +198,7 @@ task_dialog = Dialog(
     Window(
        Const('Требуется отчет о проделанной работе'),
         MessageInput(media_pin_task, content_types=[ContentType.ANY]),
-
-        statet=WorkerTaskSG.media_pin,
-
+        SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
+        state=WorkerTaskSG.media_pin
     )
 )

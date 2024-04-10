@@ -1,3 +1,5 @@
+from aiogram_dialog import DialogManager
+
 from db.models import DataBase, SqLiteDataBase
 from db.schema import DB_NAME, CREATE_DB_SCRIPT
 
@@ -123,6 +125,9 @@ class TaskService:
              ''', params=None)
         return data
 
+    def save_result(self, result, resultid, resulttype, taskid):
+        params = [result, resulttype, resultid, taskid]
+        self.database.post_query("UPDATE task SET result=?, resulttype=?, resultid=? WHERE taskid=?", params)
 
 class EmployeeService:
     def __init__(self, database: DataBase):
