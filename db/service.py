@@ -127,7 +127,7 @@ class TaskService:
 
     def save_result(self, result, resultid, resulttype, taskid):
         params = [result, resulttype, resultid, taskid]
-        self.database.post_query("UPDATE task SET result=?, resulttype=?, resultid=? WHERE taskid=?", params)
+        self.database.post_query("UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=?", params)
 
 class EmployeeService:
     def __init__(self, database: DataBase):
@@ -160,5 +160,5 @@ class EntityService:
 
     @staticmethod
     def get_task_for_entity(entity):
-        query = 'SELECT * FROM task WHERE entities = ?'
+        query = 'SELECT * FROM tasks WHERE entity = ?'
         return db.select_query(query, [entity])
