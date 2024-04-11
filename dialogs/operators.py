@@ -147,7 +147,4 @@ worker_dialog = Dialog(
         state=WorkersSG.slv,
         getter=operators.worker_getter
     ),
-    Window(
-
-    )
 )
