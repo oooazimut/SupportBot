@@ -2,17 +2,18 @@ import asyncio
 import datetime
 import operator
 
-from aiogram import Bot
+from aiogram import F
 from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Back
+from aiogram_dialog.widgets.kbd import Select, Column, Button, SwitchTo, Cancel, Back
+from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import task_service
-from getters.workers import task_entities_getter, tasks_open_getter
+from getters.workers import task_entities_getter, tasks_open_getter, media_getter
 from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
     open_tasks, on_entity
 from jobs import close_task
@@ -203,9 +204,11 @@ async def media_pin_task(message: Message, message_input: MessageInput, manager:
     await asyncio.sleep(5)
     await mes.delete()
     await manager.done()
-    
+
+
 task_dialog = Dialog(
     Window(
+        DynamicMedia('media', when=F['media']),
         Format('{start_data[created]}'),
         Format('{start_data[name]}'),
         Format('{start_data[title]}'),
@@ -217,10 +220,11 @@ task_dialog = Dialog(
         Button(Const('Закрыть'), id='close_task', on_click=onclose_task, when=not_in_archive),
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
         Cancel(Const('Назад')),
-        state=WorkerTaskSG.main
+        state=WorkerTaskSG.main,
+        getter=media_getter
     ),
     Window(
-       Const('Требуется отчет о проделанной работе. Это может быть картинка, видео, текст или голосовое сообщение.'),
+        Const('Требуется отчет о проделанной работе. Это может быть картинка, видео, текст или голосовое сообщение.'),
         MessageInput(media_pin_task, content_types=[ContentType.ANY]),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
         state=WorkerTaskSG.media_pin

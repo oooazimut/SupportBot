@@ -14,7 +14,7 @@ from handlers.task import (
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
     to_description, cancel_edit, to_slave, on_close, on_return
 )
-from states import TaskCreating, PerformedTaskSG
+from states import TaskCreating, PerformedTaskSG, AssignedTaskSG
 
 create_task_dialog = Dialog(
     Window(
@@ -136,11 +136,22 @@ create_task_dialog = Dialog(
 
 performed_task = Dialog(
     Window(
-        Format('Ваша заявка {title} выполнена. Если вы ничего не нажмёте, через три дня она автоматически уйдет в '
-               'архив.'),
+        DynamicMedia('media', when=F['media']),
+        Jinja('Ваша заявка {{title}} выполнена. Если вы ничего не нажмёте, через 3 дня она уйдет в архив.'),
+        Jinja('Описание: {{result}}', when=F['result']),
         Button(Const('Подтвердить выполнение'), id='confirm_performing', on_click=on_close),
         Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return),
         state=PerformedTaskSG.main,
-        getter=performed_getter
+        getter=performed_getter,
+        parse_mode='html'
+    )
+)
+
+assigned_task = Dialog(
+    Window(
+        Jinja('У вас новая заявка!'),
+        Cancel(Const('Закрыть')),
+        state=AssignedTaskSG.main,
+        parse_mode='html'
     )
 )

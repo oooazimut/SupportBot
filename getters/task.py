@@ -54,9 +54,15 @@ async def result_getter(dialog_manager: DialogManager, **kwargs):
         'priority': priority,
         'username': username,
     }
-    return dialog_manager.dialog_data['to_save'].update({'media': media})
+    data = {'media': media}
+    data.update(dialog_manager.dialog_data['to_save'])
+    return data
 
 
 async def performed_getter(dialog_manager: DialogManager, **kwargs):
     task = task_service.get_task(dialog_manager.start_data['taskid'])[0]
+    media = None
+    if task['resultid']:
+        media = MediaAttachment(task['resulttype'], file_id=MediaId(task['resultid']))
+    task.update({'media': media})
     return task

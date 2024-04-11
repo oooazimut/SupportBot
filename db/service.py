@@ -1,5 +1,3 @@
-from aiogram_dialog import DialogManager
-
 from db.models import DataBase, SqLiteDataBase
 from db.schema import DB_NAME, CREATE_DB_SCRIPT
 
@@ -26,7 +24,7 @@ class TaskService:
         slave) = (?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE taskid = ?'''
         self.database.post_query(query, params)
 
-    def get_task(self, taskid):
+    def get_task(self, taskid) -> list:
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
         query = '''
         SELECT *
@@ -128,6 +126,7 @@ class TaskService:
     def save_result(self, result, resultid, resulttype, taskid):
         params = [result, resulttype, resultid, taskid]
         self.database.post_query("UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=?", params)
+
 
 class EmployeeService:
     def __init__(self, database: DataBase):

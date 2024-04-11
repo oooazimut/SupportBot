@@ -29,7 +29,6 @@ async def on_progress(callback: CallbackQuery, button: Button, manager: DialogMa
     data.extend(in_progress)
     data.extend(performed)
     if data:
-        print(data)
         manager.dialog_data[str(callback.from_user.id)] = data
         await manager.switch_to(WorkerSG.in_progress)
     else:
@@ -55,7 +54,6 @@ async def entites_name_handler(message: Message, message_input: MessageInput, ma
     if entities:
         manager.dialog_data['entities'] = entities
         await manager.switch_to(WorkerSG.enter_object)
-        print(entities)
     else:
         pass
 

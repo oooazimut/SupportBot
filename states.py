@@ -59,3 +59,7 @@ class WorkerTaskSG(StatesGroup):
 
 class CustomerTaskSG(StatesGroup):
     main = State()
+
+
+class AssignedTaskSG(StatesGroup):
+    main = State()
