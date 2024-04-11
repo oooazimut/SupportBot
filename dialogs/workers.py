@@ -89,13 +89,16 @@ main_dialog = Dialog(
     ),
     Window(
         Const('Объекты'),
-        Select(
-            Format('{item[name]}'),
-            id='objects',
-            item_id_getter=operator.itemgetter('ent_id'),
-            items='objects',
-            on_click=on_entity
+        Column(
+            Select(
+                Format('{item[name]}'),
+                id='objects',
+                item_id_getter=operator.itemgetter('ent_id'),
+                items='objects',
+                on_click=on_entity
+            )
         ),
+        Back(Const('Назад')),
         state=WorkerSG.enter_object,
         getter=task_entities_getter
     ),
@@ -103,11 +106,11 @@ main_dialog = Dialog(
         Const('Заявки на обьекте:'),
         Column(
             Select(
-            Format('{item[title]} {item[priority]}'),
-            id='tasks',
-            item_id_getter=operator.itemgetter('taskid'),
-            items='tasks',
-            on_click=open_tasks
+                Format('{item[title]} {item[priority]}'),
+                id='tasks',
+                item_id_getter=operator.itemgetter('taskid'),
+                items='tasks',
+                on_click=open_tasks
             ),
             Back(Const('Назад')),
         ),
