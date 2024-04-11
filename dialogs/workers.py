@@ -216,7 +216,7 @@ task_dialog = Dialog(
         state=WorkerTaskSG.main
     ),
     Window(
-       Const('Требуется отчет о проделанной работе'),
+       Const('Требуется отчет о проделанной работе. Это может быть картинка, видео, текст или голосовое сообщение.'),
         MessageInput(media_pin_task, content_types=[ContentType.ANY]),
         SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
         state=WorkerTaskSG.media_pin
