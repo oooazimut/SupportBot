@@ -86,7 +86,7 @@ main_dialog = Dialog(
     Window(
         Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
         MessageInput(entites_name_handler, content_types=[ContentType.TEXT]),
-        Back(Const('Назад')),
+        SwitchTo(Const('Назад'), id='back_main', state=WorkerSG.main),
         state=WorkerSG.entities_search
     ),
     Window(
