@@ -28,7 +28,7 @@ async def task_getter(dialog_manager: DialogManager, **kwargs):
 main_dialog = Dialog(
     Window(
         Const('Главное меню:'),
-        Row(
+        Column(
             Button(Const('Назначенные'), id='worker_assigned', on_click=on_assigned),
             Button(Const('В работе'), id='worker_in_progress', on_click=on_progress),
             Button(Const('Архив'), id='worker_archive', on_click=on_archive),
@@ -85,6 +85,7 @@ main_dialog = Dialog(
     Window(
         Const('Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть.'),
         MessageInput(entites_name_handler, content_types=[ContentType.TEXT]),
+        Back(Const('Назад')),
         state=WorkerSG.entities_search
     ),
     Window(
