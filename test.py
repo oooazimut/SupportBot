@@ -2,6 +2,6 @@ from db import task_service
 
 MY_ID = 5963726977
 
-tasks = task_service.get_tasks()
-for task in tasks:
-    task_service.change_status(task['taskid'], 'открыто')
+a = {'a': 1}
+b = a.update({'b': 2})
+print(b)

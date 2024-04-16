@@ -162,6 +162,7 @@ worker_dialog = Dialog(
         state=WorkersSG.slv,
         getter=operators.worker_getter
     ),
+
     Window(
         Const('Введите имя сотрудника'),
         TextInput(id = 'user_name', on_success=next_or_end),

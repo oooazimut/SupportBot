@@ -1,6 +1,6 @@
 import datetime
 
-from aiogram import F, Bot
+from aiogram import F
 from aiogram.enums import ContentType
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, ShowMode
@@ -11,7 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service, task_service
 from db.service import EntityService
-from states import TaskCreating
+from states import TaskCreating, AssignedTaskSG
 
 CANCEL_EDIT = SwitchTo(
     Const("Отменить редактирование"),
@@ -127,6 +127,8 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     priority = manager.dialog_data['to_save']['priority']
     entity = manager.dialog_data['task'].get('entity') or manager.start_data.get('entity')
     slave = manager.dialog_data['task'].get('slave') or manager.start_data.get('slave')
+    if manager.dialog_data['task'].get('slave'):
+        status = 'назначено'
     if manager.start_data:
 
         task_service.update_task(phone, title, description, media_type, media_id, status, priority,
@@ -137,8 +139,9 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                                entity, slave)
         await clb.answer('Заявка принята в обработку и скоро появится в списке заявок объекта.', show_alert=True)
     if manager.dialog_data['task'].get('slave'):
-        bot: Bot = manager.middleware_data['bot']
-        await bot.send_message(chat_id=manager.dialog_data['task'].get('slave'), text='У вас новая заявка!')
+        userid = manager.dialog_data['task'].get('slave')
+        bg = manager.bg(userid, userid)
+        await bg.start(AssignedTaskSG.main)
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
