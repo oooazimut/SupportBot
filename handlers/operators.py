@@ -88,7 +88,20 @@ async def go_worker(callback_query: CallbackQuery, button: Button, manager: Dial
         await manager.switch_to(WorkersSG.slv)
     else:
         await callback_query.answer('Работники отсутствуют.', show_alert=True)
-
+async def go_addslaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
+    await manager.switch_to(WorkersSG.add_slv)
+async def insert_slaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
+    name=manager.find('user_name').get_value
+    user_id=manager.find('user_id').get_value
+    empl_service.insert_employee(name,user_id,'worker')
+    await callback_query.answer('Новый работник добавлен.', show_alert=True)
+    await manager.done()
+async def insert_operator(callback_query: CallbackQuery, button: Button, manager: DialogManager):
+    name = manager.find('user_name').get_value
+    user_id = manager.find('user_id').get_value
+    empl_service.insert_employee(name, user_id, 'operator')
+    await callback_query.answer('Новый оператор добавлен.', show_alert=True)
+    await manager.done()
 
 async def operator_getter(dialog_manager: DialogManager, **kwargs):
     un = dialog_manager.dialog_data['operators']
@@ -128,3 +141,4 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
     task_service.change_status(taskid, 'выполнено')
     scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid], id=str(taskid))
     await bg.start(state=PerformedTaskSG.main, data={'taskid': taskid})
+    await manager.switch_to(OpTaskSG.tas)
