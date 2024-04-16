@@ -17,6 +17,9 @@ class WorkersSG(StatesGroup):
     main = State()
     opr = State()
     slv = State()
+    add_slv = State()
+    add_id = State()
+    status = State()
 
 
 class CustomerSG(StatesGroup):

@@ -1,8 +1,10 @@
 import operator
 
 from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start
+from aiogram_dialog.widgets.input import MessageInput, TextInput
+from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start, Back
 from aiogram_dialog.widgets.text import Const, Format, Jinja
+from magic_filter import F
 
 from handlers import operators
 from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating
@@ -105,13 +107,26 @@ task_dialog = Dialog(
         state=OpTaskSG.preview
     )
 )
+async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
+    if dialog_manager.dialog_data.get('finished'):
+        await dialog_manager.switch_to(TaskCreating.preview)
+    else:
+        await dialog_manager.next()
+
+CANCEL_EDIT = SwitchTo(
+    Const("Отменить редактирование"),
+    when=F["dialog_data"]['finished'],
+    id="cnl_edt",
+    state=TaskCreating.preview
+)
 
 worker_dialog = Dialog(
     Window(
         Const('Работники:'),
         Row(
             Button(Const('Операторы'), id='assigned', on_click=operators.go_operator),
-            Button(Const('Исполнители'), id='worker_archive', on_click=operators.go_worker)
+            Button(Const('Исполнители'), id='worker_archive', on_click=operators.go_worker),
+            Button(Const('Добавить работника'), id='add_worker', on_clik=operators.go_addslaves),
         ),
         Cancel(Const('Назад')),
         state=WorkersSG.main
@@ -147,4 +162,32 @@ worker_dialog = Dialog(
         state=WorkersSG.slv,
         getter=operators.worker_getter
     ),
+
+    Window(
+        Const('Введите имя сотрудника'),
+        TextInput(id = 'user_name', on_success=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
+        Cancel(Const('Отменить создание')),
+        state = WorkersSG.add_slv
+    ),
+    Window(
+        Const('Введите id сотрудника'),
+        TextInput(id = 'user_id', on_success=next_or_end),
+        Back(Const('Назад')),
+        Cancel(Const('Отменить создание')),
+        state = WorkersSG.add_id
+    ),
+    Window(
+        Const('Выберите статус для сотрудника'),
+        Column(
+            Button(Const('Исполнитель'), id='slaves_status', on_click = operators.insert_slaves),
+            Button(Const('Оператор'), id='operator_status', on_clik = operators.insert_operator)
+        ),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
+        state = WorkersSG.status()
+
+    )
 )
+
