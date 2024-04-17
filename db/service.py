@@ -114,7 +114,7 @@ class TaskService:
              AND 
              slave is NOT NULL
              AND
-             status NOT IN ('закрыто', 'выполнено')
+             status NOT IN ('закрыто', 'выполнено', 'в работе')
              ''', params=None)
         return data
 
