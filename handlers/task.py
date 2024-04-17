@@ -111,6 +111,10 @@ async def to_slave(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.slave, show_mode=ShowMode.SEND)
 
 
+async def to_priority(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.priority, show_mode=ShowMode.SEND)
+
+
 async def cancel_edit(event, button, manager: DialogManager):
     await manager.done(show_mode=ShowMode.SEND)
 

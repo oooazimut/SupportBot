@@ -4,7 +4,7 @@ from typing import Any
 from aiogram import Bot
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import CallbackQuery
-from aiogram_dialog import DialogManager
+from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -67,8 +67,16 @@ async def go_archive(callback_query: CallbackQuery, button: Button, manager: Dia
 
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     task = next((t for t in manager.dialog_data['tasks'] if t['taskid'] == int(item_id)), None)
-    manager.dialog_data['taskid'] = item_id
-    await manager.start(OpTaskSG.preview, data=task)
+    manager.dialog_data['task'] = task
+    await manager.switch_to(OpTaskSG.preview)
+
+
+async def on_addit(callback: CallbackQuery, button: Button, manager: DialogManager):
+    await manager.switch_to(OpTaskSG.additional)
+
+
+async def on_back_to_preview(callback, button, manager: DialogManager):
+    await manager.switch_to(OpTaskSG.preview, show_mode=ShowMode.SEND)
 
 
 # Хендлеры для сотрудников
@@ -88,20 +96,27 @@ async def go_worker(callback_query: CallbackQuery, button: Button, manager: Dial
         await manager.switch_to(WorkersSG.slv)
     else:
         await callback_query.answer('Работники отсутствуют.', show_alert=True)
+
+
 async def go_addslaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     await manager.switch_to(WorkersSG.add_slv)
+
+
 async def insert_slaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    name=manager.find('user_name').get_value
-    user_id=manager.find('user_id').get_value
-    empl_service.insert_employee(name,user_id,'worker')
+    name = manager.find('user_name').get_value
+    user_id = manager.find('user_id').get_value
+    empl_service.insert_employee(name, user_id, 'worker')
     await callback_query.answer('Новый работник добавлен.', show_alert=True)
     await manager.done()
+
+
 async def insert_operator(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     name = manager.find('user_name').get_value
     user_id = manager.find('user_id').get_value
     empl_service.insert_employee(name, user_id, 'operator')
     await callback_query.answer('Новый оператор добавлен.', show_alert=True)
     await manager.done()
+
 
 async def operator_getter(dialog_manager: DialogManager, **kwargs):
     un = dialog_manager.dialog_data['operators']

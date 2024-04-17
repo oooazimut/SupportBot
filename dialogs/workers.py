@@ -129,11 +129,6 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
     await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
 
 
-async def refuse_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['taskid'], 'открыто')
-    await callback.answer(f'Вы отказались от заявки:  {manager.start_data["title"]}')
-
-
 async def onclose_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.switch_to(WorkerTaskSG.media_pin)
 
@@ -141,10 +136,6 @@ async def onclose_task(callback: CallbackQuery, button: Button, manager: DialogM
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
     task_service.change_status(manager.start_data['taskid'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} снова в работе.')
-
-
-async def client_info(callback: CallbackQuery, button: Button, manager: DialogManager):
-    pass
 
 
 def is_opened(data, widget, manager: DialogManager):
@@ -164,27 +155,8 @@ def is_in_progress(data, widget, manager: DialogManager):
 
 
 async def media_pin_task(message: Message, message_input: MessageInput, manager: DialogManager, callback=CallbackQuery):
-    txt = ''
-    media_id = None
-    match message.content_type:
-        case ContentType.TEXT:
-            txt = message.text
-        case ContentType.PHOTO:
-            media_id = message.photo[-1].file_id
-            txt = message.caption
-        case ContentType.DOCUMENT:
-            media_id = message.document.file_id
-            txt = message.caption
-        case ContentType.VIDEO:
-            media_id = message.video.file_id
-            txt = message.caption
-        case ContentType.AUDIO:
-            media_id = message.audio.file_id
-            txt = message.caption
-        case ContentType.VOICE:
-            media_id = message.voice.file_id
-        case ContentType.VIDEO_NOTE:
-            media_id = message.video_note.file_id
+    txt = message.caption
+    media_id = message.video.file_id
     media_type = message.content_type
 
     task_service.save_result(txt, media_id, media_type, manager.start_data['taskid'])
@@ -216,7 +188,6 @@ task_dialog = Dialog(
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
-        Button(Const('Отказаться'), id='refuse_task', on_click=refuse_task, when=not_in_archive),
         Button(Const('Закрыть'), id='close_task', on_click=onclose_task, when=not_in_archive),
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
         Cancel(Const('Назад')),
@@ -224,9 +195,9 @@ task_dialog = Dialog(
         getter=media_getter
     ),
     Window(
-        Const('Требуется отчет о проделанной работе. Это может быть картинка, видео, текст или голосовое сообщение.'),
-        MessageInput(media_pin_task, content_types=[ContentType.ANY]),
-        SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
+        Const('Для закрытия заявки добавьте видеоотчёт.'),
+        MessageInput(media_pin_task, content_types=[ContentType.VIDEO]),
+        Back(Const('Назад')),
         state=WorkerTaskSG.media_pin
     )
 )

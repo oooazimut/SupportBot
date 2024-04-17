@@ -1,7 +1,5 @@
-from db import task_service
+from db import db
 
 MY_ID = 5963726977
 
-a = {'a': 1}
-b = a.update({'b': 2})
-print(b)
+db.post_query('delete from tasks where taskid=23')

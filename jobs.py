@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Bot
 
 from db import task_service
@@ -6,7 +8,9 @@ from db import task_service
 async def reminders_task_to_worker(bot: Bot):
     tasks = task_service.get_task_reminder()
     for task in tasks:
-        await bot.send_message(chat_id=task['slave'], text='Есть заявки с высоким приоритетом!')
+        messaga = await bot.send_message(chat_id=task['slave'], text='Есть заявки с высоким приоритетом!')
+        await asyncio.sleep(30)
+        await messaga.delete()
 
 
 async def reminders_task_to_morning(bot: Bot):

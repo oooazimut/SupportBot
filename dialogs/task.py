@@ -12,7 +12,7 @@ from getters.task import priority_getter, result_getter, entitites_getter, slave
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
-    to_description, cancel_edit, to_slave, on_close, on_return
+    to_description, cancel_edit, to_slave, on_close, on_return, to_priority
 )
 from states import TaskCreating, PerformedTaskSG, AssignedTaskSG
 
@@ -117,6 +117,7 @@ create_task_dialog = Dialog(
         Button(Const('Изменить объект'), id='to_entity', on_click=to_entity),
         Button(Const('Изменить телефон'), id='to_phone', on_click=to_phone),
         Button(Const('Изменить Тему'), id='to_title', on_click=to_title),
+        Button(Const('Изменить приоритет'), id='to_priority', on_click=to_priority),
         Button(Const('Изменить описание'), id='to_description', on_click=to_description),
         Button(Const('Отменить создание'), id='cancel_edit', on_click=cancel_edit),
         Button(Const('Изменить исполнителя'), id='to_slave', on_click=to_slave),
@@ -150,7 +151,7 @@ performed_task = Dialog(
 assigned_task = Dialog(
     Window(
         Jinja('У вас новая заявка!'),
-        Cancel(Const('Закрыть')),
+        Cancel(Const('Хорошо')),
         state=AssignedTaskSG.main,
         parse_mode='html'
     )

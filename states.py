@@ -11,6 +11,7 @@ class OpTaskSG(StatesGroup):
     progress_task = State()
     archive_task = State()
     preview = State()
+    additional = State()
 
 
 class WorkersSG(StatesGroup):

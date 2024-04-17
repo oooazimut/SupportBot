@@ -113,6 +113,8 @@ class TaskService:
              where priority="\U0001F525" 
              AND 
              slave is NOT NULL
+             AND
+             status NOT IN ('закрыто', 'выполнено')
              ''', params=None)
         return data
 

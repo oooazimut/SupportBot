@@ -39,8 +39,8 @@ async def main():
     scheduler.start()
     scheduler.add_job(
         func=jobs.reminders_task_to_worker,
-        trigger='interval',
-        hours=1,
+        trigger='cron',
+        hour='9-16',
         id='send_task_to_worker',
         kwargs={'bot': bot},
     )
