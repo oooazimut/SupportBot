@@ -7,11 +7,10 @@ from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 from magic_filter import F
 
-from getters.operators import task_getter, addition_getter
+from getters.operators import media_getter, addition_getter
 from handlers import operators
 from handlers.operators import on_addit, on_back_to_preview
 from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating
-
 
 main_dialog = Dialog(
     Window(
@@ -56,7 +55,7 @@ task_dialog = Dialog(
         Const('Заявки в работе:'),
         Column(
             Select(
-                Format('{item[title]} {item[priority]}'),
+                Format('{item[title]}{item[priority]} {item[emoji]}'),
                 id='in_progress_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
@@ -98,7 +97,7 @@ task_dialog = Dialog(
         Button(Const('Закрыть'), id='close_task', on_click=operators.on_close, when=(F['status'] != 'закрыто')),
         Cancel(Const('Назад')),
         state=OpTaskSG.preview,
-        getter=task_getter
+        getter=media_getter
     ),
     Window(
         DynamicMedia('media'),

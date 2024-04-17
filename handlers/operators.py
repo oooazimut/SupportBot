@@ -34,6 +34,9 @@ async def go_new_task(callback_query: CallbackQuery, button: Button, manager: Di
 
 async def go_work_task(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     data = task_service.get_tasks_by_status('в работе')
+    if data:
+        for i in data:
+            i['emoji'] = ''
     assigned = task_service.get_tasks_by_status('назначено')
     if assigned:
         for item in assigned:

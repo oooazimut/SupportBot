@@ -2,7 +2,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
 
-async def task_getter(dialog_manager: DialogManager, **kwargs):
+async def media_getter(dialog_manager: DialogManager, **kwargs):
     task: dict = dialog_manager.dialog_data['task'].copy()
     resultmedia = None
     if task['resultid']:
