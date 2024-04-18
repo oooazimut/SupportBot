@@ -33,7 +33,7 @@ async def on_priority(event, select, dialog_manager: DialogManager, data: str, /
 
 
 async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
-    task = task_service.get_task(data)
+    task = task_service.get_task(data)[0]
     dialog_manager.dialog_data['task']['entity'] = task['ent_id']
     dialog_manager.dialog_data['task']['name'] = task['name']
 

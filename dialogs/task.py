@@ -141,13 +141,10 @@ performed_task = Dialog(
         {{username}} выполнил заявку: {{title}}.
         Количество выполненных заявок: {{counter}}.
         '''),
-        Start(
-            Const('Подробнее'),
-            id='to_inprogress',
-            state=OpTaskSG.progress_task,
-            mode=StartMode.RESET_STACK
+        Cancel(
+            Const('Прочитано'),
+            id='accepted',
         ),
-        Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return),
         state=PerformedTaskSG.main,
         getter=performed_getter,
         parse_mode='html'
