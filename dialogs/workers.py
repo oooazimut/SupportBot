@@ -12,7 +12,7 @@ from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from db import task_service
+from db import task_service, empl_service
 from getters.workers import task_entities_getter, tasks_open_getter, media_getter
 from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
     open_tasks, on_entity
@@ -158,21 +158,22 @@ async def media_pin_task(message: Message, message_input: MessageInput, manager:
     txt = message.caption
     media_id = message.video.file_id
     media_type = message.content_type
-
     task_service.save_result(txt, media_id, media_type, manager.start_data['taskid'])
-    task_service.change_status(manager.start_data['taskid'], 'выполнено')
-    mes = await message.answer(f'Заявка {manager.start_data["title"]} выполнена. Ожидаем потверждения от клиента.')
 
     taskid = manager.start_data['taskid']
-    user = manager.start_data['creator']
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-    bg = manager.bg(user_id=user, chat_id=user)
 
     task_service.change_status(taskid, 'выполнено')
     scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid], id=str(taskid))
-    await bg.start(state=PerformedTaskSG.main, data={'taskid': taskid})
 
+    operators = empl_service.get_employees_by_position('operator')
+    for o in operators:
+        bg = manager.bg(user_id=o['userid'], chat_id=o['userid'])
+        await bg.start(state=PerformedTaskSG.main, data={'taskid': taskid})
+
+    text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
+    mes = await message.answer(text=text)
     await asyncio.sleep(5)
     await mes.delete()
     await manager.done()

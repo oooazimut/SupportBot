@@ -1,11 +1,10 @@
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
 from config import START_STATES
-from db import empl_service, task_service
-from handlers.operators import TaskCallbackFactory
+from db import empl_service
 
 router = Router()
 

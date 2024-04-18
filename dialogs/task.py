@@ -2,9 +2,9 @@ import operator
 
 from aiogram import F
 from aiogram.enums import ContentType
-from aiogram_dialog import Dialog, Window
+from aiogram_dialog import Dialog, Window, StartMode
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Column
+from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Column, Start
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Jinja, Format
 
@@ -12,9 +12,9 @@ from getters.task import priority_getter, result_getter, entitites_getter, slave
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
-    to_description, cancel_edit, to_slave, on_close, on_return, to_priority
+    to_description, cancel_edit, to_slave, on_return, to_priority
 )
-from states import TaskCreating, PerformedTaskSG, AssignedTaskSG
+from states import TaskCreating, PerformedTaskSG, AssignedTaskSG, OpTaskSG
 
 create_task_dialog = Dialog(
     Window(
@@ -31,7 +31,7 @@ create_task_dialog = Dialog(
                 Format('🔘 {item[name]}'),
                 Format('⚪️ {item[name]}'),
                 id='choose_entity',
-                item_id_getter=lambda item: item,
+                item_id_getter=lambda item: item['ent_id'],
                 items='entities',
                 on_click=on_entity
             ),
@@ -137,10 +137,16 @@ create_task_dialog = Dialog(
 
 performed_task = Dialog(
     Window(
-        DynamicMedia('media', when=F['media']),
-        Jinja('Ваша заявка {{title}} выполнена. Если вы ничего не нажмёте, через 3 дня она уйдет в архив.'),
-        Jinja('Описание: {{result}}', when=F['result']),
-        Button(Const('Подтвердить выполнение'), id='confirm_performing', on_click=on_close),
+        Jinja('''
+        {{username}} выполнил заявку: {{title}}.
+        Количество выполненных заявок: {{counter}}.
+        '''),
+        Start(
+            Const('Подробнее'),
+            id='to_inprogress',
+            state=OpTaskSG.progress_task,
+            mode=StartMode.RESET_STACK
+        ),
         Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return),
         state=PerformedTaskSG.main,
         getter=performed_getter,

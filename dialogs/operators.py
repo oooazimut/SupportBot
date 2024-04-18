@@ -9,7 +9,7 @@ from magic_filter import F
 
 from getters.operators import media_getter, addition_getter
 from handlers import operators
-from handlers.operators import on_addit, on_back_to_preview
+from handlers.operators import on_addit, on_back_to_preview, on_return
 from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating
 
 main_dialog = Dialog(
@@ -71,7 +71,7 @@ task_dialog = Dialog(
         Const('Заявки в архиве'),
         Column(
             Select(
-                Format('{item[title]}'),
+                Format('{item[priority]}{item[title]}'),
                 id='done_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
@@ -85,7 +85,8 @@ task_dialog = Dialog(
     Window(
         Jinja('''
        {{created}}
-       Тема: {{title}}
+       Тема: {{title if title}}
+       Объект: {{name if name}}
        Описание: {{description if description}}
        Исполнитель: {{username if username}}
        Приоритет: {{priority if priority}}
@@ -95,6 +96,7 @@ task_dialog = Dialog(
         Button(Const('Доп инфо'), id='addit_info', on_click=on_addit, when=F['media_id']),
         Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=(F['status'] != 'закрыто')),
         Button(Const('Закрыть'), id='close_task', on_click=operators.on_close, when=(F['status'] != 'закрыто')),
+        Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return, when=(F['status'] == 'выполнено')),
         Cancel(Const('Назад')),
         state=OpTaskSG.preview,
         getter=media_getter

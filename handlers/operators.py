@@ -1,8 +1,5 @@
-import datetime
 from typing import Any
 
-from aiogram import Bot
-from aiogram.filters.callback_data import CallbackData
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
@@ -10,8 +7,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service
 from db import task_service
-from jobs import close_task
-from states import WorkersSG, OpTaskSG, TaskCreating, PerformedTaskSG
+from states import WorkersSG, OpTaskSG, TaskCreating
 
 
 # Хендлеры для тасков
@@ -69,7 +65,7 @@ async def go_archive(callback_query: CallbackQuery, button: Button, manager: Dia
 
 
 async def on_task(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    task = next((t for t in manager.dialog_data['tasks'] if t['taskid'] == int(item_id)), None)
+    task = task_service.get_task(taskid=item_id)[0]
     manager.dialog_data['task'] = task
     await manager.switch_to(OpTaskSG.preview)
 
@@ -135,28 +131,33 @@ async def worker_getter(dialog_manager: DialogManager, **kwargs):
     return {'un': un}
 
 
-async def client_info(callback: CallbackQuery, button: Button, manager: DialogManager):
-    pass
-
-
 async def edit_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.start(TaskCreating.preview, data=manager.start_data)
-
-
-class TaskCallbackFactory(CallbackData, prefix='return_task'):
-    action: str
-    taskid: int
+    await manager.start(TaskCreating.preview, data=manager.dialog_data['task'])
 
 
 async def on_close(callback: CallbackQuery, button: Button, manager: DialogManager):
-    taskid = manager.start_data['taskid']
-    user = manager.start_data['creator']
-    run_date = datetime.datetime.now() + datetime.timedelta(days=3)
+    taskid = manager.dialog_data['task']['taskid']
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-    bot: Bot = manager.middleware_data['bot']
-    bg = manager.bg(user_id=user, chat_id=user)
+    task_service.change_status(taskid, 'закрыто')
+    job = scheduler.get_job(job_id=str(taskid))
+    if job:
+        job.remove()
+        await callback.answer('Заявка перемещена в архив.', show_alert=True)
+    else:
+        await callback.answer('Заявка уже в архиве.', show_alert=True)
+    await manager.switch_to(OpTaskSG.progress_task)
 
-    task_service.change_status(taskid, 'выполнено')
-    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid], id=str(taskid))
-    await bg.start(state=PerformedTaskSG.main, data={'taskid': taskid})
-    await manager.switch_to(OpTaskSG.tas)
+
+async def on_return(clb: CallbackQuery, button, manager: DialogManager):
+    task = manager.dialog_data['task']
+    task_service.change_status(task['taskid'], 'в работе')
+
+    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+    job = scheduler.get_job(str(task['taskid']))
+    if job:
+        job.remove()
+        await clb.answer('Заявка возвращена в работу.', show_alert=True)
+    else:
+        await clb.answer('Заявка уже в работе.', show_alert=True)
+
+    await manager.switch_to(OpTaskSG.progress_task)

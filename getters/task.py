@@ -6,7 +6,7 @@ from db import empl_service, task_service
 
 async def priority_getter(dialog_manager: DialogManager, **kwargs):
     priorities = [
-        ('низкий', ''),
+        ('низкий', ' '),
         ('высокий', '\U0001F525')
     ]
     return {
@@ -44,6 +44,8 @@ async def result_getter(dialog_manager: DialogManager, **kwargs):
         title = dialog_manager.start_data.get('title')
     description = dialog_manager.dialog_data['task'].get('description') or dialog_manager.start_data.get('description')
     priority = dialog_manager.dialog_data['task'].get('priority') or dialog_manager.start_data.get('priority')
+    if priority == ' ':
+        priority = None
     username = dialog_manager.dialog_data['task'].get('username') or dialog_manager.start_data.get('username')
     dialog_manager.dialog_data['finished'] = True
     dialog_manager.dialog_data['to_save'] = {
@@ -61,8 +63,8 @@ async def result_getter(dialog_manager: DialogManager, **kwargs):
 
 async def performed_getter(dialog_manager: DialogManager, **kwargs):
     task = task_service.get_task(dialog_manager.start_data['taskid'])[0]
-    media = None
-    if task['resultid']:
-        media = MediaAttachment(task['resulttype'], file_id=MediaId(task['resultid']))
-    task.update({'media': media})
+    title = task['title']
+    username = task['username']
+    performed_counter = len(task_service.get_tasks_by_status('выполнено'))
+    task.update({'counter': performed_counter})
     return task

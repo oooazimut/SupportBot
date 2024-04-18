@@ -33,9 +33,9 @@ async def on_priority(event, select, dialog_manager: DialogManager, data: str, /
 
 
 async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
-    data = eval(data)
-    dialog_manager.dialog_data['task']['entity'] = data['ent_id']
-    dialog_manager.dialog_data['task']['name'] = data['name']
+    task = task_service.get_task(data)
+    dialog_manager.dialog_data['task']['entity'] = task['ent_id']
+    dialog_manager.dialog_data['task']['name'] = task['name']
 
 
 async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
@@ -85,6 +85,8 @@ async def task_description_handler(message: Message, message_input: MessageInput
 async def ent_name_handler(message: Message, message_input: MessageInput, manager: DialogManager):
     entities = EntityService.get_entities_by_substr(message.text)
     if entities:
+        for i in entities:
+            print(i)
         manager.dialog_data['entities'] = entities
         await manager.switch_to(TaskCreating.entities)
     else:
@@ -92,31 +94,31 @@ async def ent_name_handler(message: Message, message_input: MessageInput, manage
 
 
 async def to_entity(event, button, manager: DialogManager):
-    await manager.switch_to(state=TaskCreating.sub_entity, show_mode=ShowMode.SEND)
+    await manager.switch_to(state=TaskCreating.sub_entity, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def to_phone(event, button, manager: DialogManager):
-    await manager.switch_to(state=TaskCreating.enter_phone, show_mode=ShowMode.SEND)
+    await manager.switch_to(state=TaskCreating.enter_phone, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def to_title(event, button, manager: DialogManager):
-    await manager.switch_to(state=TaskCreating.enter_title, show_mode=ShowMode.SEND)
+    await manager.switch_to(state=TaskCreating.enter_title, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def to_description(event, button, manager: DialogManager):
-    await manager.switch_to(state=TaskCreating.enter_description, show_mode=ShowMode.SEND)
+    await manager.switch_to(state=TaskCreating.enter_description, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def to_slave(event, button, manager: DialogManager):
-    await manager.switch_to(state=TaskCreating.slave, show_mode=ShowMode.SEND)
+    await manager.switch_to(state=TaskCreating.slave, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def to_priority(event, button, manager: DialogManager):
-    await manager.switch_to(state=TaskCreating.priority, show_mode=ShowMode.SEND)
+    await manager.switch_to(state=TaskCreating.priority, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def cancel_edit(event, button, manager: DialogManager):
-    await manager.done(show_mode=ShowMode.SEND)
+    await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
@@ -151,18 +153,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
 async def on_start(data, manager: DialogManager):
     manager.dialog_data['task'] = {}
-
-
-async def on_close(clb: CallbackQuery, button, manager: DialogManager):
-    task_service.change_status(manager.start_data['taskid'], 'закрыто')
-    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-    job = scheduler.get_job(str(manager.start_data['taskid']))
-    if job:
-        job.remove()
-        await clb.answer('Заявка перемещена в архив.', show_alert=True)
-    else:
-        await clb.answer('Заявка уже в архиве.', show_alert=True)
-    await manager.done()
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
