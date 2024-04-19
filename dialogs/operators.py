@@ -12,6 +12,16 @@ from handlers import operators
 from handlers.operators import on_addit, on_back_to_preview, on_return
 from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating
 
+JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}\
+                       {% set dt_list = dttm_list[0].split("-") %}\
+                       {% set dt = dt_list[2]+"."+dt_list[1] %}\
+                       {% set em = "\U00002705" if item.status == "выполнено" else "" %}\
+                       {% set sl = item.username if item.username else "\U00002753" %}\
+                       {% set pr = item.priority if item.priority else "" %}\
+                       {% set ob = item.name if item.name else "" %}\
+                       {% set tt = item.title if item.title else "" %}\
+                       {{em}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
+
 main_dialog = Dialog(
     Window(
         Const("Главное меню:"),
@@ -26,20 +36,18 @@ task_dialog = Dialog(
     Window(
         Const('Заявки:'),
         Row(
-            Button(Const('Новые заявки'), id='assign', on_click=operators.go_new_task),
-            Button(Const('Заявки в работе'), id='done', on_click=operators.go_work_task),
+            Button(Const('Открытые'), id='tasks', on_click=operators.on_tasks),
             Button(Const('Архив'), id='archive', on_click=operators.go_archive)
         ),
         Start(Const('Создать заявку'), id='new_op_task', data={}, state=TaskCreating.sub_entity),
         Cancel(Const('Назад')),
         state=OpTaskSG.tas
     ),
-
     Window(
-        Const('Новые заявки:'),
+        Const('Открытые заявки:'),
         Column(
             Select(
-                Format('{item[title]} {item[priority]}'),
+                JINJA_TEMPLATE,
                 id='new_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
@@ -47,31 +55,15 @@ task_dialog = Dialog(
             )
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
-        state=OpTaskSG.new_task,
-        getter=operators.tasks_getter
-    ),
-
-    Window(
-        Const('Заявки в работе:'),
-        Column(
-            Select(
-                Format('{item[title]}{item[priority]} {item[emoji]}'),
-                id='in_progress_tasks',
-                item_id_getter=operator.itemgetter('taskid'),
-                items='tasks',
-                on_click=operators.on_task
-            )
-        ),
-        SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
-        state=OpTaskSG.progress_task,
+        state=OpTaskSG.opened_tasks,
         getter=operators.tasks_getter,
+        parse_mode='html'
     ),
-
     Window(
         Const('Заявки в архиве'),
         Column(
             Select(
-                Format('{item[priority]}{item[title]}'),
+                JINJA_TEMPLATE,
                 id='done_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
@@ -80,7 +72,8 @@ task_dialog = Dialog(
         ),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.archive_task,
-        getter=operators.tasks_getter
+        getter=operators.tasks_getter,
+        parse_mode='html'
     ),
     Window(
         Jinja('''

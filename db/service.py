@@ -163,3 +163,8 @@ class EntityService:
     def get_task_for_entity(entity):
         query = 'SELECT * FROM tasks WHERE entity = ?'
         return db.select_query(query, [entity])
+
+    @staticmethod
+    def get_entity(entid):
+        query = 'SELECT * FROM entities WHERE ent_id = ?'
+        return db.select_query(query, [entid])

@@ -7,8 +7,7 @@ class OperatorSG(StatesGroup):
 
 class OpTaskSG(StatesGroup):
     tas = State()
-    new_task = State()
-    progress_task = State()
+    opened_tasks = State()
     archive_task = State()
     preview = State()
     additional = State()

@@ -19,35 +19,21 @@ async def go_slaves(callback_query: CallbackQuery, button: Button, manager: Dial
     await manager.start(WorkersSG.main)
 
 
-async def go_new_task(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    data = task_service.get_tasks_by_status('открыто')
-    if data:
-        manager.dialog_data['tasks'] = data
-        await manager.switch_to(OpTaskSG.new_task)
+async def on_tasks(callback_query: CallbackQuery, button: Button, manager: DialogManager):
+    tasks = list()
+    new_tasks = task_service.get_tasks_by_status('открыто')
+    confirmed_tasks = task_service.get_tasks_by_status('выполнено')
+    assigned_tasks = sorted(
+        task_service.get_tasks_by_status('назначено'),
+        key=lambda x: x['priority'] if x['priority'] else ''
+    )
+    for item in (assigned_tasks, new_tasks, confirmed_tasks):
+        tasks.extend(item)
+    if tasks:
+        manager.dialog_data['tasks'] = tasks
+        await manager.switch_to(OpTaskSG.opened_tasks)
     else:
-        await callback_query.answer('Нет новых заявок', show_alert=True)
-
-
-async def go_work_task(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    data = task_service.get_tasks_by_status('в работе')
-    if data:
-        for i in data:
-            i['emoji'] = ''
-    assigned = task_service.get_tasks_by_status('назначено')
-    if assigned:
-        for item in assigned:
-            item['emoji'] = '\U00002753'
-        data.extend(assigned)
-    confirmed = task_service.get_tasks_by_status('выполнено')
-    if confirmed:
-        for item in confirmed:
-            item['emoji'] = '\U00002705'
-        data.extend(confirmed)
-    if data:
-        manager.dialog_data['tasks'] = data
-        await manager.switch_to(OpTaskSG.progress_task)
-    else:
-        await callback_query.answer('Нет заявок в работе', show_alert=True)
+        await callback_query.answer('Тут ничего нет.', show_alert=True)
 
 
 async def tasks_getter(dialog_manager: DialogManager, **kwargs):
@@ -126,7 +112,6 @@ async def worker_getter(dialog_manager: DialogManager, **kwargs):
     try:
         un = dialog_manager.dialog_data['workers']
     except KeyError:
-        print(dialog_manager.start_data['workers'])
         un = dialog_manager.start_data['workers']
     return {'un': un}
 
@@ -145,7 +130,7 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
         await callback.answer('Заявка перемещена в архив.', show_alert=True)
     else:
         await callback.answer('Заявка уже в архиве.', show_alert=True)
-    await manager.switch_to(OpTaskSG.progress_task)
+    await manager.switch_to(OpTaskSG.opened_tasks)
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
@@ -160,4 +145,4 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
     else:
         await clb.answer('Заявка уже в работе.', show_alert=True)
 
-    await manager.switch_to(OpTaskSG.progress_task)
+    await manager.switch_to(OpTaskSG.opened_tasks)

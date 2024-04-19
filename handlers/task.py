@@ -33,9 +33,9 @@ async def on_priority(event, select, dialog_manager: DialogManager, data: str, /
 
 
 async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
-    task = task_service.get_task(data)[0]
-    dialog_manager.dialog_data['task']['entity'] = task['ent_id']
-    dialog_manager.dialog_data['task']['name'] = task['name']
+    entity = EntityService.get_entity(data)[0]
+    dialog_manager.dialog_data['task']['entity'] = entity['ent_id']
+    dialog_manager.dialog_data['task']['name'] = entity['name']
 
 
 async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
@@ -85,8 +85,6 @@ async def task_description_handler(message: Message, message_input: MessageInput
 async def ent_name_handler(message: Message, message_input: MessageInput, manager: DialogManager):
     entities = EntityService.get_entities_by_substr(message.text)
     if entities:
-        for i in entities:
-            print(i)
         manager.dialog_data['entities'] = entities
         await manager.switch_to(TaskCreating.entities)
     else:
