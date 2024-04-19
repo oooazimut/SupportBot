@@ -12,15 +12,15 @@ from handlers import operators
 from handlers.operators import on_addit, on_back_to_preview, on_return
 from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating
 
-JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}\
-                       {% set dt_list = dttm_list[0].split("-") %}\
-                       {% set dt = dt_list[2]+"."+dt_list[1] %}\
-                       {% set em = "\U00002705" if item.status == "выполнено" else "" %}\
-                       {% set sl = item.username if item.username else "\U00002753" %}\
-                       {% set pr = item.priority if item.priority else "" %}\
-                       {% set ob = item.name if item.name else "" %}\
-                       {% set tt = item.title if item.title else "" %}\
-                       {{em}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
+JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
+                       '{% set dt_list = dttm_list[0].split("-") %}'
+                       '{% set dt = dt_list[2]+"."+dt_list[1] %}'
+                       '{% set em = "\U00002705" if item.status == "выполнено" else "" %}'
+                       '{% set sl = item.username if item.username else "\U00002753" %}'
+                       '{% set pr = item.priority if item.priority else "" %}'
+                       '{% set ob = item.name if item.name else "" %}'
+                       '{% set tt = item.title if item.title else "" %}'
+                       '{{em}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
 
 main_dialog = Dialog(
     Window(
