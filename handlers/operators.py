@@ -27,7 +27,11 @@ async def on_tasks(callback_query: CallbackQuery, button: Button, manager: Dialo
         task_service.get_tasks_by_status('назначено'),
         key=lambda x: x['priority'] if x['priority'] else ''
     )
-    for item in (assigned_tasks, new_tasks, confirmed_tasks):
+    progress_tasks = sorted(
+        task_service.get_tasks_by_status('в работе'),
+        key=lambda x: x['priority'] if x['priority'] else ''
+    )
+    for item in (progress_tasks, assigned_tasks, new_tasks, confirmed_tasks):
         tasks.extend(item)
     if tasks:
         manager.dialog_data['tasks'] = tasks
@@ -88,17 +92,17 @@ async def go_addslaves(callback_query: CallbackQuery, button: Button, manager: D
 
 
 async def insert_slaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    name = manager.find('user_name').get_value
-    user_id = manager.find('user_id').get_value
-    empl_service.insert_employee(name, user_id, 'worker')
+    name = manager.find('user_name').get_value()
+    user_id = manager.find('user_id').get_value()
+    empl_service.save_employee(user_id, name, 'worker')
     await callback_query.answer('Новый работник добавлен.', show_alert=True)
     await manager.done()
 
 
 async def insert_operator(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    name = manager.find('user_name').get_value
-    user_id = manager.find('user_id').get_value
-    empl_service.insert_employee(name, user_id, 'operator')
+    name = manager.find('user_name').get_value()
+    user_id = manager.find('user_id').get_value()
+    empl_service.save_employee(user_id, name, 'operator')
     await callback_query.answer('Новый оператор добавлен.', show_alert=True)
     await manager.done()
 

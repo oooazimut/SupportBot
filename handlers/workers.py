@@ -1,7 +1,7 @@
 from typing import Any
 
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import DialogManager
+from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
@@ -23,9 +23,6 @@ async def on_progress(callback: CallbackQuery, button: Button, manager: DialogMa
     data = []
     in_progress = task_service.get_tasks_by_status('в работе', userid=callback.from_user.id)
     performed = task_service.get_tasks_by_status('выполнено', userid=callback.from_user.id)
-    if performed:
-        for i in performed:
-            i['priority'] += '\U00002705'
     data.extend(in_progress)
     data.extend(performed)
     if data:
@@ -70,3 +67,15 @@ async def on_entity(callback: CallbackQuery, select, manager: DialogManager, dat
 async def open_tasks(callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     task = task_service.get_task(item_id)[0]
     await manager.start(WorkerTaskSG.main, data=task)
+
+
+async def back_to_main(callback, button, manager: DialogManager):
+    await manager.switch_to(WorkerSG.main, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def to_entities(callback, button, manager: DialogManager):
+    await manager.switch_to(WorkerSG.entities_search, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def on_cancel(callback, button, manager: DialogManager):
+    await manager.done(show_mode=ShowMode.DELETE_AND_SEND)

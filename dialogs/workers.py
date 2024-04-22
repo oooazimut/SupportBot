@@ -5,19 +5,31 @@ import operator
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram_dialog import Dialog, Window, DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Select, Column, Button, SwitchTo, Cancel, Back
+from aiogram_dialog.widgets.kbd import Select, Column, Button, SwitchTo, Back
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Jinja
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import task_service, empl_service
 from getters.workers import task_entities_getter, tasks_open_getter, media_getter
 from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
-    open_tasks, on_entity
+    open_tasks, on_entity, back_to_main, to_entities, on_cancel
 from jobs import close_task
 from states import WorkerSG, WorkerTaskSG, PerformedTaskSG
+
+JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
+                       '{% set dt_list = dttm_list[0].split("-") %}'
+                       '{% set dt = dt_list[2]+"."+dt_list[1] %}'
+                       '{% set em = "\U00002705" if item.status == "выполнено" else "" %}'
+                       '{% set sl = item.username if item.username else "\U00002753" %}'
+                       '{% set pr = item.priority if item.priority else "" %}'
+                       '{% set ob = item.name if item.name else "" %}'
+                       '{% set tt = item.title if item.title else "" %}'
+                       '{{em}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
+
+TO_MAIN = Button(Const('Назад'), id='back_to_main', on_click=back_to_main)
 
 
 async def task_getter(dialog_manager: DialogManager, **kwargs):
@@ -41,7 +53,7 @@ main_dialog = Dialog(
         Const('Назначенные заявки'),
         Column(
             Select(
-                Format('{item[title]} {item[priority]}'),
+                JINJA_TEMPLATE,
                 id='worker_assigned_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
@@ -49,7 +61,7 @@ main_dialog = Dialog(
 
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
+        TO_MAIN,
         state=WorkerSG.assigned,
         getter=task_getter
     ),
@@ -57,14 +69,14 @@ main_dialog = Dialog(
         Const('Заявки в работе:'),
         Column(
             Select(
-                Format('{item[title]} {item[priority]}'),
+                JINJA_TEMPLATE,
                 id='worker_in_progress_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=on_task
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
+        TO_MAIN,
         state=WorkerSG.in_progress,
         getter=task_getter
     ),
@@ -72,14 +84,14 @@ main_dialog = Dialog(
         Const('Архив заявок:'),
         Column(
             Select(
-                Format('{item[title]}'),
+                JINJA_TEMPLATE,
                 id='worker_archive_tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=on_task
             )
         ),
-        SwitchTo(Const('Назад'), id='to_main', state=WorkerSG.main),
+        TO_MAIN,
         state=WorkerSG.archive,
         getter=task_getter
     ),
@@ -108,15 +120,14 @@ main_dialog = Dialog(
         Const('Заявки на обьекте:'),
         Column(
             Select(
-                Format('{item[title]} {item[priority]}'),
+                JINJA_TEMPLATE,
                 id='tasks',
                 item_id_getter=operator.itemgetter('taskid'),
                 items='tasks',
                 on_click=open_tasks
-            ),
-            Back(Const('Назад')),
+            )
         ),
-
+        Button(Const('Назад'), id='to_entity_search', on_click=to_entities),
         state=WorkerSG.tasks_entities,
         getter=tasks_open_getter
 
@@ -127,6 +138,7 @@ main_dialog = Dialog(
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     task_service.change_status(manager.start_data['taskid'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
+    await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def onclose_task(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -191,7 +203,7 @@ task_dialog = Dialog(
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
         Button(Const('Закрыть'), id='close_task', on_click=onclose_task, when=not_in_archive),
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
-        Cancel(Const('Назад')),
+        Button(Const('Назад'), id='cancel', on_click=on_cancel),
         state=WorkerTaskSG.main,
         getter=media_getter
     ),

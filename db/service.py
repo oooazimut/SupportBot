@@ -122,6 +122,7 @@ class TaskService:
         data = self.database.select_query(
             '''SELECT * from tasks
              where slave is NOT NULL
+             AND status NOT IN ('закрыто', 'выполнено')
              ''', params=None)
         return data
 
@@ -150,6 +151,8 @@ class EmployeeService:
     def get_employees_by_position(self, position):
         data = self.database.select_query('SELECT * FROM employees WHERE position = ?', [position])
         return data
+
+
 
 
 class EntityService:
