@@ -142,7 +142,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
 
 
 async def onclose_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(WorkerTaskSG.media_pin)
+    await manager.switch_to(WorkerTaskSG.media_pin, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
