@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, StartMode
@@ -25,9 +25,9 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
     await dialog_manager.start(state=START_STATES[position], mode=StartMode.RESET_STACK)
 
 
-@router.callback_query(TaskFactory.filter(F.action == 'get'))
+@router.callback_query(TaskFactory.filter())
 async def get_task(callback: CallbackQuery, callback_data: TaskFactory, scheduler: AsyncIOScheduler):
-    jobid = str(callback.from_user.id) + str(callback_data.taskid)
+    jobid = str(callback.from_user.id) + callback_data.task
     job = scheduler.get_job(jobid)
     if job:
         job.remove()

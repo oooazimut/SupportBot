@@ -8,13 +8,13 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Co
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Jinja, Format
 
-from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter, performed_getter
+from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
     to_description, cancel_edit, to_slave, to_priority
 )
-from states import TaskCreating, PerformedTaskSG, AssignedTaskSG
+from states import TaskCreating
 
 create_task_dialog = Dialog(
     Window(
@@ -133,29 +133,4 @@ create_task_dialog = Dialog(
         state=TaskCreating.empty_entities
     ),
     on_start=on_start,
-)
-
-performed_task = Dialog(
-    Window(
-        Jinja('''
-        {{username}} выполнил заявку: {{title}}.
-        Количество выполненных заявок: {{counter}}.
-        '''),
-        Cancel(
-            Const('Прочитано'),
-            id='accepted',
-        ),
-        state=PerformedTaskSG.main,
-        getter=performed_getter,
-        parse_mode='html'
-    )
-)
-
-assigned_task = Dialog(
-    Window(
-        Jinja('У вас новая заявка!'),
-        Cancel(Const('Хорошо')),
-        state=AssignedTaskSG.main,
-        parse_mode='html'
-    )
 )

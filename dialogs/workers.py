@@ -16,8 +16,8 @@ from db import task_service, empl_service
 from getters.workers import task_entities_getter, tasks_open_getter, media_getter
 from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
     open_tasks, on_entity, back_to_main, to_entities, on_cancel
-from jobs import close_task
-from states import WorkerSG, WorkerTaskSG, PerformedTaskSG
+from jobs import close_task, confirmed_task
+from states import WorkerSG, WorkerTaskSG
 
 JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set dt_list = dttm_list[0].split("-") %}'
@@ -182,8 +182,11 @@ async def media_pin_task(message: Message, message_input: MessageInput, manager:
 
     operators = empl_service.get_employees_by_position('operator')
     for o in operators:
-        bg = manager.bg(user_id=o['userid'], chat_id=o['userid'])
-        await bg.start(state=PerformedTaskSG.main, data={'taskid': taskid})
+        operatorid = o['userid']
+        slave = manager.start_data['username']
+        task = manager.start_data['title']
+        scheduler.add_job(confirmed_task, 'cron', minute='*/5', hour='9-17', day_of_week='mon-fri',
+                          args=[operatorid, slave, task], id=str(operatorid)+task, replace_existing=True)
 
     text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     mes = await message.answer(text=text)
