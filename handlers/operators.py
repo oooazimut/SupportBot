@@ -1,13 +1,15 @@
+import datetime
 from typing import Any
 
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
+from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service
 from db import task_service
-from states import WorkersSG, OpTaskSG, TaskCreating
+from states import WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG
 
 
 # Хендлеры для тасков
@@ -22,6 +24,7 @@ async def go_slaves(callback_query: CallbackQuery, button: Button, manager: Dial
 async def on_tasks(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     tasks = list()
     new_tasks = task_service.get_tasks_by_status('открыто')
+    delayed_tasks = task_service.get_tasks_by_status('отложено')
     confirmed_tasks = task_service.get_tasks_by_status('выполнено')
     assigned_tasks = sorted(
         task_service.get_tasks_by_status('назначено'),
@@ -31,7 +34,7 @@ async def on_tasks(callback_query: CallbackQuery, button: Button, manager: Dialo
         task_service.get_tasks_by_status('в работе'),
         key=lambda x: x['priority'] if x['priority'] else ''
     )
-    for item in (progress_tasks, assigned_tasks, new_tasks, confirmed_tasks):
+    for item in (delayed_tasks, progress_tasks, assigned_tasks, new_tasks, confirmed_tasks):
         tasks.extend(item)
     if tasks:
         manager.dialog_data['tasks'] = tasks
@@ -150,3 +153,29 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
         await clb.answer('Заявка уже в работе.', show_alert=True)
 
     await manager.switch_to(OpTaskSG.opened_tasks)
+
+
+async def on_delay(callback, button, manager: DialogManager):
+    task: dict = manager.dialog_data['task'].copy()
+    await manager.start(state=DelayTaskSG.enter_delay, data=task, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def delay_handler(message: Message, message_input: MessageInput, manager: DialogManager):
+    delay = int(message.text)
+    taskid = manager.start_data['taskid']
+    delayed_status = manager.start_data['status']
+
+    task_service.change_status(taskid, status='отложено')
+    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+    trigger_data = datetime.date.today() + datetime.timedelta(days=delay)
+    manager.dialog_data['trigger'] = str(trigger_data)
+    year, month, day = trigger_data.year, trigger_data.month, trigger_data.day
+    scheduler.add_job(task_service.change_status, trigger='date',
+                      run_date=datetime.datetime(year, month, day, 9, 0, 0),
+                      args=[taskid, delayed_status], id='delay' + str(taskid))
+    await manager.next()
+
+
+async def on_done(callback, button, manager: DialogManager):
+    await manager.done()
+    await manager.switch_to(OpTaskSG.opened_tasks, show_mode=ShowMode.DELETE_AND_SEND)

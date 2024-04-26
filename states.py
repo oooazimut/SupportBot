@@ -13,6 +13,11 @@ class OpTaskSG(StatesGroup):
     additional = State()
 
 
+class DelayTaskSG(StatesGroup):
+    enter_delay = State()
+    done = State()
+
+
 class WorkersSG(StatesGroup):
     main = State()
     opr = State()

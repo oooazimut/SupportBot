@@ -1,7 +1,8 @@
 import operator
 
+from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.input import TextInput
+from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start, Back
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
@@ -9,18 +10,20 @@ from magic_filter import F
 
 from getters.operators import media_getter, addition_getter
 from handlers import operators
-from handlers.operators import on_addit, on_back_to_preview, on_return
-from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating
+from handlers.operators import on_addit, on_back_to_preview, on_return, delay_handler
+from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG
 
 JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set dt_list = dttm_list[0].split("-") %}'
                        '{% set dt = dt_list[2]+"."+dt_list[1] %}'
-                       '{% set em = "\U00002705" if item.status == "выполнено" else "" %}'
+                       '{% set d = "\U0000231B" if item.status == "отложено" else "" %}'
+                       '{% set st = "\U00002705" if item.status == "выполнено" else "\U0001F7E9" if item.status == '
+                       '"в работе" else "" %}'
                        '{% set sl = item.username if item.username else "\U00002753" %}'
                        '{% set pr = item.priority if item.priority else "" %}'
                        '{% set ob = item.name if item.name else "" %}'
                        '{% set tt = item.title if item.title else "" %}'
-                       '{{em}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
+                       '{{d}}{{st}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
 
 main_dialog = Dialog(
     Window(
@@ -88,9 +91,10 @@ task_dialog = Dialog(
         DynamicMedia('resultmedia', when=F['resultmedia']),
         Button(Const('Доп инфо'), id='addit_info', on_click=on_addit, when=F['media_id']),
         Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=(F['status'] != 'закрыто')),
-        Button(Const('Закрыть'), id='close_task', on_click=operators.on_close, when=(F['status'] != 'закрыто')),
+        Button(Const('Отложить'), id='delay_task', on_click=operators.on_delay, when=(F['status'] != 'отложено')),
+        Button(Const('Закрыть заявку'), id='close_task', on_click=operators.on_close, when=(F['status'] != 'закрыто')),
         Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return, when=(F['status'] == 'выполнено')),
-        Cancel(Const('Назад')),
+        Back(Const('Назад')),
         state=OpTaskSG.preview,
         getter=media_getter
     ),
@@ -99,6 +103,20 @@ task_dialog = Dialog(
         Button(Const('Назад'), id='to_preview', on_click=on_back_to_preview),
         state=OpTaskSG.additional,
         getter=addition_getter
+    )
+)
+
+DelayDialog = Dialog(
+    Window(
+        Const('Введите количество дней, на которое вы хотите отложить заявку'),
+        MessageInput(delay_handler, content_types=[ContentType.TEXT]),
+        Cancel(Const('Назад')),
+        state=DelayTaskSG.enter_delay
+    ),
+    Window(
+        Format('Ваша заявка отложена до {dialog_data[trigger]}'),
+        Button(Const('Хорошо'), id='on_done', on_click=operators.on_done),
+        state=DelayTaskSG.done
     )
 )
 

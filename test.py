@@ -1,9 +1,12 @@
-from db import task_service
+import sqlite3 as sq
 
 MY_ID = 5963726977
 
-tasks = task_service.get_tasks()
-for i in tasks:
-    for key in i:
-        print(key, i[key], type(i[key]))
-    print()
+with sq.connect('Support.db') as con:
+    script = '''
+    BEGIN TRANSACTION;
+    alter table jobs
+    add column dttm timestamp;
+    COMMIT;
+    '''
+    con.executescript(script)

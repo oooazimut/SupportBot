@@ -14,15 +14,15 @@ class TaskService:
         query = '''
         INSERT INTO tasks(created, creator, phone, title, description, media_type, media_id, status, priority,
                         entity, slave)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
         '''
-        self.database.post_query(query=query, params=params)
+        return self.database.post_query(query=query, params=params)
 
     def update_task(self, phone, title, description, media_type, media_id, status, priority, entity, slave, taskid):
         params = [phone, title, description, media_type, media_id, status, priority, entity, slave, taskid]
         query = '''UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, entity, 
-        slave) = (?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE taskid = ?'''
-        self.database.post_query(query, params)
+        slave) = (?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE taskid = ? RETURNING *'''
+        return self.database.post_query(query, params)
 
     def get_task(self, taskid) -> list:
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
@@ -46,6 +46,8 @@ class TaskService:
         FROM tasks as t
         LEFT JOIN employees as em
         ON em.userid = t.slave
+        LEFT JOIN entities as en
+        ON en.ent_id = t.entity
         WHERE t.status = ? 
         '''
         if userid:
@@ -151,8 +153,6 @@ class EmployeeService:
     def get_employees_by_position(self, position):
         data = self.database.select_query('SELECT * FROM employees WHERE position = ?', [position])
         return data
-
-
 
 
 class EntityService:

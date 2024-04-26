@@ -1,4 +1,6 @@
-from db import db
+import datetime
 
-query = 'update employees set position = "worker" where userid = ?'
-db.post_query(query, [6392799889])
+a = datetime.date.today()
+b = str(a)
+
+print(b, type(b))

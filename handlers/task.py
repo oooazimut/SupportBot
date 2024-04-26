@@ -11,7 +11,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service, task_service
 from db.service import EntityService
-from states import TaskCreating, AssignedTaskSG
+from jobs import new_task
+from states import TaskCreating
 
 CANCEL_EDIT = SwitchTo(
     Const("Отменить редактирование"),
@@ -134,18 +135,27 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     if manager.dialog_data['task'].get('slave'):
         status = 'назначено'
     if manager.start_data:
-
-        task_service.update_task(phone, title, description, media_type, media_id, status, priority,
-                                 entity, slave, manager.start_data['taskid'])
+        task = task_service.update_task(phone, title, description, media_type, media_id, status, priority,
+                                        entity, slave, manager.start_data['taskid'])
+        scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+        job = scheduler.get_job(job_id='delay'+str(manager.start_data['taskid']))
+        if job:
+            job.remove()
         await clb.answer('Заявка отредактирована.', show_alert=True)
     else:
-        task_service.save_task(created, creator, phone, title, description, media_type, media_id, status, priority,
-                               entity, slave)
+        task = task_service.save_task(created, creator, phone, title, description, media_type, media_id, status,
+                                      priority,
+                                      entity, slave)
         await clb.answer('Заявка принята в обработку и скоро появится в списке заявок объекта.', show_alert=True)
-    if manager.dialog_data['task'].get('slave'):
-        userid = manager.dialog_data['task'].get('slave')
-        bg = manager.bg(userid, userid)
-        await bg.start(AssignedTaskSG.main)
+    users = empl_service.get_employees_by_position('operator')
+    userids = [user['userid'] for user in users]
+    slaveid = manager.dialog_data['task'].get('slave')
+    if slaveid:
+        userids.append(slaveid)
+    for userid in userids:
+        scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+        scheduler.add_job(new_task, 'cron', minute='*/5', hour='9-17', day_of_week='mon-fri',
+                          args=[userid, task['taskid']], id=str(userid)+str(task['taskid']), replace_existing=True)
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
