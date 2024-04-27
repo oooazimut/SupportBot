@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db import empl_service
 from db import task_service
+from jobs import closed_task, returned_task
 from states import WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG
 
 
@@ -50,6 +51,8 @@ async def tasks_getter(dialog_manager: DialogManager, **kwargs):
 
 async def go_archive(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     data = task_service.get_tasks_by_status('закрыто')
+    scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+    scheduler.print_jobs()
     if data:
         manager.dialog_data['tasks'] = data
         await manager.switch_to(OpTaskSG.archive_task)
@@ -135,6 +138,10 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
     if job:
         job.remove()
         await callback.answer('Заявка перемещена в архив.', show_alert=True)
+        slave = manager.dialog_data['task']['slave']
+        task = manager.dialog_data['task']['title']
+        scheduler.add_job(closed_task, 'cron', minute='*/5', hour='9-17', args=[slave, task],
+                          id=str(slave)+task, replace_existing=True)
     else:
         await callback.answer('Заявка уже в архиве.', show_alert=True)
     await manager.switch_to(OpTaskSG.opened_tasks)
@@ -149,6 +156,10 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
     if job:
         job.remove()
         await clb.answer('Заявка возвращена в работу.', show_alert=True)
+        slave = manager.dialog_data['task']['slave']
+        task = manager.dialog_data['task']['title']
+        scheduler.add_job(returned_task, 'cron', minute='*/5', hour='9-17', args=[slave, task],
+                          id=str(slave)+task, replace_existing=True)
     else:
         await clb.answer('Заявка уже в работе.', show_alert=True)
 

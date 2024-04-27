@@ -42,7 +42,6 @@ async def main():
     scheduler.add_job(
         func=jobs.reminders_task_to_worker,
         trigger='cron',
-        day_of_week='mon-fri',
         hour='9-16',
         id='send_task_to_worker',
         replace_existing=True
@@ -50,8 +49,8 @@ async def main():
     scheduler.add_job(
         jobs.reminders_task_to_morning,
         trigger='cron',
-        day_of_week='mon-fri',
         hour=9,
+        id='morning_report',
         replace_existing=True
     )
     setup_dialogs(dp)

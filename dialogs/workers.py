@@ -163,6 +163,10 @@ def is_performed(data, widget, manager: DialogManager):
     return manager.start_data['status'] == 'выполнено'
 
 
+def isnt_performed(data, widge, manager: DialogManager):
+    return manager.start_data['status'] not in ('выполнено', 'закрыто')
+
+
 def is_in_progress(data, widget, manager: DialogManager):
     return manager.start_data['status'] == 'в работе'
 
@@ -178,15 +182,16 @@ async def media_pin_task(message: Message, message_input: MessageInput, manager:
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
 
     task_service.change_status(taskid, 'выполнено')
-    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid], id=str(taskid))
+    scheduler.add_job(close_task, trigger='date', run_date=run_date, args=[taskid], id=str(taskid),
+                      replace_existing=True)
 
     operators = empl_service.get_employees_by_position('operator')
     for o in operators:
         operatorid = o['userid']
         slave = manager.start_data['username']
         task = manager.start_data['title']
-        scheduler.add_job(confirmed_task, 'cron', minute='*/5', hour='9-17', day_of_week='mon-fri',
-                          args=[operatorid, slave, task], id=str(operatorid)+task, replace_existing=True)
+        scheduler.add_job(confirmed_task, 'cron', minute='*/5', hour='8-22',
+                          args=[operatorid, slave, task], id=str(operatorid) + task, replace_existing=True)
 
     text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     mes = await message.answer(text=text)
@@ -205,7 +210,7 @@ task_dialog = Dialog(
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
-        Button(Const('Закрыть'), id='close_task', on_click=onclose_task, when=not_in_archive),
+        Button(Const('Закрыть'), id='close_task', on_click=onclose_task, when=isnt_performed),
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
         Button(Const('Назад'), id='cancel', on_click=on_cancel),
         state=WorkerTaskSG.main,

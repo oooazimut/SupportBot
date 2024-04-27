@@ -154,8 +154,8 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         userids.append(slaveid)
     for userid in userids:
         scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-        scheduler.add_job(new_task, 'cron', minute='*/5', hour='9-17', day_of_week='mon-fri',
-                          args=[userid, task['taskid']], id=str(userid)+str(task['taskid']), replace_existing=True)
+        scheduler.add_job(new_task, 'cron', minute='*/5', hour='9-17',
+                          args=[userid, task['title']], id=str(userid)+task['title'], replace_existing=True)
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 

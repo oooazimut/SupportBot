@@ -34,12 +34,13 @@ class TaskFactory(CallbackData, prefix='taskfctr'):
     task: str
 
 
-async def new_task(slaveid: int, taskid: int):
+async def new_task(slaveid: int, task: str):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='get', task=str(taskid)))
+    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='get', task=task))
     try:
-        messaga = await bot.send_message(chat_id=slaveid, text='Новая заявка!', reply_markup=keyboard.as_markup())
+        messaga = await bot.send_message(chat_id=slaveid, text=f'Новая заявка: {task}',
+                                         reply_markup=keyboard.as_markup())
         await asyncio.sleep(295)
         await messaga.delete()
     except TelegramBadRequest:
@@ -52,6 +53,32 @@ async def confirmed_task(operatorid, slave, title):
     keyboard.button(text='Хорошо', callback_data=TaskFactory(action='сonfirmed', task=title))
     try:
         messaga = await bot.send_message(chat_id=operatorid, text=f'{slave} выполнил заявку {title}.',
+                                         reply_markup=keyboard.as_markup())
+        await asyncio.sleep(295)
+        await messaga.delete()
+    except TelegramBadRequest:
+        pass
+
+
+async def closed_task(slaveid, task):
+    bot: Bot = MyBot.get_instance()
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='closed', task=task))
+    try:
+        messaga = await bot.send_message(chat_id=slaveid, text=f'Заявка {task} закрыта и перемещена в архив.',
+                                         reply_markup=keyboard.as_markup())
+        await asyncio.sleep(295)
+        await messaga.delete()
+    except TelegramBadRequest:
+        pass
+
+
+async def returned_task(slaveid, task):
+    bot: Bot = MyBot.get_instance()
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='returned', task=task))
+    try:
+        messaga = await bot.send_message(chat_id=slaveid, text=f'Заявка {task} возвращена вам в работу.',
                                          reply_markup=keyboard.as_markup())
         await asyncio.sleep(295)
         await messaga.delete()
