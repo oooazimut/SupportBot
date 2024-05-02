@@ -34,10 +34,10 @@ class TaskFactory(CallbackData, prefix='taskfctr'):
     task: str
 
 
-async def new_task(slaveid: int, task: str):
+async def new_task(slaveid: int, task: str, taskid: int):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='get', task=task))
+    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='get', task=str(taskid)))
     try:
         messaga = await bot.send_message(chat_id=slaveid, text=f'Новая заявка: {task}',
                                          reply_markup=keyboard.as_markup())
@@ -47,10 +47,10 @@ async def new_task(slaveid: int, task: str):
         pass
 
 
-async def confirmed_task(operatorid, slave, title):
+async def confirmed_task(operatorid, slave, title, taskid):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='сonfirmed', task=title))
+    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='сonfirmed', task=str(taskid)))
     try:
         messaga = await bot.send_message(chat_id=operatorid, text=f'{slave} выполнил заявку {title}.',
                                          reply_markup=keyboard.as_markup())
@@ -60,10 +60,10 @@ async def confirmed_task(operatorid, slave, title):
         pass
 
 
-async def closed_task(slaveid, task):
+async def closed_task(slaveid, task, taskid):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='closed', task=task))
+    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='closed', task=str(taskid)))
     try:
         messaga = await bot.send_message(chat_id=slaveid, text=f'Заявка {task} закрыта и перемещена в архив.',
                                          reply_markup=keyboard.as_markup())
@@ -73,10 +73,10 @@ async def closed_task(slaveid, task):
         pass
 
 
-async def returned_task(slaveid, task):
+async def returned_task(slaveid, task, taskid):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='returned', task=task))
+    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='returned', task=str(taskid)))
     try:
         messaga = await bot.send_message(chat_id=slaveid, text=f'Заявка {task} возвращена вам в работу.',
                                          reply_markup=keyboard.as_markup())

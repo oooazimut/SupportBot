@@ -190,8 +190,9 @@ async def media_pin_task(message: Message, message_input: MessageInput, manager:
         operatorid = o['userid']
         slave = manager.start_data['username']
         task = manager.start_data['title']
+        taskid = manager.start_data['taskid']
         scheduler.add_job(confirmed_task, 'cron', minute='*/5', hour='8-22',
-                          args=[operatorid, slave, task], id=str(operatorid) + task, replace_existing=True)
+                          args=[operatorid, slave, task, taskid], id=str(operatorid)+str(taskid), replace_existing=True)
 
     text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     mes = await message.answer(text=text)

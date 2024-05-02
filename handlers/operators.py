@@ -140,8 +140,9 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
         await callback.answer('Заявка перемещена в архив.', show_alert=True)
         slave = manager.dialog_data['task']['slave']
         task = manager.dialog_data['task']['title']
-        scheduler.add_job(closed_task, 'cron', minute='*/5', hour='9-17', args=[slave, task],
-                          id=str(slave)+task, replace_existing=True)
+        taskid = manager.dialog_data['task']['taskid']
+        scheduler.add_job(closed_task, 'cron', minute='*/5', hour='9-17', args=[slave, task, taskid],
+                          id=str(slave)+str(taskid), replace_existing=True)
     else:
         await callback.answer('Заявка уже в архиве.', show_alert=True)
     await manager.switch_to(OpTaskSG.opened_tasks)
