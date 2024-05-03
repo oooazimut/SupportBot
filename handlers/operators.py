@@ -159,7 +159,8 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
         await clb.answer('Заявка возвращена в работу.', show_alert=True)
         slave = manager.dialog_data['task']['slave']
         task = manager.dialog_data['task']['title']
-        scheduler.add_job(returned_task, 'cron', minute='*/5', hour='9-17', args=[slave, task],
+        taskid = manager.dialog_data['task']['taskid']
+        scheduler.add_job(returned_task, 'cron', minute='*/5', hour='9-17', args=[slave, task, taskid],
                           id=str(slave)+task, replace_existing=True)
     else:
         await clb.answer('Заявка уже в работе.', show_alert=True)
