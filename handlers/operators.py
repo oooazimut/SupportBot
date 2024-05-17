@@ -141,8 +141,8 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
         slave = manager.dialog_data['task']['slave']
         task = manager.dialog_data['task']['title']
         taskid = manager.dialog_data['task']['taskid']
-        scheduler.add_job(closed_task, 'cron', minute='*/5', hour='9-17', args=[slave, task, taskid],
-                          id=str(slave)+str(taskid), replace_existing=True)
+        scheduler.add_job(closed_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
+                          args=[slave, task, taskid], id=str(slave)+str(taskid), replace_existing=True)
     else:
         await callback.answer('Заявка уже в архиве.', show_alert=True)
     await manager.switch_to(OpTaskSG.opened_tasks)
@@ -160,8 +160,8 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
         slave = manager.dialog_data['task']['slave']
         task = manager.dialog_data['task']['title']
         taskid = manager.dialog_data['task']['taskid']
-        scheduler.add_job(returned_task, 'cron', minute='*/5', hour='9-17', args=[slave, task, taskid],
-                          id=str(slave)+task, replace_existing=True)
+        scheduler.add_job(returned_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
+                          args=[slave, task, taskid], id=str(slave)+task, replace_existing=True)
     else:
         await clb.answer('Заявка уже в работе.', show_alert=True)
 
