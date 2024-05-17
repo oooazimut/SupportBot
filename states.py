@@ -46,6 +46,10 @@ class TaskCreating(StatesGroup):
     preview = State()
 
 
+class PerformedTaskSG(StatesGroup):
+    main = State()
+
+
 class WorkerSG(StatesGroup):
     main = State()
     assigned = State()
@@ -62,4 +66,8 @@ class WorkerTaskSG(StatesGroup):
 
 
 class CustomerTaskSG(StatesGroup):
+    main = State()
+
+
+class AssignedTaskSG(StatesGroup):
     main = State()

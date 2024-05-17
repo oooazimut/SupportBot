@@ -116,7 +116,7 @@ class TaskService:
              AND 
              slave is NOT NULL
              AND
-             status NOT IN ('закрыто', 'выполнено', 'в работе')
+             status NOT IN ('закрыто', 'выполнено', 'в работе', 'отложено')
              ''', params=None)
         return data
 
@@ -124,7 +124,7 @@ class TaskService:
         data = self.database.select_query(
             '''SELECT * from tasks
              where slave is NOT NULL
-             AND status NOT IN ('закрыто', 'выполнено')
+             AND status NOT IN ('закрыто', 'выполнено', 'отложено')
              ''', params=None)
         return data
 
