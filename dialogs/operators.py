@@ -57,6 +57,7 @@ task_dialog = Dialog(
                 on_click=operators.on_task
             )
         ),
+        Button(Const('Обновить'), id='reload_opened'),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.opened_tasks,
         getter=operators.tasks_getter,
@@ -73,6 +74,7 @@ task_dialog = Dialog(
                 on_click=operators.on_task
             )
         ),
+        Button(Const('Обновить'), id='reload_archived'),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
         state=OpTaskSG.archive_task,
         getter=operators.tasks_getter,
