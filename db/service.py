@@ -41,6 +41,7 @@ class TaskService:
         return self.database.select_query('SELECT * FROM tasks', params=None)
 
     def get_tasks_by_status(self, status, userid=None) -> list:
+        finish = 'order by created DESC LIMIT 50'
         query = '''
         SELECT *
         FROM tasks as t
@@ -48,12 +49,14 @@ class TaskService:
         ON em.userid = t.slave
         LEFT JOIN entities as en
         ON en.ent_id = t.entity
-        WHERE t.status = ? 
+        WHERE t.status = ?
         '''
         if userid:
             query += ' AND t.slave = ?'
-            return self.database.select_query(query, [status, userid])
-        return self.database.select_query(query, [status])
+            result  = self.database.select_query(query+finish, [status, userid])
+        result =  self.database.select_query(query+finish, [status])
+        result.reverse()
+        return result
 
     def get_archive_tasks(self, clientid):
         query = '''
