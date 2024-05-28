@@ -54,7 +54,8 @@ class TaskService:
         if userid:
             query += ' AND t.slave = ?'
             result  = self.database.select_query(query+finish, [status, userid])
-        result =  self.database.select_query(query+finish, [status])
+        else:
+            result =  self.database.select_query(query+finish, [status])
         result.reverse()
         return result
 
