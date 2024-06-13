@@ -23,7 +23,8 @@ JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set pr = item.priority if item.priority else "" %}'
                        '{% set ob = item.name if item.name else "" %}'
                        '{% set tt = item.title if item.title else "" %}'
-                       '{{d}}{{st}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
+                       '{% set act = "да" if item.act else "нет" %}'
+                       '{{d}} {{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}} {{act}}')
 
 main_dialog = Dialog(
     Window(

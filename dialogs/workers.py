@@ -28,7 +28,8 @@ JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set pr = item.priority if item.priority else "" %}'
                        '{% set ob = item.name if item.name else "" %}'
                        '{% set tt = item.title if item.title else "" %}'
-                       '{{em}} {{dt}} {{pr}},{{sl}} {{ob}} {{tt}}')
+                       '{% set act = "да" if item.act else "нет" %}'
+                       '{{em}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}} {{act}}')
 
 TO_MAIN = Button(Const('Назад'), id='back_to_main', on_click=back_to_main)
 
@@ -210,8 +211,9 @@ task_dialog = Dialog(
         Format('{start_data[description]}'),
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
+        Jinja('Статус: {{ "Да" if start_data["act"] else "Нет" }}'),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
-        Button(Const('Закрыть'), id='close_task', on_click=onclose_task, when=isnt_performed),
+        Button(Const('Выполнено'), id='close_task', on_click=onclose_task, when=isnt_performed),
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
         Button(Const('Назад'), id='cancel', on_click=on_cancel),
         state=WorkerTaskSG.main,

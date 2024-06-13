@@ -1,11 +1,11 @@
-import sqlite3 as sq
+a = dict()
+a.setdefault('a', 15)
+a.setdefault('a', 24)
+print(a)
 
-MY_ID = 5963726977
+
+def is_exist(task: dict):
+    return task.get('taskid') is not None
 
 
-with sq.connect('Support.db') as con:
-    query = 'select * from employees'
-    res = con.execute(query)
-
-for i in res:
-    print(i)
+print(is_exist(a))

@@ -27,6 +27,7 @@ CREATE_DB_SCRIPT = '''
         result TEXT,
         resulttype TEXT,
         resultid INTEGER,
+        act INTEGER,
         FOREIGN KEY (entity) REFERENCES entities (ent_id)
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 

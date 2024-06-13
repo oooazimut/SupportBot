@@ -8,11 +8,11 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Co
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Jinja, Format
 
-from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter
+from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter, act_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
-    to_description, cancel_edit, to_slave, to_priority
+    to_description, cancel_edit, to_slave, to_priority, on_act, to_act
 )
 from states import TaskCreating
 
@@ -82,7 +82,22 @@ create_task_dialog = Dialog(
         getter=priority_getter,
         state=TaskCreating.priority
     ),
-
+    Window(
+        Const('Необходимость акта от исполнителя:'),
+        Radio(
+            Format('🔘 {item[0]}'),
+            Format('⚪️ {item[0]}'),
+            id='act_nssr',
+            item_id_getter=lambda x: x[1],
+            items='act_nssr',
+            on_click=on_act
+        ),
+        Button(Const('Подтвердить'), id='confirm_act', on_click=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
+        getter=act_getter,
+        state=TaskCreating.act
+    ),
     Window(
         Const('Назначить работника'),
         Column(
@@ -111,6 +126,7 @@ create_task_dialog = Dialog(
         <b>Описание</b>: {{description if description}}
         <b>Приоритет</b>: {{priority if priority}}
         <b>Работник</b>: {{username if username}}
+        <b>Акт</b>: {{'Да' if act else 'Нет'}}
         '''),
         DynamicMedia('media', when=F['media']),
         Button(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),
@@ -118,6 +134,7 @@ create_task_dialog = Dialog(
         Button(Const('Изменить телефон'), id='to_phone', on_click=to_phone),
         Button(Const('Изменить Тему'), id='to_title', on_click=to_title),
         Button(Const('Изменить приоритет'), id='to_priority', on_click=to_priority),
+        Button(Const('Необходимость акта'), id='to_act', on_click=to_act),
         Button(Const('Изменить описание'), id='to_description', on_click=to_description),
         Button(Const('Изменить исполнителя'), id='to_slave', on_click=to_slave),
         Button(Const('Отмена'), id='cancel_edit', on_click=cancel_edit),

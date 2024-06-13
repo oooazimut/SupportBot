@@ -33,6 +33,10 @@ async def on_priority(event, select, dialog_manager: DialogManager, data: str, /
     dialog_manager.dialog_data['task']['priority'] = data
 
 
+async def on_act(event, select, dialog_manager: DialogManager, data, /):
+    dialog_manager.dialog_data['task']['act'] = data
+
+
 async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
     entity = EntityService.get_entity(data)[0]
     dialog_manager.dialog_data['task']['entity'] = entity['ent_id']
@@ -116,52 +120,55 @@ async def to_priority(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.priority, show_mode=ShowMode.DELETE_AND_SEND)
 
 
+async def to_act(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.act, show_mode=ShowMode.DELETE_AND_SEND)
+
+
 async def cancel_edit(event, button, manager: DialogManager):
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
-    created = manager.start_data.get('created') or datetime.datetime.now().replace(microsecond=0)
-    creator = manager.start_data.get('creator') or clb.from_user.id
-    phone = manager.dialog_data['to_save']['phone']
-    title = manager.dialog_data['to_save']['title']
-    description = manager.dialog_data['to_save']['description']
-    media_type = manager.dialog_data['task'].get('media_type') or manager.start_data.get('media_type')
-    media_id = manager.dialog_data['task'].get('media_id') or manager.start_data.get('media_id')
-    status = manager.start_data.get('status') or 'открыто'
-    priority = manager.dialog_data['to_save']['priority']
-    entity = manager.dialog_data['task'].get('entity') or manager.start_data.get('entity')
-    slave = manager.dialog_data['task'].get('slave') or manager.start_data.get('slave')
-    if manager.dialog_data['task'].get('slave'):
-        status = 'назначено'
-    if manager.start_data:
-        task = task_service.update_task(phone, title, description, media_type, media_id, status, priority,
-                                        entity, slave, manager.start_data['taskid'])
+    def is_exist(someone_task: dict):
+        return someone_task.get('taskid')
+
+    data: dict = manager.dialog_data['task']
+    data.setdefault('created', datetime.datetime.now().replace(microsecond=0))
+    data.setdefault('creator', clb.from_user.id)
+    if data['slave']:
+        data['status'] = 'назначено'
+    data.setdefault('status', 'открыто')
+
+    if is_exist(data):
+        task_service.update_task(data)
         scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-        job = scheduler.get_job(job_id='delay'+str(manager.start_data['taskid']))
+        job = scheduler.get_job(job_id='delay' + str(data['taskid']))
         if job:
             job.remove()
         await clb.answer('Заявка отредактирована.', show_alert=True)
     else:
-        task = task_service.save_task(created, creator, phone, title, description, media_type, media_id, status,
-                                      priority,
-                                      entity, slave)
+        task = task_service.save_task(data)
         await clb.answer('Заявка принята в обработку и скоро появится в списке заявок объекта.', show_alert=True)
-    users = empl_service.get_employees_by_position('operator')
-    userids = [user['userid'] for user in users]
-    slaveid = manager.dialog_data['task'].get('slave')
-    if slaveid:
-        userids.append(slaveid)
-    for userid in userids:
+        users = empl_service.get_employees_by_position('operator')
+        userids = [user['userid'] for user in users]
+        slaveid = data.get('slave')
+        if slaveid:
+            userids.append(slaveid)
+
         scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-        scheduler.add_job(new_task, 'cron', minute='*/5', hour='9-17',
-                          args=[userid, task['title'], task['taskid']], id=str(userid)+str(task['taskid']),
-                          replace_existing=True)
+        for userid in userids:
+            scheduler.add_job(new_task, 'cron', minute='*/5', hour='9-17',
+                              args=[userid, task['title'], task['taskid']], id=str(userid) + str(task['taskid']),
+                              replace_existing=True)
+
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_start(data, manager: DialogManager):
-    manager.dialog_data['task'] = {}
+    if manager.start_data:
+        manager.dialog_data['task'] = manager.start_data
+    else:
+        manager.dialog_data['task'] = dict()
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):

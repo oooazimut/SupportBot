@@ -14,6 +14,14 @@ async def priority_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
+async def act_getter(dialog_manager: DialogManager, **kwargs):
+    act_nesessary = [
+        ('с актом', 1),
+        ('без акта', 0)
+    ]
+    return {'act_nssr': act_nesessary}
+
+
 async def entitites_getter(dialog_manager: DialogManager, **kwargs):
     entities = dialog_manager.dialog_data['entities']
     return {
@@ -29,42 +37,30 @@ async def slaves_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def result_getter(dialog_manager: DialogManager, **kwargs):
-    mediatype = dialog_manager.dialog_data['task'].get('media_type') or dialog_manager.start_data.get('media_type')
-    mediaid = dialog_manager.dialog_data['task'].get('media_id') or dialog_manager.start_data.get('media_id')
+    data: dict = dialog_manager.dialog_data['task']
+
+    media = None
+    mediatype = data.get('media_type')
+    mediaid = data.get('media_id')
     if mediatype and mediaid:
         media = MediaAttachment(mediatype, file_id=MediaId(mediaid))
-    else:
-        media = None
-    entity = dialog_manager.dialog_data['task'].get('name') or dialog_manager.start_data.get('name')
+
     phone = dialog_manager.find('phone_input').get_value()
-    if phone == 'None':
-        phone = dialog_manager.start_data.get('phone')
+    if phone != 'None':
+        data['phone'] = phone
+
     title = dialog_manager.find('title_input').get_value()
-    if title == 'None':
-        title = dialog_manager.start_data.get('title')
-    description = dialog_manager.dialog_data['task'].get('description') or dialog_manager.start_data.get('description')
-    priority = dialog_manager.dialog_data['task'].get('priority') or dialog_manager.start_data.get('priority')
-    if priority == ' ':
-        priority = None
-    username = dialog_manager.dialog_data['task'].get('username') or dialog_manager.start_data.get('username')
+    if title != 'None':
+        data['title'] = title
+
+    data.update({'media': media})
+    dialog_manager.dialog_data['task'] = data
     dialog_manager.dialog_data['finished'] = True
-    dialog_manager.dialog_data['to_save'] = {
-        'entity': entity,
-        'phone': phone,
-        'title': title,
-        'description': description,
-        'priority': priority,
-        'username': username,
-    }
-    data = {'media': media}
-    data.update(dialog_manager.dialog_data['to_save'])
     return data
 
 
 async def performed_getter(dialog_manager: DialogManager, **kwargs):
     task = task_service.get_task(dialog_manager.start_data['taskid'])[0]
-    title = task['title']
-    username = task['username']
     performed_counter = len(task_service.get_tasks_by_status('выполнено'))
     task.update({'counter': performed_counter})
     return task

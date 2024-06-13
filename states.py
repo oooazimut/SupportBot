@@ -42,6 +42,7 @@ class TaskCreating(StatesGroup):
     enter_title = State()
     enter_description = State()
     priority = State()
+    act = State()
     slave = State()
     preview = State()
 
