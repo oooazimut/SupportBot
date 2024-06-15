@@ -130,7 +130,7 @@ async def cancel_edit(event, button, manager: DialogManager):
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
     def is_exist(someone_task: dict):
-        return someone_task.get('taskid')
+        return someone_task.get('taskid') is not None
 
     data: dict = manager.dialog_data['task']
     data.setdefault('created', datetime.datetime.now().replace(microsecond=0))

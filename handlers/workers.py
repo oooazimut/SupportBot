@@ -79,3 +79,22 @@ async def to_entities(callback, button, manager: DialogManager):
 
 async def on_cancel(callback, button, manager: DialogManager):
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def act_handler(msg: Message, widget: MessageInput, manager: DialogManager):
+    actid = None
+    acttype = msg.content_type
+    match acttype:
+        case 'document':
+            actid = msg.document.file_id
+        case 'photo':
+            actid = msg.photo[-1].file_id
+
+    data = {
+        'taskid': manager.start_data['taskid'],
+        'actid': actid,
+        'acttype': acttype
+    }
+
+    task_service.add_act(data)
+    await manager.switch_to(WorkerTaskSG.media_pin)

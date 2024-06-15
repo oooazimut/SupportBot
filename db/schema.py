@@ -19,15 +19,17 @@ CREATE_DB_SCRIPT = '''
         title TEXT,
         description TEXT,
         media_type TEXT, 
-        media_id INTEGER,
+        media_id TEXT,
         status TEXT,
         priority TEXT,
         entity INTEGER,
         slave INTEGER,
         result TEXT,
         resulttype TEXT,
-        resultid INTEGER,
+        resultid TEXT,
         act INTEGER,
+        actid TEXT,
+        acttype TEXT,
         FOREIGN KEY (entity) REFERENCES entities (ent_id)
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 

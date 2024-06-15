@@ -117,15 +117,14 @@ create_task_dialog = Dialog(
         getter=slaves_getter
     ),
     Window(
-        Jinja('''
-        Ваша заявка:
+        Jinja('''Ваша заявка:
 
-        <b>Объект</b>: {{entity if entity}}
-        <b>Телефон</b>: {{phone if phone}}
-        <b>Тема</b>: {{title if title}}
-        <b>Описание</b>: {{description if description}}
-        <b>Приоритет</b>: {{priority if priority}}
-        <b>Работник</b>: {{username if username}}
+        <b>Объект</b>: {{entity if entity else ''}}
+        <b>Телефон</b>: {{phone if phone else ''}}
+        <b>Тема</b>: {{title if title else ''}}
+        <b>Описание</b>: {{description if description else ''}}
+        <b>Приоритет</b>: {{priority if priority else ''}}
+        <b>Работник</b>: {{username if username else ''}}
         <b>Акт</b>: {{'Да' if act else 'Нет'}}
         '''),
         DynamicMedia('media', when=F['media']),

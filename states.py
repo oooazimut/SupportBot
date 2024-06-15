@@ -11,6 +11,7 @@ class OpTaskSG(StatesGroup):
     archive_task = State()
     preview = State()
     additional = State()
+    act = State()
 
 
 class DelayTaskSG(StatesGroup):
@@ -64,6 +65,7 @@ class WorkerSG(StatesGroup):
 class WorkerTaskSG(StatesGroup):
     main = State()
     media_pin = State()
+    act = State()
 
 
 class CustomerTaskSG(StatesGroup):
@@ -71,4 +73,8 @@ class CustomerTaskSG(StatesGroup):
 
 
 class AssignedTaskSG(StatesGroup):
+    main = State()
+
+
+class ActsSG(StatesGroup):
     main = State()

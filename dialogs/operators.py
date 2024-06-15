@@ -1,17 +1,21 @@
 import operator
+from typing import Dict
 
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram_dialog.widgets.common import Whenable
 from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start, Back
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 from magic_filter import F
 
-from getters.operators import media_getter, addition_getter
+import config
+from db import task_service
+from getters.operators import review_getter, addition_getter, act_getter
 from handlers import operators
-from handlers.operators import on_addit, on_back_to_preview, on_return, delay_handler
-from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG
+from handlers.operators import on_addit, on_back_to_preview, on_return, delay_handler, on_act
+from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG, ActsSG
 
 JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set dt_list = dttm_list[0].split("-") %}'
@@ -23,26 +27,37 @@ JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set pr = item.priority if item.priority else "" %}'
                        '{% set ob = item.name if item.name else "" %}'
                        '{% set tt = item.title if item.title else "" %}'
-                       '{% set act = "да" if item.act else "нет" %}'
-                       '{{d}} {{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}} {{act}}')
+                       '{{d}} {{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}')
 
 main_dialog = Dialog(
     Window(
         Const("Главное меню:"),
         Row(
-            Button(Const('Заявки'), id='tasks', on_click=operators.go_task),
-            Button(Const('Работники'), id='slaves', on_click=operators.go_slaves),
+            Start(Const('Заявки'), id='tasks', state=OpTaskSG.tas),
+            Start(Const('Работники'), id='slaves', state=WorkersSG.main),
         ),
         state=OperatorSG.main
     ),
 )
+
+
+def show_close_button(data: Dict, widget: Whenable, manager: DialogManager):
+    userid = manager.event.from_user.id
+    # return data['status'] not in ['закрыто', 'проверка'] or (userid == config.CHIEF_ID and data['status'] != 'закрыто')
+    return data['status'] != 'закрыто' and (data['status'] != 'проверка' or userid == config.CHIEF_ID)
+
+
+def acts_are_existing(data, widget, manager: DialogManager):
+    return bool(task_service.get_tasks_by_status('проверка'))
+
 task_dialog = Dialog(
     Window(
         Const('Заявки:'),
         Row(
             Button(Const('Открытые'), id='tasks', on_click=operators.on_tasks),
-            Button(Const('Архив'), id='archive', on_click=operators.go_archive)
+            Button(Const('Архив'), id='archive', on_click=operators.go_archive),
         ),
+        Start(Const('Проверить акты'), id='to_acts', state=ActsSG.main, when=acts_are_existing),
         Start(Const('Создать заявку'), id='new_op_task', data={}, state=TaskCreating.sub_entity),
         Cancel(Const('Назад')),
         state=OpTaskSG.tas
@@ -60,6 +75,7 @@ task_dialog = Dialog(
         ),
         Button(Const('Обновить'), id='reload_opened'),
         SwitchTo(Const('Назад'), id='to_main', state=OpTaskSG.tas),
+        SwitchTo(Const('Проверить акты'), id='to_act_checking', state=OpTaskSG.act),
         state=OpTaskSG.opened_tasks,
         getter=operators.tasks_getter,
         parse_mode='html'
@@ -93,19 +109,26 @@ task_dialog = Dialog(
        '''),
         DynamicMedia('resultmedia', when=F['resultmedia']),
         Button(Const('Доп инфо'), id='addit_info', on_click=on_addit, when=F['media_id']),
+        Button(Const('Акт'), id='act', on_click=on_act, when=F['actid']),
         Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=(F['status'] != 'закрыто')),
         Button(Const('Отложить'), id='delay_task', on_click=operators.on_delay, when=(F['status'] != 'отложено')),
-        Button(Const('Закрыть заявку'), id='close_task', on_click=operators.on_close, when=(F['status'] != 'закрыто')),
+        Button(Const('Переместить в архив'), id='close_task', on_click=operators.on_close, when=show_close_button),
         Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return, when=(F['status'] == 'выполнено')),
         Back(Const('Назад')),
         state=OpTaskSG.preview,
-        getter=media_getter
+        getter=review_getter
     ),
     Window(
         DynamicMedia('media'),
         Button(Const('Назад'), id='to_preview', on_click=on_back_to_preview),
         state=OpTaskSG.additional,
         getter=addition_getter
+    ),
+    Window(
+        DynamicMedia('media'),
+        Button(Const('Назад'), id='to_preview', on_click=on_back_to_preview),
+        state=OpTaskSG.act,
+        getter=act_getter
     )
 )
 
@@ -206,5 +229,11 @@ worker_dialog = Dialog(
         CANCEL_EDIT,
         state=WorkersSG.status
 
+    )
+)
+
+acts = Dialog(
+    Window(
+        state=ActsSG.main
     )
 )
