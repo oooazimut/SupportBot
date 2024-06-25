@@ -92,6 +92,10 @@ async def go_addslaves(callback_query: CallbackQuery, button: Button, manager: D
     await manager.switch_to(WorkersSG.add_slv)
 
 
+async def to_all_tasks(clb, btn, manager: DialogManager):
+    await manager.switch_to(OpTaskSG.tas)
+
+
 async def insert_slaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     name = manager.find('user_name').get_value()
     user_id = manager.find('user_id').get_value()
@@ -128,21 +132,21 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
 async def on_close(callback: CallbackQuery, button: Button, manager: DialogManager):
     taskid = manager.dialog_data['task']['taskid']
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-    if manager.dialog_data['task']['act']:
-        task_service.change_status(taskid, 'проверка')
-    else:
+    if manager.dialog_data['task']['status'] == 'проверка' or not manager.dialog_data['task']['act']:
         task_service.change_status(taskid, 'закрыто')
         job = scheduler.get_job(job_id=str(taskid))
         if job:
             job.remove()
-            await callback.answer('Заявка перемещена в архив.', show_alert=True)
-            slave = manager.dialog_data['task']['slave']
-            task = manager.dialog_data['task']['title']
-            taskid = manager.dialog_data['task']['taskid']
-            scheduler.add_job(closed_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
-                              args=[slave, task, taskid], id=str(slave) + str(taskid), replace_existing=True)
-        else:
-            await callback.answer('Заявка уже в архиве.', show_alert=True)
+        await callback.answer('Заявка перемещена в архив.', show_alert=True)
+        slave = manager.dialog_data['task']['slave']
+        task = manager.dialog_data['task']['title']
+        taskid = manager.dialog_data['task']['taskid']
+        scheduler.add_job(closed_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
+                            args=[slave, task, taskid], id=str(slave) + str(taskid), replace_existing=True)
+    else:
+        task_service.change_status(taskid, 'проверка')
+        await callback.answer('Заявка ушла на проверку правильного заполнения акта.', show_alert=True)
+
     await manager.switch_to(OpTaskSG.opened_tasks)
 
 

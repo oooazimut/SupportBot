@@ -1,6 +1,8 @@
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
+from db import task_service
+
 
 async def review_getter(dialog_manager: DialogManager, **kwargs):
     task: dict = dialog_manager.dialog_data['task'].copy()
@@ -21,3 +23,8 @@ async def act_getter(dialog_manager: DialogManager, **kwargs):
     task = dialog_manager.dialog_data['task']
     media = MediaAttachment(type=task['acttype'], file_id=MediaId(task['actid']))
     return {'media': media}
+
+
+async def with_acts_getter(dialog_manager: DialogManager, **kwargs):
+    tasks = task_service.get_tasks_by_status(status='проверка')
+    return {'tasks': tasks}

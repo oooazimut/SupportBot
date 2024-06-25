@@ -10,6 +10,7 @@ class OpTaskSG(StatesGroup):
     opened_tasks = State()
     archive_task = State()
     preview = State()
+    with_acts = State()
     additional = State()
     act = State()
 
@@ -73,8 +74,4 @@ class CustomerTaskSG(StatesGroup):
 
 
 class AssignedTaskSG(StatesGroup):
-    main = State()
-
-
-class ActsSG(StatesGroup):
     main = State()

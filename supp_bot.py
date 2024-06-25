@@ -33,7 +33,7 @@ async def main():
         operators.main_dialog,
         operators.task_dialog,
         operators.DelayDialog,
-        operators.worker_dialog,
+        operators.worker_dialog
     )
     dp.include_router(finish_router.router)
     scheduler = AsyncIOScheduler()
