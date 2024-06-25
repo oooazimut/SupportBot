@@ -1,11 +1,13 @@
-a = dict()
-a.setdefault('a', 15)
-a.setdefault('a', 24)
-print(a)
+from db import task_service
+
+data = task_service.get_tasks_by_status(';jsdfsad')
+print(data, type(data))
+print(data is not None)
+
+def test():
+    return bool(task_service.get_tasks_by_status('закрыто'))
 
 
-def is_exist(task: dict):
-    return task.get('taskid') is not None
+a = test()
 
-
-print(is_exist(a))
+print(a, type(a))

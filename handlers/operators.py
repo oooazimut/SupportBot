@@ -13,15 +13,6 @@ from jobs import closed_task, returned_task
 from states import WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG
 
 
-# Хендлеры для тасков
-async def go_task(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.start(OpTaskSG.tas)
-
-
-async def go_slaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.start(WorkersSG.main)
-
-
 async def on_tasks(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     tasks = list()
     new_tasks = task_service.get_tasks_by_status('открыто')
@@ -70,6 +61,10 @@ async def on_addit(callback: CallbackQuery, button: Button, manager: DialogManag
     await manager.switch_to(OpTaskSG.additional)
 
 
+async def on_act(callback: CallbackQuery, button: Button, manager: DialogManager):
+    await  manager.switch_to(OpTaskSG.act, show_mode=ShowMode.DELETE_AND_SEND)
+
+
 async def on_back_to_preview(callback, button, manager: DialogManager):
     await manager.switch_to(OpTaskSG.preview, show_mode=ShowMode.SEND)
 
@@ -95,6 +90,10 @@ async def go_worker(callback_query: CallbackQuery, button: Button, manager: Dial
 
 async def go_addslaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
     await manager.switch_to(WorkersSG.add_slv)
+
+
+async def to_all_tasks(clb, btn, manager: DialogManager):
+    await manager.switch_to(OpTaskSG.tas)
 
 
 async def insert_slaves(callback_query: CallbackQuery, button: Button, manager: DialogManager):
@@ -133,18 +132,21 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
 async def on_close(callback: CallbackQuery, button: Button, manager: DialogManager):
     taskid = manager.dialog_data['task']['taskid']
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-    task_service.change_status(taskid, 'закрыто')
-    job = scheduler.get_job(job_id=str(taskid))
-    if job:
-        job.remove()
+    if manager.dialog_data['task']['status'] == 'проверка' or not manager.dialog_data['task']['act']:
+        task_service.change_status(taskid, 'закрыто')
+        job = scheduler.get_job(job_id=str(taskid))
+        if job:
+            job.remove()
         await callback.answer('Заявка перемещена в архив.', show_alert=True)
         slave = manager.dialog_data['task']['slave']
         task = manager.dialog_data['task']['title']
         taskid = manager.dialog_data['task']['taskid']
         scheduler.add_job(closed_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
-                          args=[slave, task, taskid], id=str(slave)+str(taskid), replace_existing=True)
+                            args=[slave, task, taskid], id=str(slave) + str(taskid), replace_existing=True)
     else:
-        await callback.answer('Заявка уже в архиве.', show_alert=True)
+        task_service.change_status(taskid, 'проверка')
+        await callback.answer('Заявка ушла на проверку правильного заполнения акта.', show_alert=True)
+
     await manager.switch_to(OpTaskSG.opened_tasks)
 
 
@@ -161,7 +163,7 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
         task = manager.dialog_data['task']['title']
         taskid = manager.dialog_data['task']['taskid']
         scheduler.add_job(returned_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
-                          args=[slave, task, taskid], id=str(slave)+task, replace_existing=True)
+                          args=[slave, task, taskid], id=str(slave) + task, replace_existing=True)
     else:
         await clb.answer('Заявка уже в работе.', show_alert=True)
 

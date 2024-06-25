@@ -8,21 +8,17 @@ class TaskService:
     def __init__(self, database: DataBase):
         self.database = database
 
-    def save_task(self, created, creator, phone, title, description, media_type, media_id, status, priority, entity,
-                  slave):
-        params = [created, creator, phone, title, description, media_type, media_id, status, priority, entity, slave]
-        query = '''
-        INSERT INTO tasks(created, creator, phone, title, description, media_type, media_id, status, priority,
-                        entity, slave)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
-        '''
-        return self.database.post_query(query=query, params=params)
+    def save_task(self, task: dict):
+        query = ('INSERT INTO tasks (created, creator, phone, title, description, media_type, media_id, status, '
+                 'priority, act, entity, slave) VALUES (:created, :creator, :phone, :title, :description, '
+                 ':media_type, :media_id, :status, :priority, :act, :entity, :slave) RETURNING *')
+        return self.database.post_query(query, task)
 
-    def update_task(self, phone, title, description, media_type, media_id, status, priority, entity, slave, taskid):
-        params = [phone, title, description, media_type, media_id, status, priority, entity, slave, taskid]
-        query = '''UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, entity, 
-        slave) = (?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE taskid = ? RETURNING *'''
-        return self.database.post_query(query, params)
+    def update_task(self, task: dict):
+        query = ('UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, act, entity, '
+                 'slave) = (:phone, :title, :description, :media_type, :media_id, :status, :priority, :act, :entity, '
+                 ':slave) WHERE taskid = :taskid RETURNING *')
+        return self.database.post_query(query, task)
 
     def get_task(self, taskid) -> list:
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
@@ -53,9 +49,9 @@ class TaskService:
         '''
         if userid:
             query += ' AND t.slave = ?'
-            result  = self.database.select_query(query+finish, [status, userid])
+            result = self.database.select_query(query + finish, [status, userid])
         else:
-            result =  self.database.select_query(query+finish, [status])
+            result = self.database.select_query(query + finish, [status])
         result.reverse()
         return result
 
@@ -135,6 +131,10 @@ class TaskService:
     def save_result(self, result, resultid, resulttype, taskid):
         params = [result, resulttype, resultid, taskid]
         self.database.post_query("UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=?", params)
+
+    def add_act(self, params: dict):
+        query = 'UPDATE tasks SET actid = :actid, acttype = :acttype WHERE taskid = :taskid'
+        self.database.post_query(query, params)
 
 
 class EmployeeService:
