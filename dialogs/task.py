@@ -8,11 +8,12 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Cancel, Back, Radio, Button, Co
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Jinja, Format
 
-from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter, act_getter
+from getters.task import priority_getter, result_getter, entitites_getter, slaves_getter, act_getter, \
+    agreementers_getter
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
-    to_description, cancel_edit, to_slave, to_priority, on_act, to_act
+    to_description, cancel_edit, to_slave, to_priority, on_act, to_act, on_agreementer, to_agreement
 )
 from states import TaskCreating
 
@@ -117,6 +118,24 @@ create_task_dialog = Dialog(
         getter=slaves_getter
     ),
     Window(
+        Const('Если нужно согласование, выберите с кем:'),
+        Column(
+            Radio(
+                Format('🔘 {item}'),
+                Format('⚪️ {item}'),
+                id='agreementers',
+                item_id_getter=lambda item: item,
+                items='agreementers',
+                on_click=on_agreementer
+            )
+        ),
+        Button(Const('Подтвердить'), id='confirm_agreementer', on_click=next_or_end),
+        Back(Const('Назад')),
+        CANCEL_EDIT,
+        state=TaskCreating.agreements,
+        getter=agreementers_getter
+    ),
+    Window(
         Jinja('''Ваша заявка:
 
         <b>Объект</b>: {{entity if entity else ''}}
@@ -136,6 +155,7 @@ create_task_dialog = Dialog(
         Button(Const('Необходимость акта'), id='to_act', on_click=to_act),
         Button(Const('Изменить описание'), id='to_description', on_click=to_description),
         Button(Const('Изменить исполнителя'), id='to_slave', on_click=to_slave),
+        Button(Const('Необходимость согласования'), id='to_agreement', on_click=to_agreement),
         Button(Const('Отмена'), id='cancel_edit', on_click=cancel_edit),
         state=TaskCreating.preview,
         getter=result_getter,

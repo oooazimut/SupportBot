@@ -48,6 +48,8 @@ async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
     user = empl_service.get_employee(data)
     dialog_manager.dialog_data['task']['username'] = user['username']
 
+async def on_agreementer(event, select, dialog_manager: DialogManager, data: str, /):
+    dialog_manager.dialog_data['task']['agreement'] = data
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
     def is_empl(userid):
@@ -124,6 +126,10 @@ async def to_act(event, button, manager: DialogManager):
     await manager.switch_to(state=TaskCreating.act, show_mode=ShowMode.DELETE_AND_SEND)
 
 
+async def to_agreement(event, button, manager: DialogManager):
+    await manager.switch_to(state=TaskCreating.agreements, show_mode=ShowMode.DELETE_AND_SEND)
+
+
 async def cancel_edit(event, button, manager: DialogManager):
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -135,9 +141,13 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     data: dict = manager.dialog_data['task']
     data.setdefault('created', datetime.datetime.now().replace(microsecond=0))
     data.setdefault('creator', clb.from_user.id)
-    if data['slave']:
+    if data.get('slave'):
         data['status'] = 'назначено'
     data.setdefault('status', 'открыто')
+    data.setdefault('slave', None)
+    data.setdefault('entity', None)
+    data.setdefault('agreement', None)
+    data.setdefault('priority', None)
 
     if is_exist(data):
         task_service.update_task(data)

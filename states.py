@@ -46,6 +46,7 @@ class TaskCreating(StatesGroup):
     priority = State()
     act = State()
     slave = State()
+    agreements = State()
     preview = State()
 
 

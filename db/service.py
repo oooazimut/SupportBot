@@ -10,14 +10,14 @@ class TaskService:
 
     def save_task(self, task: dict):
         query = ('INSERT INTO tasks (created, creator, phone, title, description, media_type, media_id, status, '
-                 'priority, act, entity, slave) VALUES (:created, :creator, :phone, :title, :description, '
-                 ':media_type, :media_id, :status, :priority, :act, :entity, :slave) RETURNING *')
+                 'priority, act, entity, slave, agreement) VALUES (:created, :creator, :phone, :title, :description, '
+                 ':media_type, :media_id, :status, :priority, :act, :entity, :slave, :agreement) RETURNING *')
         return self.database.post_query(query, task)
 
     def update_task(self, task: dict):
         query = ('UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, act, entity, '
-                 'slave) = (:phone, :title, :description, :media_type, :media_id, :status, :priority, :act, :entity, '
-                 ':slave) WHERE taskid = :taskid RETURNING *')
+                 'slave, agreement) = (:phone, :title, :description, :media_type, :media_id, :status, :priority, '
+                 ':act, :entity, :slave, :agreement) WHERE taskid = :taskid RETURNING *')
         return self.database.post_query(query, task)
 
     def get_task(self, taskid) -> list:

@@ -30,6 +30,7 @@ CREATE_DB_SCRIPT = '''
         act INTEGER,
         actid TEXT,
         acttype TEXT,
+        agreement TEXT,
         FOREIGN KEY (entity) REFERENCES entities (ent_id)
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 

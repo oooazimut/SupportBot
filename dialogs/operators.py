@@ -100,6 +100,8 @@ task_dialog = Dialog(
        Приоритет: {{priority if priority}}
        Статус: {{status}}
        '''),
+        Format('Нужен акт', when=F['act']),
+        Format('Согласование: {agreement}', when=F['agreement']),
         DynamicMedia('resultmedia', when=F['resultmedia']),
         Button(Const('Доп инфо'), id='addit_info', on_click=on_addit, when=F['media_id']),
         Button(Const('Акт'), id='act', on_click=on_act, when=F['actid']),

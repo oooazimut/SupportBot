@@ -62,7 +62,7 @@ async def on_addit(callback: CallbackQuery, button: Button, manager: DialogManag
 
 
 async def on_act(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await  manager.switch_to(OpTaskSG.act, show_mode=ShowMode.DELETE_AND_SEND)
+    await manager.switch_to(OpTaskSG.act, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_back_to_preview(callback, button, manager: DialogManager):
@@ -141,8 +141,9 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
         slave = manager.dialog_data['task']['slave']
         task = manager.dialog_data['task']['title']
         taskid = manager.dialog_data['task']['taskid']
-        scheduler.add_job(closed_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
-                            args=[slave, task, taskid], id=str(slave) + str(taskid), replace_existing=True)
+        if slave:
+            scheduler.add_job(closed_task, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
+                              args=[slave, task, taskid], id=str(slave) + str(taskid), replace_existing=True)
     else:
         task_service.change_status(taskid, 'проверка')
         await callback.answer('Заявка ушла на проверку правильного заполнения акта.', show_alert=True)

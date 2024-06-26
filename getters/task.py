@@ -1,6 +1,7 @@
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
+import config
 from db import empl_service, task_service
 
 
@@ -34,6 +35,10 @@ async def slaves_getter(dialog_manager: DialogManager, **kwargs):
     return {
         'slaves': slaves
     }
+
+
+async def agreementers_getter(dialog_manager: DialogManager, **k):
+    return {'agreementers': config.AGREEMENTERS}
 
 
 async def result_getter(dialog_manager: DialogManager, **kwargs):

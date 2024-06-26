@@ -138,6 +138,9 @@ main_dialog = Dialog(
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     task_service.change_status(manager.start_data['taskid'], 'в работе')
+    if manager.start_data['agreement']:
+        agreementer = manager.start_data['agreement']
+        await callback.answer(f'Перед работой по этой заявке нужно согласование с {agreementer}', show_alert=True)
     await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -216,6 +219,7 @@ task_dialog = Dialog(
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
         Jinja('Акт: {{ "да" if start_data["act"] else "нет" }}'),
+        Format('Согласование: {start_data[agreement]}', when=F['start_data']['agreement']),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
         Button(Const('Выполнено'), id='close_task', on_click=onclose_task, when=isnt_performed),
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),
