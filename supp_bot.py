@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Dispatcher
+from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram_dialog import setup_dialogs
@@ -22,7 +23,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
 async def main():
-    bot = MyBot(config.TOKEN).get_instance()
+    bot = MyBot(config.TOKEN, parse_mode=ParseMode.HTML).get_instance()
     storage = RedisStorage(Redis(), key_builder=DefaultKeyBuilder(with_destiny=True, with_bot_id=True))
     dp = Dispatcher(storage=storage)
     dp.include_router(start_router.router)

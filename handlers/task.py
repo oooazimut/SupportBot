@@ -48,8 +48,10 @@ async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
     user = empl_service.get_employee(data)
     dialog_manager.dialog_data['task']['username'] = user['username']
 
+
 async def on_agreementer(event, select, dialog_manager: DialogManager, data: str, /):
     dialog_manager.dialog_data['task']['agreement'] = data
+
 
 async def task_description_handler(message: Message, message_input: MessageInput, manager: DialogManager):
     def is_empl(userid):

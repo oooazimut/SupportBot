@@ -1,4 +1,6 @@
-a = dict()
-a['111'] = 111
-if a.get('111'):
-    print('sdafsdf')
+a = ((1, '3'), (2, '4'), (5, '6'))
+x = '1'
+
+b = next((i[0] for i in a if i[1] == x), None)
+
+print(b)

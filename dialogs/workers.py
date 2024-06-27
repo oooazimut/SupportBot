@@ -12,11 +12,12 @@ from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+import config
 from db import task_service, empl_service
 from getters.workers import task_entities_getter, tasks_open_getter, media_getter
 from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
     open_tasks, on_entity, back_to_main, to_entities, on_cancel, act_handler
-from jobs import close_task, confirmed_task
+from jobs import close_task, confirmed_task, agreement_alarm
 from states import WorkerSG, WorkerTaskSG
 
 JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
@@ -28,7 +29,8 @@ JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set pr = item.priority if item.priority else "" %}'
                        '{% set ob = item.name if item.name else "" %}'
                        '{% set tt = item.title if item.title else "" %}'
-                       '{{em}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}')
+                       '{% set ag = "\U00002757\U0001F4DE\U00002757" if item.agreement else "" %}'
+                       '{{ag}}{{em}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}')
 
 TO_MAIN = Button(Const('Назад'), id='back_to_main', on_click=back_to_main)
 
@@ -138,9 +140,15 @@ main_dialog = Dialog(
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
     task_service.change_status(manager.start_data['taskid'], 'в работе')
+
     if manager.start_data['agreement']:
         agreementer = manager.start_data['agreement']
+        operatorid = config.AGREEMENTERS[agreementer]
+        taskid = manager.start_data['taskid']
         await callback.answer(f'Перед работой по этой заявке нужно согласование с {agreementer}', show_alert=True)
+        scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+        scheduler.add_job(agreement_alarm, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
+                          args=[operatorid, taskid], id=str(operatorid)+str(taskid), replace_existing=True)
     await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -219,7 +227,7 @@ task_dialog = Dialog(
         Format('Приоритет: {start_data[priority]}'),
         Format('Статус: {start_data[status]}'),
         Jinja('Акт: {{ "да" if start_data["act"] else "нет" }}'),
-        Format('Согласование: {start_data[agreement]}', when=F['start_data']['agreement']),
+        Format('\n\n<b><i><u>Согласование: {start_data[agreement]}</u></i></b>', when=F['start_data']['agreement']),
         Button(Const('Принять'), id='accept_task', on_click=accept_task, when=is_opened),
         Button(Const('Выполнено'), id='close_task', on_click=onclose_task, when=isnt_performed),
         Button(Const('Вернуть в работу'), id='back_to_work', on_click=get_back, when=is_performed),

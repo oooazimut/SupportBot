@@ -145,6 +145,7 @@ create_task_dialog = Dialog(
         <b>Приоритет</b>: {{priority if priority else ''}}
         <b>Работник</b>: {{username if username else ''}}
         <b>Акт</b>: {{'Да' if act else 'Нет'}}
+        <b>Согласование</b>: {{agreement if agreement else ''}}
         '''),
         DynamicMedia('media', when=F['media']),
         Button(Const('Сохранить'), id='confirm_creating', on_click=on_confirm),

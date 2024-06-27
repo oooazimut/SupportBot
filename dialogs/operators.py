@@ -25,7 +25,8 @@ JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set pr = item.priority if item.priority else "" %}'
                        '{% set ob = item.name if item.name else "" %}'
                        '{% set tt = item.title if item.title else "" %}'
-                       '{{d}} {{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}')
+                       '{% set ag = "\U00002757\U0001F4DE\U00002757" if item.agreement else "" %}'
+                       '{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}')
 
 main_dialog = Dialog(
     Window(
@@ -101,17 +102,18 @@ task_dialog = Dialog(
        Статус: {{status}}
        '''),
         Format('Нужен акт', when=F['act']),
-        Format('Согласование: {agreement}', when=F['agreement']),
+        Format('<b><i><u>Согласование: {agreement}</u></i></b>', when=F['agreement']),
         DynamicMedia('resultmedia', when=F['resultmedia']),
         Button(Const('Доп инфо'), id='addit_info', on_click=on_addit, when=F['media_id']),
         Button(Const('Акт'), id='act', on_click=on_act, when=F['actid']),
         Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=(F['status'] != 'закрыто')),
         Button(Const('Отложить'), id='delay_task', on_click=operators.on_delay, when=(F['status'] != 'отложено')),
-        Button(Const('Переместить в архив'), id='close_task', on_click=operators.on_close, when=(F['status'] != 'закрыто')),
+        Button(Const('Переместить в архив'), id='close_task', on_click=operators.on_close,
+               when=(F['status'] != 'закрыто')),
         Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return, when=(F['status'] == 'выполнено')),
         Button(Const('Назад'), id='to_all_tasks', on_click=to_all_tasks),
         state=OpTaskSG.preview,
-        getter=review_getter
+        getter=review_getter,
     ),
     Window(
         Const('Проверить акты:'),
