@@ -140,7 +140,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     def is_exist(someone_task: dict):
         return someone_task.get('taskid') is not None
 
-    data: dict = manager.dialog_data['task']
+    data: dict = manager.dialog_data.get('task', {})
     data.setdefault('created', datetime.datetime.now().replace(microsecond=0))
     data.setdefault('creator', clb.from_user.id)
     if data.get('slave'):
@@ -150,7 +150,8 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     data.setdefault('entity', None)
     data.setdefault('agreement', None)
     data.setdefault('priority', None)
-
+    slave_widget = manager.find('choose_slave')
+    print(slave_widget.get_checked())
     if is_exist(data):
         task_service.update_task(data)
         scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
@@ -198,3 +199,9 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
     else:
         await clb.answer('Заявка уже в работе.', show_alert=True)
     await manager.done()
+
+
+async def on_del_performer(clb: CallbackQuery, button, manager: DialogManager):
+    manager.dialog_data['task']['slave'] = None
+    manager.dialog_data['task']['username'] = None
+    await clb.answer('Исполнитель убран из заявки.', show_alert=True)

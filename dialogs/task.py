@@ -13,7 +13,7 @@ from getters.task import priority_getter, result_getter, entitites_getter, slave
 from handlers.task import (
     next_or_end, CANCEL_EDIT, task_description_handler,
     on_priority, ent_name_handler, on_confirm, on_entity, on_slave, on_start, to_entity, to_phone, to_title,
-    to_description, cancel_edit, to_slave, to_priority, on_act, to_act, on_agreementer, to_agreement
+    to_description, cancel_edit, to_slave, to_priority, on_act, to_act, on_agreementer, to_agreement, on_del_performer
 )
 from states import TaskCreating
 
@@ -111,6 +111,7 @@ create_task_dialog = Dialog(
                 on_click=on_slave
             ),
         ),
+        Button(Const('Убрать исполнителя'), id='del_performer', on_click=on_del_performer),
         Button(Const('Подтвердить'), id='confirm_slave', on_click=next_or_end),
         Back(Const('Назад')),
         CANCEL_EDIT,
