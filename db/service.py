@@ -20,6 +20,10 @@ class TaskService:
                  ':act, :entity, :slave, :agreement) WHERE taskid = :taskid RETURNING *')
         return self.database.post_query(query, task)
 
+    def update_summary(self, taskid: int, summary: str):
+        query = 'UPDATE tasks SET summary = ? where taskid = ?'
+        return self.database.post_query(query, [summary, taskid])
+
     def get_task(self, taskid) -> list:
         # return self.database.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
         query = '''

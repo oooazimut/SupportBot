@@ -3,7 +3,7 @@ import operator
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start, Back
+from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start, Back, Next
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 from magic_filter import F
@@ -103,17 +103,29 @@ task_dialog = Dialog(
        '''),
         Format('Нужен акт', when=F['act']),
         Format('<b><i><u>Согласование: {agreement}</u></i></b>', when=F['agreement']),
+        Format('\n <b>Информация по закрытию:</b> \n {summary}', when=F['summary']),
         DynamicMedia('resultmedia', when=F['resultmedia']),
         Button(Const('Доп инфо'), id='addit_info', on_click=on_addit, when=F['media_id']),
         Button(Const('Акт'), id='act', on_click=on_act, when=F['actid']),
         Button(Const('Редактировать'), id='edit_task', on_click=operators.edit_task, when=(F['status'] != 'закрыто')),
         Button(Const('Отложить'), id='delay_task', on_click=operators.on_delay, when=(F['status'] != 'отложено')),
-        Button(Const('Переместить в архив'), id='close_task', on_click=operators.on_close,
+        Button(Const('Переместить в архив'), id='close_task', on_click=operators.to_confirmation,
                when=(F['status'] != 'закрыто')),
         Button(Const('Вернуть в работу'), id='return_to_work', on_click=on_return, when=(F['status'] == 'выполнено')),
         Button(Const('Назад'), id='to_all_tasks', on_click=to_all_tasks),
         state=OpTaskSG.preview,
         getter=review_getter,
+    ),
+    Window(
+        Const('Вы уверены, что хотите закрыть заявку?'),
+        Back(Const('нет')),
+        Next(Const('да')),
+        state=OpTaskSG.close_confirmation
+    ),
+    Window(
+        Const('Здесь можно добавить информацию по закрытию заявки:'),
+        TextInput(id='summary', on_success=operators.on_close),
+        state=OpTaskSG.summary
     ),
     Window(
         Const('Проверить акты:'),

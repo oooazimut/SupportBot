@@ -7,6 +7,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+import config
 from db import empl_service
 from db import task_service
 from jobs import closed_task, returned_task
@@ -36,7 +37,7 @@ async def on_tasks(callback_query: CallbackQuery, button: Button, manager: Dialo
 
 
 async def tasks_getter(dialog_manager: DialogManager, **kwargs):
-    tasks = dialog_manager.dialog_data['tasks']
+    tasks = dialog_manager.dialog_data.get('tasks')
     return {'tasks': tasks}
 
 
@@ -129,9 +130,15 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
     await manager.start(TaskCreating.preview, data=manager.dialog_data['task'])
 
 
-async def on_close(callback: CallbackQuery, button: Button, manager: DialogManager):
+async def on_close(callback: CallbackQuery, widget, manager: DialogManager, *_):
     taskid = manager.dialog_data['task']['taskid']
+    operator = next((key for key, value in config.AGREEMENTERS.items() if value == callback.from_user.id), None)
     scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
+    summary = manager.dialog_data.get('task', {}).get('summary') or ''
+    add_summ = manager.find('summary').get_value() or ''
+    summary += add_summ + f'\nзакрыл {operator}.\n'
+    task_service.update_summary(taskid, summary)
+
     if manager.dialog_data['task']['status'] == 'проверка' or not manager.dialog_data['task']['act']:
         task_service.change_status(taskid, 'закрыто')
         job = scheduler.get_job(job_id=str(taskid))
@@ -149,6 +156,10 @@ async def on_close(callback: CallbackQuery, button: Button, manager: DialogManag
         await callback.answer('Заявка ушла на проверку правильного заполнения акта.', show_alert=True)
 
     await manager.switch_to(OpTaskSG.opened_tasks)
+
+
+async def to_confirmation(clb, btn, manager: DialogManager):
+    await manager.switch_to(OpTaskSG.close_confirmation, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
