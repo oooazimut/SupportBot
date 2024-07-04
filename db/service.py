@@ -179,3 +179,7 @@ class EntityService:
     def get_entity(entid):
         query = 'SELECT * FROM entities WHERE ent_id = ?'
         return db.select_query(query, [entid])
+
+    @staticmethod
+    def get_all_entities():
+        return db.select_query('select * from entities')

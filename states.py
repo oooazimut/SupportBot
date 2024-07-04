@@ -78,3 +78,9 @@ class CustomerTaskSG(StatesGroup):
 
 class AssignedTaskSG(StatesGroup):
     main = State()
+
+class ObjectsSG(StatesGroup):
+    main = State()
+    allinone = State()
+    search = State()
+    add = State()

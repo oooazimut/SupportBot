@@ -1,7 +1,10 @@
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
+from aiogram_dialog.widgets.kbd import Button
+from aiogram_dialog.widgets.text import Const
 
 from db import task_service
+from db.service import EntityService
 
 
 async def review_getter(dialog_manager: DialogManager, **kwargs):
@@ -28,3 +31,8 @@ async def act_getter(dialog_manager: DialogManager, **kwargs):
 async def with_acts_getter(dialog_manager: DialogManager, **kwargs):
     tasks = task_service.get_tasks_by_status(status='проверка')
     return {'tasks': tasks}
+
+
+async def objects_getter(dialog_manager: DialogManager, **kwargs):
+    objects = EntityService.get_all_entities()
+    return {'objects': objects}
