@@ -150,7 +150,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     data.setdefault('entity', None)
     data.setdefault('agreement', None)
     data.setdefault('priority', None)
-    data.setdefault('act', None)
     slave_widget = manager.find('choose_slave')
     print(slave_widget.get_checked())
     if is_exist(data):

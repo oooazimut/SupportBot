@@ -3,17 +3,17 @@ import operator
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start, Back, Next, ScrollingGroup
+from aiogram_dialog.widgets.kbd import Row, Select, Column, Button, SwitchTo, Cancel, Start, Back, Next, WebApp
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 from magic_filter import F
 
 import config
 from db import task_service
-from getters.operators import review_getter, addition_getter, act_getter, with_acts_getter, objects_getter
+from getters.operators import review_getter, addition_getter, act_getter, with_acts_getter
 from handlers import operators
 from handlers.operators import on_addit, on_back_to_preview, on_return, delay_handler, on_act, to_all_tasks
-from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG, ObjectsSG
+from states import OperatorSG, WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG
 
 JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
                        '{% set dt_list = dttm_list[0].split("-") %}'
@@ -34,7 +34,10 @@ main_dialog = Dialog(
         Row(
             Start(Const('Заявки'), id='tasks', state=OpTaskSG.tas),
             Start(Const('Работники'), id='slaves', state=WorkersSG.main),
-            Start(Const('Объекты'), id='ojects', state=ObjectsSG.main)
+            WebApp(
+                Const('Админка'),
+                Const('https://azimut-asutp.ru/admin')
+            ),
         ),
         state=OperatorSG.main
     ),
@@ -254,40 +257,4 @@ worker_dialog = Dialog(
         state=WorkersSG.status
 
     )
-)
-
-
-objects = Dialog(
-    Window(
-        Const('Функционал объектов'),
-        SwitchTo(Const('Все объекты'), id='to_all', state=ObjectsSG.allinone),
-        SwitchTo(Const('Поиск'), id='to_search', state=ObjectsSG.search),
-        SwitchTo(Const('Добавить объект'), id='to_adding', state=ObjectsSG.add),
-        Cancel(Const('Назад')),
-        state=ObjectsSG.main
-    ),
-    Window(
-        Const('Все объекты'),
-        ScrollingGroup(
-            Select(
-                Format('item[name]'),
-                id='sel_objects',
-                item_id_getter=lambda x: x['ent_id'],
-                items='objects',
-                on_click=on_object
-            ),
-            id='scroll_objects',
-            width=2,
-            height=10,
-            hide_on_single_page=True
-        ),
-        state=ObjectsSG.allinone,
-        getter=objects_getter
-    ),
-    Window(
-        state=ObjectsSG.search
-    ),
-    Window(
-        state=ObjectsSG.add
-    ),
 )
