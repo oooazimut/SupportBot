@@ -176,13 +176,14 @@ task_dialog = Dialog(
         getter=review_getter,
     ),
     Window(
-        Const("Вы уверены, что хотите закрыть заявку?"),
+        Const("Как вы хотите закрыть заявку?"),
         Back(Const("нет")),
         Next(Const("да")),
-        state=OpTaskSG.close_confirmation,
+        state=OpTaskSG.choose_closetype,
     ),
     Window(
         Const("Здесь можно добавить информацию по закрытию заявки:"),
+        MessageInput()
         TextInput(id="summary", on_success=operators.on_close),
         state=OpTaskSG.summary,
     ),
@@ -322,3 +323,4 @@ worker_dialog = Dialog(
         state=WorkersSG.status,
     ),
 )
+

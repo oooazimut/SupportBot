@@ -10,7 +10,7 @@ class OpTaskSG(StatesGroup):
     opened_tasks = State()
     archive_task = State()
     preview = State()
-    close_confirmation = State()
+    choose_closetype = State()
     summary = State()
     with_acts = State()
     additional = State()

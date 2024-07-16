@@ -159,7 +159,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
     if agreement:
         await callback.answer(f'Требуется согласование c {agreement}!', show_alert=True)
         bot: Bot = MyBot.get_instance()
-        operators = empl_service.get_employees_by_position('operator')
+        operators: list = empl_service.get_employees_by_position('operator') or []
         keyboard = InlineKeyboardBuilder()
         keyboard.button(text='Хорошо', callback_data='agr_not_is_readed')
         content = Text(Bold(f'Нужно согласование с {manager.start_data.get("username")} по заявке {manager.start_data.get("title")}!'))
