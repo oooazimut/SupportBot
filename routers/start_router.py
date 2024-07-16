@@ -34,3 +34,7 @@ async def get_task(callback: CallbackQuery, callback_data: TaskFactory, schedule
     await callback.answer('Оповещение отключено')
     if callback.message:
         await callback.message.delete()
+
+@router.callback_query(F.data == 'agr_not_is_readed')
+async def close_message(callback: CallbackQuery):
+    await callback.message.delete()

@@ -2,22 +2,37 @@ import asyncio
 import datetime
 import operator
 
-from aiogram import F
+from aiogram import Bot, F
 from aiogram.enums import ContentType
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import Dialog, Window, DialogManager, ShowMode
+from aiogram.utils.formatting import Bold, Text
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram_dialog import Dialog, DialogManager, ShowMode, Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Select, Column, Button, SwitchTo, Back
+from aiogram_dialog.widgets.kbd import Back, Button, Column, Select, SwitchTo
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import config
-from db import task_service, empl_service
-from getters.workers import task_entities_getter, tasks_open_getter, media_getter
-from handlers.workers import on_assigned, on_archive, on_progress, on_task, entites_name_handler, \
-    open_tasks, on_entity, back_to_main, to_entities, on_cancel, act_handler
-from jobs import close_task, confirmed_task, agreement_alarm
+from bot import MyBot
+from db import empl_service, task_service
+from getters.workers import media_getter, task_entities_getter, tasks_open_getter
+from handlers.workers import (
+    act_handler,
+    back_to_main,
+    entites_name_handler,
+    on_archive,
+    on_assigned,
+    on_cancel,
+    on_entity,
+    on_progress,
+    on_task,
+    open_tasks,
+    to_entities,
+)
+from jobs import close_task, confirmed_task
 from states import WorkerSG, WorkerTaskSG
 
 JINJA_TEMPLATE = Jinja('{% set dttm_list = item.created.split() %}'
@@ -139,16 +154,23 @@ main_dialog = Dialog(
 
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(manager.start_data['taskid'], 'в работе')
 
-    if manager.start_data['agreement']:
-        agreementer = manager.start_data['agreement']
-        operatorid = config.AGREEMENTERS[agreementer]
-        taskid = manager.start_data['taskid']
-        await callback.answer(f'Перед работой по этой заявке нужно согласование с {agreementer}', show_alert=True)
-        scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
-        scheduler.add_job(agreement_alarm, 'interval', minutes=5, next_run_time=datetime.datetime.now(),
-                          args=[operatorid, taskid], id=str(operatorid)+str(taskid), replace_existing=True)
+    agreement = manager.start_data.get('agreement')
+    if agreement:
+        await callback.answer(f'Требуется согласование c {agreement}!', show_alert=True)
+        bot: Bot = MyBot.get_instance()
+        operators = empl_service.get_employees_by_position('operator')
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(text='Хорошо', callback_data='agr_not_is_readed')
+        content = Text(Bold(f'Нужно согласование с {manager.start_data.get("username")} по заявке {manager.start_data.get("title")}!'))
+        for operator in operators:
+            try:
+                await bot.send_message(chat_id=operator['userid'], **content.as_kwargs(), reply_markup=keyboard.as_markup())
+            except TelegramBadRequest:
+                pass
+        return
+
+    task_service.change_status(manager.start_data['taskid'], 'в работе')
     await callback.answer(f'Заявка {manager.start_data["title"]} принята в работу.')
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 

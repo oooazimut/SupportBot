@@ -91,16 +91,3 @@ async def returned_task(slaveid, task, taskid):
     except TelegramBadRequest:
         pass
 
-
-async def agreement_alarm(operatorid, taskid):
-    bot: Bot = MyBot.get_instance()
-    task = task_service.get_task(taskid)[0]
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(text='Хорошо', callback_data=TaskFactory(action='agreement', task=str(taskid)))
-    content = Text(Bold(f'Нужен созвон с {task["username"]} по заявке {task["title"]}!'))
-    try:
-        messaga = await bot.send_message(chat_id=operatorid, **content.as_kwargs(), reply_markup=keyboard.as_markup())
-        await asyncio.sleep(295)
-        await messaga.delete()
-    except TelegramBadRequest:
-        pass
