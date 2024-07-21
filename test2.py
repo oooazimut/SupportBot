@@ -1,10 +1,22 @@
-from db import db
-
-q1 = 'alter table tasks add column act integer'
-q2 = 'alter table tasks add column actid text'
-q3 = 'alter table tasks add column acttype text'
-q4 = 'alter table tasks add column agreement text'
+from aiogram_dialog import DialogManager, Window
+from aiogram_dialog.widgets.kbd import Start
+from aiogram_dialog.widgets.text import Const
 
 
-for q in (q1, q2, q3, q4):
-    db.post_query(q)
+async def getter(dialog_manager: DialogManager, **kwargs):
+    return {
+        "name": "Ivan",
+        "surname": "Ivanov",
+    }
+
+
+the_window = Window(
+    Const("SomeText"),
+    Start(
+        Const("Go to another dialog"),
+        id="next_dialog",
+        state=AnotherSG.main,
+        data={"condom_name": "name"},
+    ),
+    state=SomeSG.main,
+)
