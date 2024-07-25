@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 class DataBase(ABC):
     @abstractmethod
-    def select_query(self, query, params):
+    def select_query(self, query, params)-> list:
         pass
 
     @abstractmethod

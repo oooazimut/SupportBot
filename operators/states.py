@@ -15,3 +15,4 @@ class DelayingSG(StatesGroup):
 
 class CloseTaskSG(StatesGroup):
     type_choice = State()
+    summary = State()

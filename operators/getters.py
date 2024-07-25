@@ -32,8 +32,13 @@ async def with_acts_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def closingtype_getter(dialog_manager: DialogManager, **kwargs):
+    task = task_service.get_task(taskid=dialog_manager.start_data.get("taskid"))
     c_types = [
         ("частично", 0),
         ("полностью", 1),
     ]
-    return {"c_types": c_types}
+
+    return {
+        "c_types": c_types,
+        "task": task,
+    }

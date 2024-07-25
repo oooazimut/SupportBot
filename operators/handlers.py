@@ -1,73 +1,16 @@
 import datetime
 from typing import Any
 
+import config
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-
-import config
-from db import empl_service
-from db import task_service
+from db import empl_service, task_service
 from jobs import closed_task, returned_task
-from states import WorkersSG, OpTaskSG, TaskCreating, DelayTaskSG
 
-
-async def on_tasks(
-    callback_query: CallbackQuery, button: Button, manager: DialogManager
-):
-    tasks = list()
-    new_tasks = task_service.get_tasks_by_status("открыто")
-    delayed_tasks = task_service.get_tasks_by_status("отложено")
-    confirmed_tasks = task_service.get_tasks_by_status("выполнено")
-    assigned_tasks = sorted(
-        task_service.get_tasks_by_status("назначено"),
-        key=lambda x: x["priority"] if x["priority"] else "",
-    )
-    progress_tasks = sorted(
-        task_service.get_tasks_by_status("в работе"),
-        key=lambda x: x["priority"] if x["priority"] else "",
-    )
-    for item in (
-        delayed_tasks,
-        progress_tasks,
-        assigned_tasks,
-        new_tasks,
-        confirmed_tasks,
-    ):
-        tasks.extend(item)
-    if tasks:
-        manager.dialog_data["tasks"] = tasks
-        await manager.switch_to(OpTaskSG.opened_tasks)
-    else:
-        await callback_query.answer("Тут ничего нет.", show_alert=True)
-
-
-async def tasks_getter(dialog_manager: DialogManager, **kwargs):
-    tasks = dialog_manager.dialog_data.get("tasks")
-    return {"tasks": tasks}
-
-
-async def go_archive(
-    callback_query: CallbackQuery, button: Button, manager: DialogManager
-):
-    data = task_service.get_tasks_by_status("закрыто")
-    scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-    scheduler.print_jobs()
-    if data:
-        manager.dialog_data["tasks"] = data
-        await manager.switch_to(OpTaskSG.archive_task)
-    else:
-        await callback_query.answer("Архив пустой.", show_alert=True)
-
-
-async def on_task(
-    callback: CallbackQuery, widget: Any, manager: DialogManager, item_id: str
-):
-    task = task_service.get_task(taskid=item_id)[0]
-    manager.dialog_data["task"] = task
-    await manager.switch_to(OpTaskSG.preview)
+from . import states
 
 
 async def on_addit(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -153,26 +96,23 @@ async def edit_task(callback: CallbackQuery, button: Button, manager: DialogMana
 
 
 async def on_type(
-    callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: int, /
+    callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: str, /
 ):
     dialog_manager.dialog_data["c_type"] = c_type
+    await dialog_manager.next()
 
 
-async def on_close(callback: CallbackQuery, widget, manager: DialogManager, *_):
+async def on_close(message: Message, widget: Any, manager: DialogManager):
     taskid = manager.dialog_data["task"]["taskid"]
-    operator = next(
-        (
-            key
-            for key, value in config.AGREEMENTERS.items()
-            if value == callback.from_user.id
-        ),
-        None,
-    )
+    operator = config.AGREEMENTERS.get(message.from_user.id)
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     summary = manager.dialog_data.get("task", {}).get("summary") or ""
     add_summ = manager.find("summary").get_value() or ""
     summary += add_summ + f"\nзакрыл {operator}.\n"
     task_service.update_summary(taskid, summary)
+
+    if manager.dialog_data.get("c_type") == "0":
+        task_service.reopen(taskid)
 
     if (
         manager.dialog_data["task"]["status"] == "проверка"
@@ -182,7 +122,9 @@ async def on_close(callback: CallbackQuery, widget, manager: DialogManager, *_):
         job = scheduler.get_job(job_id=str(taskid))
         if job:
             job.remove()
-        await callback.answer("Заявка перемещена в архив.", show_alert=True)
+        messaga = await message.answer("Заявка перемещена в архив.")
+        await asyncio.sleep(3)
+        await messaga.delete()
         slave = manager.dialog_data["task"]["slave"]
         task = manager.dialog_data["task"]["title"]
         taskid = manager.dialog_data["task"]["taskid"]
@@ -198,11 +140,13 @@ async def on_close(callback: CallbackQuery, widget, manager: DialogManager, *_):
             )
     else:
         task_service.change_status(taskid, "проверка")
-        await callback.answer(
-            "Заявка ушла на проверку правильного заполнения акта.", show_alert=True
+        messaga = await message.answer(
+            "Заявка ушла на проверку правильного заполнения акта."
         )
+        await asyncio.sleep(3)
+        await messaga.delete()
 
-    await manager.switch_to(OpTaskSG.opened_tasks)
+    await manager.done()
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):

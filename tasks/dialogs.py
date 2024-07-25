@@ -18,8 +18,9 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
-
 from db import empl_service
+from operators import states as opstates
+
 from . import getters, handlers, states
 
 CANCEL_EDIT = SwitchTo(
@@ -53,7 +54,7 @@ new = Dialog(
         MessageInput(handlers.ent_name_handler, content_types=[ContentType.TEXT]),
         Back(Const("Назад")),
         CANCEL_EDIT,
-        state=NewSG.entity_choice,
+        state=states.NewSG.entity_choice,
     ),
     Window(
         Const("Найденные объекты:"),
@@ -252,7 +253,7 @@ tasks = Dialog(
                 id="sel_task",
                 item_id_getter=lambda x: x.get("taskid"),
                 items="tasks",
-                on_click=handlers.on_task
+                on_click=handlers.on_task,
             )
         ),
         Button(Const("Обновить"), id="reload_tasks"),
@@ -297,7 +298,12 @@ tasks = Dialog(
                 on_click=handlers.on_delay,
                 when=(F["status"] != "отложено"),
             ),
-            Start(Const('Переместить в архив'), id='close_task', state=None, data={'taskid'}),
+            Start(
+                Const("Переместить в архив"),
+                id="close_task",
+                state=opstates.CloseTaskSG.type_choice,
+                data={"taskid": F["taskid"]},
+            ),
             # Button(
             #     Const("Переместить в архив"),
             #     id="close_task",
@@ -307,7 +313,7 @@ tasks = Dialog(
             Button(
                 Const("Вернуть в работу"),
                 id="return_to_work",
-                on_click=on_return,
+                on_click=handlers.on_return,
                 when=(F["status"] == "выполнено"),
             ),
             when=user_is_operator,
@@ -315,7 +321,7 @@ tasks = Dialog(
         Group(
             when=user_is_performer,
         ),
-        Back(Const('Назад')),
+        Back(Const("Назад")),
         state=states.TaskSG.task,
         getter=getters.task,
     ),

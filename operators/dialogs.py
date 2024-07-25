@@ -1,12 +1,12 @@
 import config
+from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
-from aiogram_dialog.widgets.input import MessageInput
+from aiogram_dialog.widgets.input import MessageInput, TextInput
 from aiogram_dialog.widgets.kbd import (
     Button,
     Cancel,
     Column,
-    Radio,
     Row,
     Select,
     Start,
@@ -17,7 +17,7 @@ from db import task_service
 from operators import getters
 from tasks.states import NewSG, TasksSG
 
-from . import states, handlers
+from . import handlers, states
 
 main = Dialog(
     Window(
@@ -82,13 +82,19 @@ close_task = Dialog(
                 Format(" {item[0]}"),
                 id="sel_type",
                 item_id_getter=lambda item: item[1],
-                items="",
+                items="c_types",
                 on_click=handlers.on_type,
             ),
         ),
         getter=getters.closingtype_getter,
         state=states.CloseTaskSG.type_choice,
-    )
+    ),
+    Window(
+        Const("Здесь можно добавить информацию по закрытию заявки:"),
+        MessageInput(func=handlers.on_close, content_types=[ContentType.TEXT, ]),
+        state=states.CloseTaskSG.summary,
+    ),
+
 )
 
 d = Dialog(
@@ -102,7 +108,7 @@ d = Dialog(
         Button(
             Const("Отложить"),
             id="delay_task",
-            on_click=operators.on_delay,
+            on_click=handlers.on_delay,
             when=(F["status"] != "отложено"),
         ),
         Button(
