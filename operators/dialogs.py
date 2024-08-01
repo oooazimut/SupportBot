@@ -98,35 +98,32 @@ close_task = Dialog(
 )
 
 d = Dialog(
-    Window(
-        Button(
-            Const("Редактировать"),
-            id="edit_task",
-            on_click=handlers.edit_task,
-            when=(F["status"] != "закрыто"),
-        ),
-        Button(
-            Const("Отложить"),
-            id="delay_task",
-            on_click=handlers.on_delay,
-            when=(F["status"] != "отложено"),
-        ),
-        Button(
-            Const("Переместить в архив"),
-            id="close_task",
-            on_click=handlers.to_confirmation,
-            when=(F["status"] != "закрыто"),
-        ),
-        Button(
-            Const("Вернуть в работу"),
-            id="return_to_work",
-            on_click=on_return,
-            when=(F["status"] == "выполнено"),
-        ),
-        Button(Const("Назад"), id="to_all_tasks", on_click=to_all_tasks),
-        state=OpTaskSG.preview,
-        getter=Getters.review,
-    ),
+    # Window(
+    #     Button(
+    #         Const("Редактировать"),
+    #         id="edit_task",
+    #         on_click=handlers.edit_task,
+    #         when=(F["status"] != "закрыто"),
+    #     ),
+    #     Button(
+    #         Const("Отложить"),
+    #         id="delay_task",
+    #         on_click=handlers.on_delay,
+    #         when=(F["status"] != "отложено"),
+    #     ),
+    #     Button(
+    #         Const("Переместить в архив"),
+    #         id="close_task",
+    #         on_click=handlers.to_confirmation,
+    #         when=(F["status"] != "закрыто"),
+    #     ),
+    #     Button(
+    #         Const("Вернуть в работу"),
+    #         id="return_to_work",
+    #         on_click=on_return,
+    #         when=(F["status"] == "выполнено"),
+    #     ),
+   # ),
     Window(
         Const("Как вы хотите закрыть заявку?"),
         Button(Const("Частично"), id="partial_closing"),

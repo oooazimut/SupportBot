@@ -1,5 +1,3 @@
-import operator
-
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
@@ -10,15 +8,13 @@ from aiogram_dialog.widgets.kbd import (
     Cancel,
     Column,
     Group,
-    Next,
-    Radio,
     Select,
     Start,
     SwitchTo,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
-from db import empl_service
+from db.service import EmployeeService
 from operators import states as opstates
 
 from . import getters, handlers, states
@@ -28,6 +24,12 @@ CANCEL_EDIT = SwitchTo(
     when=F["dialog_data"]["finished"],
     id="cnl_edt",
     state=states.NewSG.preview,
+)
+
+PASS = Button(
+    Const("Пропустить"),
+    id="next_or_end",
+    on_click=handlers.next_or_end,
 )
 
 JINJA_TEMPLATE = Jinja(
@@ -52,37 +54,35 @@ new = Dialog(
             "Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть."
         ),
         MessageInput(handlers.ent_name_handler, content_types=[ContentType.TEXT]),
-        Back(Const("Назад")),
         CANCEL_EDIT,
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.entity_choice,
     ),
     Window(
         Const("Найденные объекты:"),
         Column(
-            Radio(
-                Format("🔘 {item[name]}"),
-                Format("⚪️ {item[name]}"),
+            Select(
+                Format("{item[name]}"),
                 id="choose_entity",
-                item_id_getter=lambda item: item["ent_id"],
+                item_id_getter=lambda x: x.get("ent_id"),
                 items="entities",
                 on_click=handlers.on_entity,
             ),
         ),
-        Button(
-            Const("Подтвердить"), id="confirm_entity", on_click=handlers.next_or_end
-        ),
-        Next(Const("Продолжить без объекта")),
+        PASS,
         Back(Const("Назад")),
         CANCEL_EDIT,
+        Cancel(Const("Отменить создание")),
         state=states.NewSG.entities,
         getter=getters.entitites,
     ),
     Window(
         Const("Ваш номер телефона:"),
         TextInput(id="phone_input", on_success=handlers.next_or_end),
+        PASS,
         Back(Const("Назад")),
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание")),
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.phone,
     ),
     Window(
@@ -90,7 +90,7 @@ new = Dialog(
         TextInput(id="title_input", on_success=handlers.next_or_end),
         CANCEL_EDIT,
         Back(Const("Назад")),
-        Cancel(Const("Отменить создание")),
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.title,
     ),
     Window(
@@ -102,77 +102,75 @@ new = Dialog(
         ),
         Back(Const("Назад")),
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание")),
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.description,
     ),
     Window(
         Const("Выбор приоритета:"),
-        Radio(
-            Format("🔘 {item[0]}"),
-            Format("⚪️ {item[0]}"),
+        Select(
+            Format("{item[0]}"),
             id="ch_prior",
-            item_id_getter=operator.itemgetter(1),
+            item_id_getter=lambda x: x[1],
             items="priorities",
             on_click=handlers.on_priority,
         ),
-        Button(
-            Const("Подтвердить"), id="confirm_priority", on_click=handlers.next_or_end
-        ),
         Back(Const("Назад")),
         CANCEL_EDIT,
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         getter=getters.priority,
         state=states.NewSG.priority,
     ),
     Window(
         Const("Необходимость акта от исполнителя:"),
-        Radio(
-            Format("🔘 {item[0]}"),
-            Format("⚪️ {item[0]}"),
+        Select(
+            Format("item[0]"),
             id="act_nssr",
             item_id_getter=lambda x: x[1],
             items="act_nssr",
             on_click=handlers.on_act,
         ),
-        Button(Const("Подтвердить"), id="confirm_act", on_click=handlers.next_or_end),
         Back(Const("Назад")),
         CANCEL_EDIT,
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         getter=getters.acts,
         state=states.NewSG.act,
     ),
     Window(
         Const("Назначить работника"),
         Column(
-            Radio(
-                Format("🔘 {item[username]}"),
-                Format("⚪️ {item[username]}"),
+            Select(
+                Format("{item[username]}"),
                 id="choose_slave",
                 item_id_getter=lambda item: item["userid"],
                 items="slaves",
                 on_click=handlers.on_slave,
             ),
+            PASS,
         ),
         Button(
             Const("Убрать исполнителя"),
             id="del_performer",
             on_click=handlers.on_del_performer,
+            when=F["dialog_data"]["finished"],
         ),
         Button(Const("Подтвердить"), id="confirm_slave", on_click=handlers.next_or_end),
         Back(Const("Назад")),
         CANCEL_EDIT,
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.performer,
         getter=getters.slaves,
     ),
     Window(
         Const("Если нужно согласование, выберите с кем:"),
         Column(
-            Radio(
-                Format("🔘 {item}"),
-                Format("⚪️ {item}"),
+            Select(
+                Format("{item}"),
                 id="agreementers",
                 item_id_getter=lambda item: item,
                 items="agreementers",
                 on_click=handlers.on_agreementer,
-            )
+            ),
+            PASS,
         ),
         Button(
             Const("Подтвердить"),
@@ -181,6 +179,7 @@ new = Dialog(
         ),
         Back(Const("Назад")),
         CANCEL_EDIT,
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.agreement,
         getter=getters.agreementers,
     ),
@@ -235,12 +234,12 @@ new = Dialog(
 
 
 def user_is_operator(data, widget, dialog_manager: DialogManager) -> bool:
-    user: dict = empl_service.get_employee(userid=dialog_manager.event.from_user.id)
+    user: dict = EmployeeService.get_employee(userid=dialog_manager.event.from_user.id)
     return user.get("status") == "operator"
 
 
 def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
-    user: dict = empl_service.get_employee(userid=dialog_manager.event.from_user.id)
+    user: dict = EmployeeService.get_employee(userid=dialog_manager.event.from_user.id)
     return user.get("status") == "worker"
 
 
@@ -276,15 +275,23 @@ tasks = Dialog(
             Const("Мультимедиа от оператора"),
             id="mm_description",
             state=states.MediaSG.main,
+            data={"type": F["media_type"], "id": F["media_id"]},
             when="media_id",
         ),
         Start(
             Const("Видео от исполнителя"),
             id="to_media",
             state=states.MediaSG.main,
+            data={"type": F["resultype"], "id": F["resultid"]},
             when="resultid",
         ),
-        Start(Const("Акт"), id="act", state=states.MediaSG.main, when="actid"),
+        Start(
+            Const("Акт"),
+            id="act",
+            state=states.MediaSG.main,
+            data={"type": F["acttype"], "id": F["actid"]},
+            when="actid",
+        ),
         Group(
             Button(
                 Const("Редактировать"),
@@ -304,12 +311,6 @@ tasks = Dialog(
                 state=opstates.CloseTaskSG.type_choice,
                 data={"taskid": F["taskid"]},
             ),
-            # Button(
-            #     Const("Переместить в архив"),
-            #     id="close_task",
-            #     on_click=handlers.to_confirmation,
-            #     when=(F["status"] != "закрыто"),
-            # ),
             Button(
                 Const("Вернуть в работу"),
                 id="return_to_work",

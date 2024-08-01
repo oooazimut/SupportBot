@@ -13,6 +13,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from redis.asyncio.client import Redis
 
 import config
+from db.models import SqLiteDataBase
+from db.schema import CREATE_DB_SCRIPT
 import jobs
 import middlewares
 from bot import MyBot
@@ -33,21 +35,13 @@ async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
 
 
 async def main():
+    SqLiteDataBase.create(script=CREATE_DB_SCRIPT)
     bot = MyBot(config.TOKEN, parse_mode=ParseMode.HTML).get_instance()
     storage = RedisStorage(
         Redis(), key_builder=DefaultKeyBuilder(with_destiny=True, with_bot_id=True)
     )
     dp = Dispatcher(storage=storage)
     dp.include_router(start_router.router)
-    dp.include_routers(customers.main_dialog)
-    dp.include_routers(tasks.create_task_dialog)
-    dp.include_routers(workers.main_dialog, workers.task_dialog)
-    dp.include_routers(
-        operators.main_dialog,
-        operators.task_dialog,
-        operators.DelayDialog,
-        operators.worker_dialog,
-    )
     dp.include_router(finish_router.router)
     scheduler = AsyncIOScheduler()
     scheduler.add_jobstore(

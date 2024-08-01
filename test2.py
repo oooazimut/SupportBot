@@ -1,22 +1,5 @@
-from aiogram_dialog import DialogManager, Window
-from aiogram_dialog.widgets.kbd import Start
-from aiogram_dialog.widgets.text import Const
+from db.models import SqLiteDataBase
+from db.schema import CREATE_DB_SCRIPT
 
 
-async def getter(dialog_manager: DialogManager, **kwargs):
-    return {
-        "name": "Ivan",
-        "surname": "Ivanov",
-    }
-
-
-the_window = Window(
-    Const("SomeText"),
-    Start(
-        Const("Go to another dialog"),
-        id="next_dialog",
-        state=AnotherSG.main,
-        data={"condom_name": "name"},
-    ),
-    state=SomeSG.main,
-)
+SqLiteDataBase.create(script=CREATE_DB_SCRIPT)

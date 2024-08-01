@@ -1,6 +1,4 @@
-DB_NAME = 'Support.db'
-
-CREATE_DB_SCRIPT = '''
+CREATE_DB_SCRIPT = """
     BEGIN TRANSACTION;
     CREATE TABLE IF NOT EXISTS employees (
         userid INTEGER PRIMARY KEY,
@@ -36,4 +34,5 @@ CREATE_DB_SCRIPT = '''
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 
     COMMIT; 
-    '''
+    """
+

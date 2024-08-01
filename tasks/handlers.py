@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery, Message
@@ -6,8 +7,7 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from db import empl_service, task_service
-from db.service import EntityService
+from db.service import EmployeeService, EntityService, TaskService
 from jobs import new_task
 from operators.states import DelayingSG
 from . import states
@@ -38,26 +38,31 @@ async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
 
 async def on_priority(event, select, dialog_manager: DialogManager, data: str, /):
     dialog_manager.dialog_data["task"]["priority"] = data
+    await next_or_end(event, select, dialog_manager)
 
 
 async def on_act(event, select, dialog_manager: DialogManager, data, /):
     dialog_manager.dialog_data["task"]["act"] = data
+    await next_or_end(event, select, dialog_manager)
 
 
-async def on_entity(event, select, dialog_manager: DialogManager, data: str, /):
-    entity = EntityService.get_entity(data)[0]
+async def on_entity(event, select, dialog_manager: DialogManager, ent_id: str, /):
+    entity = EntityService.get_entity(ent_id)[0]
     dialog_manager.dialog_data["task"]["entity"] = entity["ent_id"]
     dialog_manager.dialog_data["task"]["name"] = entity["name"]
+    await next_or_end(event, select, dialog_manager)
 
 
 async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
     dialog_manager.dialog_data["task"]["slave"] = data
-    user = empl_service.get_employee(data)
-    dialog_manager.dialog_data["task"]["username"] = user["username"]
+    user = EmployeeService.get_employee(data)
+    dialog_manager.dialog_data["task"]["username"] = user.get("username")
+    await next_or_end(event, select, dialog_manager)
 
 
 async def on_agreementer(event, select, dialog_manager: DialogManager, data: str, /):
     dialog_manager.dialog_data["task"]["agreement"] = data
+    await next_or_end(event, select, dialog_manager)
 
 
 async def task_description_handler(
@@ -164,11 +169,11 @@ async def on_start(data, manager: DialogManager):
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
     taskid = manager.start_data["taskid"]
-    task = task_service.get_task(taskid)[0]
+    task = TaskService.get_task(taskid)[0]
     if task["slave"]:
-        task_service.change_status(taskid, "в работе")
+        TaskService.change_status(taskid, "в работе")
     else:
-        task_service.change_status(taskid, "открыто")
+        TaskService.change_status(taskid, "открыто")
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     job = scheduler.get_job(str(manager.start_data["taskid"]))
     if job:
