@@ -6,5 +6,4 @@ router = Router()
 
 @router.message()
 async def all_messages(msg: Message):
-    print('checked')
     await msg.delete()

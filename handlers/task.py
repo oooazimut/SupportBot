@@ -150,8 +150,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     data.setdefault('entity', None)
     data.setdefault('agreement', None)
     data.setdefault('priority', None)
-    slave_widget = manager.find('choose_slave')
-    print(slave_widget.get_checked())
     if is_exist(data):
         task_service.update_task(data)
         scheduler: AsyncIOScheduler = manager.middleware_data['scheduler']
