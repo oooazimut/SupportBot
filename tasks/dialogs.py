@@ -9,13 +9,11 @@ from aiogram_dialog.widgets.kbd import (
     Column,
     Group,
     Select,
-    Start,
     SwitchTo,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 from db.service import EmployeeService
-from operators import states as opstates
 
 from . import getters, handlers, states
 
@@ -53,7 +51,8 @@ new = Dialog(
         Const(
             "Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть."
         ),
-        MessageInput(handlers.ent_name_handler, content_types=[ContentType.TEXT]),
+        MessageInput(handlers.ent_name_handler),
+        PASS,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.entity_choice,
@@ -88,6 +87,7 @@ new = Dialog(
     Window(
         Const("Тема обращения?"),
         TextInput(id="title_input", on_success=handlers.next_or_end),
+        PASS,
         CANCEL_EDIT,
         Back(Const("Назад")),
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
@@ -100,6 +100,7 @@ new = Dialog(
         MessageInput(
             handlers.task_description_handler, content_types=[ContentType.ANY]
         ),
+        PASS,
         Back(Const("Назад")),
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
@@ -123,7 +124,7 @@ new = Dialog(
     Window(
         Const("Необходимость акта от исполнителя:"),
         Select(
-            Format("item[0]"),
+            Format("{item[0]}"),
             id="act_nssr",
             item_id_getter=lambda x: x[1],
             items="act_nssr",
@@ -153,7 +154,6 @@ new = Dialog(
             on_click=handlers.on_del_performer,
             when=F["dialog_data"]["finished"],
         ),
-        Button(Const("Подтвердить"), id="confirm_slave", on_click=handlers.next_or_end),
         Back(Const("Назад")),
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
@@ -172,11 +172,6 @@ new = Dialog(
             ),
             PASS,
         ),
-        Button(
-            Const("Подтвердить"),
-            id="confirm_agreementer",
-            on_click=handlers.next_or_end,
-        ),
         Back(Const("Назад")),
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
@@ -186,7 +181,7 @@ new = Dialog(
     Window(
         Jinja("""Ваша заявка:
 
-        <b>Объект</b>: {{entity if entity else ''}}
+        <b>Объект</b>: {{name if name else ''}}
         <b>Телефон</b>: {{phone if phone else ''}}
         <b>Тема</b>: {{title if title else ''}}
         <b>Описание</b>: {{description if description else ''}}
@@ -195,11 +190,10 @@ new = Dialog(
         <b>Акт</b>: {{'Да' if act else 'Нет'}}
         <b>Согласование</b>: {{agreement if agreement else ''}}
         """),
-        Start(
+        Button(
             Const("Мультимедиа"),
             id="to_multimedia",
-            state=states.MediaSG.main,
-            when="media_id",
+            on_click=handlers.show_operator_media,
         ),
         Button(Const("Сохранить"), id="confirm_creating", on_click=handlers.on_confirm),
         SwitchTo(
@@ -235,12 +229,12 @@ new = Dialog(
 
 def user_is_operator(data, widget, dialog_manager: DialogManager) -> bool:
     user: dict = EmployeeService.get_employee(userid=dialog_manager.event.from_user.id)
-    return user.get("status") == "operator"
+    return user.get("position") == "operator"
 
 
 def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
-    user: dict = EmployeeService.get_employee(userid=dialog_manager.event.from_user.id)
-    return user.get("status") == "worker"
+    user = EmployeeService.get_employee(userid=dialog_manager.event.from_user.id)
+    return user.get("position") == "worker"
 
 
 tasks = Dialog(
@@ -268,28 +262,25 @@ tasks = Dialog(
         Format("Исполнитель: {username}", when="username"),
         Const("<b>Высокий приоритет!</b>", when="priority"),
         Format("Статус: {status}"),
-        Format("Нужен акт", when="act"),
+        Format("\nНужен акт", when="act"),
         Format("<b><i><u>Согласование: {agreement}</u></i></b>", when="agreement"),
         Format("\n <b>Информация по закрытию:</b> \n {summary}", when="summary"),
-        Start(
+        Button(
             Const("Мультимедиа от оператора"),
             id="mm_description",
-            state=states.MediaSG.main,
-            data={"type": F["media_type"], "id": F["media_id"]},
+            on_click=handlers.show_operator_media,
             when="media_id",
         ),
-        Start(
+        Button(
             Const("Видео от исполнителя"),
             id="to_media",
-            state=states.MediaSG.main,
-            data={"type": F["resultype"], "id": F["resultid"]},
+            on_click=handlers.show_performer_media,
             when="resultid",
         ),
-        Start(
+        Button(
             Const("Акт"),
             id="act",
-            state=states.MediaSG.main,
-            data={"type": F["acttype"], "id": F["actid"]},
+            on_click=handlers.show_act,
             when="actid",
         ),
         Group(
@@ -297,33 +288,51 @@ tasks = Dialog(
                 Const("Редактировать"),
                 id="edit_task",
                 on_click=handlers.edit_task,
-                when=(F["status"] != "закрыто"),
+                when=F["status"].not_in(["закрыто", "проверка"]),
             ),
             Button(
                 Const("Отложить"),
                 id="delay_task",
                 on_click=handlers.on_delay,
-                when=(F["status"] != "отложено"),
+                when=F["status"].not_in(["отложено", "проверка", "закрыто"]),
             ),
-            Start(
+            Button(
                 Const("Переместить в архив"),
                 id="close_task",
-                state=opstates.CloseTaskSG.type_choice,
-                data={"taskid": F["taskid"]},
+                on_click=handlers.on_close,
+                when=F["status"] != "закрыто",
             ),
             Button(
                 Const("Вернуть в работу"),
                 id="return_to_work",
                 on_click=handlers.on_return,
-                when=(F["status"] == "выполнено"),
+                when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
             ),
             when=user_is_operator,
         ),
         Group(
+            Button(
+                Const("Принять"),
+                id="accept_task",
+                on_click=handlers.accept_task,
+                when=F["status"] == "назначено",
+            ),
+            Button(
+                Const("Выполнено"),
+                id="close_task",
+                on_click=handlers.on_perform,
+                when=F["status"].not_in(["выполнено", "закрыто, 'проверка"]),
+            ),
+            Button(
+                Const("Вернуть в работу"),
+                id="back_to_work",
+                on_click=handlers.get_back,
+                when=F["status"] == "выполнено",
+            ),
             when=user_is_performer,
         ),
         Back(Const("Назад")),
-        state=states.TaskSG.task,
+        state=states.TasksSG.task,
         getter=getters.task,
     ),
 )
@@ -331,6 +340,7 @@ tasks = Dialog(
 
 media = Dialog(
     Window(
+        Format("{wintitle}"),
         DynamicMedia("media"),
         Cancel(Const("Назад")),
         state=states.MediaSG.main,

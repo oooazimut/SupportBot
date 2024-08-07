@@ -26,7 +26,6 @@ class SqLiteDataBase:
     @classmethod
     @connector
     def create(cls, con: sq.Connection, script):
-        print(script)
         con.executescript(script)
 
     # получить из БД
@@ -48,15 +47,13 @@ class SqLiteDataBase:
     # положить в БД
     @classmethod
     @connector
-    def post_query(cls, con: sq.Connection, query: str, params=None) -> Any | None:
+    def post_query(cls, con: sq.Connection, query: str, params=None) -> sq.Row:
         if params is None:
             params = []
         con.row_factory = sq.Row
         data = con.execute(query, params).fetchall()
-        if data:
-            data = data[0]
         con.commit()
-        return data
+        return data[0]
 
     @classmethod
     @connector

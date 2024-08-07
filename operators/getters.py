@@ -1,6 +1,7 @@
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
-from db import task_service
+
+from db.service import TaskService
 
 
 async def review_getter(dialog_manager: DialogManager, **kwargs):
@@ -27,12 +28,13 @@ async def act_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def with_acts_getter(dialog_manager: DialogManager, **kwargs):
-    tasks = task_service.get_tasks_by_status(status="проверка")
+    tasks = TaskService.get_tasks_by_status(status="проверка")
     return {"tasks": tasks}
 
 
 async def closingtype_getter(dialog_manager: DialogManager, **kwargs):
-    task = task_service.get_task(taskid=dialog_manager.start_data.get("taskid"))
+    task = TaskService.get_task(taskid=dialog_manager.start_data.get("taskid"))[0]
+    dialog_manager.dialog_data['task'] = task
     c_types = [
         ("частично", 0),
         ("полностью", 1),
@@ -40,5 +42,4 @@ async def closingtype_getter(dialog_manager: DialogManager, **kwargs):
 
     return {
         "c_types": c_types,
-        "task": task,
     }

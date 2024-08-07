@@ -16,9 +16,6 @@ class NewSG(StatesGroup):
 
 class TasksSG(StatesGroup):
     tasks = State()
-
-
-class TaskSG(StatesGroup):
     task = State()
 
 

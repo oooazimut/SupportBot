@@ -4,8 +4,7 @@ import logging
 from aiogram import Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
-from aiogram.fsm.storage.base import DefaultKeyBuilder
-from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.types import ErrorEvent
 from aiogram_dialog import DialogManager, StartMode, setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
@@ -15,23 +14,28 @@ from redis.asyncio.client import Redis
 import config
 from db.models import SqLiteDataBase
 from db.schema import CREATE_DB_SCRIPT
+from db.service import EmployeeService
 import jobs
 import middlewares
 from bot import MyBot
 from routers import finish_router, start_router
-from db import empl_service
+from operators import dialogs as op_dialogs
+from performers import dialogs as prf_dialogs
+from tasks import dialogs as tsk_dialogs  # noqa: F401
 
-_logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
+
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
-    userid = dialog_manager.middleware_data['event_from_user'].id
-    user = empl_service.get_employee(userid=userid)
+    userid = dialog_manager.middleware_data["event_from_user"].id
+    user = EmployeeService.get_employee(userid=userid)
     if user:
-        position = user['position']
+        position = user["position"]
     else:
-        position = 'customer'
-    await dialog_manager.start(state=config.START_STATES[position], mode=StartMode.RESET_STACK)
+        position = "customer"
+    await dialog_manager.start(
+        state=config.START_STATES[position], mode=StartMode.RESET_STACK
+    )
 
 
 async def main():
@@ -42,6 +46,11 @@ async def main():
     )
     dp = Dispatcher(storage=storage)
     dp.include_router(start_router.router)
+    dp.include_routers(
+        op_dialogs.main, op_dialogs.tasks, op_dialogs.close_task, op_dialogs.delay
+    )
+    dp.include_routers(prf_dialogs.main, prf_dialogs.performed)
+    dp.include_routers(tsk_dialogs.new, tsk_dialogs.tasks, tsk_dialogs.media)
     dp.include_router(finish_router.router)
     scheduler = AsyncIOScheduler()
     scheduler.add_jobstore(

@@ -1,5 +1,6 @@
-from db.models import SqLiteDataBase
-from db.schema import CREATE_DB_SCRIPT
+from db.service import TaskService
 
 
-SqLiteDataBase.create(script=CREATE_DB_SCRIPT)
+tasks = TaskService.get_tasks_by_status('октрыто')
+for i in tasks:
+    TaskService.change_status(i['taskid'], 'открыто')

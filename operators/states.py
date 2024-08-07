@@ -1,18 +1,16 @@
 from aiogram.fsm.state import State, StatesGroup
 
 
-class MainMenuSG(StatesGroup):
+class OpMainMenuSG(StatesGroup):
     main = State()
 
-class TasksMenuSG(StatesGroup):
+class OpTasksSG(StatesGroup):
     main = State()
 
-class WorkersSG(StatesGroup):
+
+class OpDelayingSG(StatesGroup):
     main = State()
 
-class DelayingSG(StatesGroup):
-    main = State()
-
-class CloseTaskSG(StatesGroup):
+class OpCloseTaskSG(StatesGroup):
     type_choice = State()
     summary = State()

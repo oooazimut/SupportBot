@@ -22,7 +22,7 @@ class TaskService:
 
     @staticmethod
     def update_summary(taskid: int, summary: str):
-        query = "UPDATE tasks SET summary = ? where taskid = ?"
+        query = "UPDATE tasks SET summary = ? where taskid = ? RETURNING *"
         return SqDB.post_query(query, [summary, taskid])
 
     @staticmethod
@@ -105,29 +105,31 @@ class TaskService:
         else:
             priority = "\U0001f525"
         SqDB.post_query(
-            "UPDATE tasks SET priority = ? WHERE taskid = ?", [priority, task_id]
+            "UPDATE tasks SET priority = ? WHERE taskid = ? RETURNING *", [priority, task_id]
         )
 
     @staticmethod
     def change_status(task_id, status: str):
         SqDB.post_query(
-            "UPDATE tasks SET status = ? WHERE taskid = ?", [status, task_id]
+            "UPDATE tasks SET status = ? WHERE taskid = ? RETURNING *", [status, task_id]
         )
 
     @staticmethod
     def change_worker(task_id, slave):
-        SqDB.post_query("UPDATE tasks SET slave = ? WHERE taskid = ?", [slave, task_id])
+        SqDB.post_query("UPDATE tasks SET slave = ? WHERE taskid = ? RETURNING *", [slave, task_id])
 
     @staticmethod
-    def get_tasks_for_entity(entity: str):
+    def get_tasks_for_entity(entid):
         query = """
         SELECT *
         FROM tasks as t
-        JOIN entities as e
-        ON t.entity = e.ent_id
-        WHERE e.name LIKE ? 
+        LEFT JOIN employees as em
+        ON em.userid = t.slave
+        LEFT JOIN entities as en
+        ON en.ent_id = t.entity
+        WHERE en.ent_id= ?
         """
-        SqDB.select_query(query, [f"%{entity}%"])
+        SqDB.select_query(query, [entid])
 
     @staticmethod
     def get_task_reminder() -> list:
@@ -158,19 +160,24 @@ class TaskService:
     def save_result(result, resultid, resulttype, taskid):
         params = [result, resulttype, resultid, taskid]
         SqDB.post_query(
-            "UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=?", params
+            "UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=? RETURNING *", params
         )
 
     @staticmethod
     def add_act(params: dict):
         query = (
-            "UPDATE tasks SET actid = :actid, acttype = :acttype WHERE taskid = :taskid"
+            "UPDATE tasks SET actid = :actid, acttype = :acttype WHERE taskid = :taskid RETURNING *"
         )
         SqDB.post_query(query, params)
 
     @classmethod
     def reopen(cls, taskid: int | str):
         task = cls.get_task(taskid)[0]
+        task['slave'] = None
+        task['username'] = None
+        task['status'] = 'открыто'
+        for i in task:
+            print(i, task[i])
         cls.save_task(task)
 
 
@@ -179,11 +186,11 @@ class EmployeeService:
     def save_employee(userid: int, username: str, position: str):
         params = [userid, username, position]
         SqDB.post_query(
-            "INSERT INTO employees(userid, username, position) VALUES (?, ?, ?)", params
+            "INSERT INTO employees(userid, username, position) VALUES (?, ?, ?) RETURNING *", params
         )
 
     @staticmethod
-    def get_employee(userid) -> dict|None:
+    def get_employee(userid) -> dict | None:
         employee = SqDB.select_query(
             "SELECT * FROM employees WHERE userid = ?", [userid]
         )
@@ -208,11 +215,6 @@ class EntityService:
     def get_entities_by_substr(substr):
         query = "SELECT * FROM entities WHERE MY_LOWER(name) LIKE MY_LOWER(?)"
         return SqDB.select_query(query, [f"%{substr}%"])
-
-    @staticmethod
-    def get_task_for_entity(entity):
-        query = "SELECT * FROM tasks WHERE entity = ?"
-        return SqDB.select_query(query, [entity])
 
     @staticmethod
     def get_entity(entid):

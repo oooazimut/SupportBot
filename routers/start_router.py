@@ -5,7 +5,7 @@ from aiogram_dialog import DialogManager, StartMode
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import START_STATES
-from db import empl_service
+from db.service import EmployeeService
 from jobs import TaskFactory
 
 router = Router()
@@ -17,7 +17,7 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
     txt = f'Пользователь {message.from_user.full_name} {message.from_user.id} запустил бота'
     await bot.send_message(chat_id=5963726977, text=txt)
 
-    user = empl_service.get_employee(userid=message.from_user.id)
+    user = EmployeeService.get_employee(userid=message.from_user.id)
     if user:
         position = user['position']
     else:
