@@ -17,18 +17,19 @@ from db.service import EmployeeService
 
 from . import getters, handlers, states
 
-CANCEL_EDIT = SwitchTo(
+CANCEL_EDIT = Cancel(
     Const("Отменить редактирование"),
     when=F["dialog_data"]["finished"],
-    id="cnl_edt",
-    state=states.NewSG.preview,
 )
 
 PASS = Button(
     Const("Пропустить"),
     id="next_or_end",
     on_click=handlers.next_or_end,
+    when=~F["dialog_data"]["finished"],
 )
+
+BACK = Button(Const("Назад"), id="back_or_back", on_click=handlers.on_back)
 
 JINJA_TEMPLATE = Jinja(
     "{% set dttm_list = item.created.split() %}"
@@ -53,6 +54,7 @@ new = Dialog(
         ),
         MessageInput(handlers.ent_name_handler),
         PASS,
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.entity_choice,
@@ -69,7 +71,7 @@ new = Dialog(
             ),
         ),
         PASS,
-        Back(Const("Назад")),
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание")),
         state=states.NewSG.entities,
@@ -79,7 +81,7 @@ new = Dialog(
         Const("Ваш номер телефона:"),
         TextInput(id="phone_input", on_success=handlers.next_or_end),
         PASS,
-        Back(Const("Назад")),
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.phone,
@@ -88,8 +90,8 @@ new = Dialog(
         Const("Тема обращения?"),
         TextInput(id="title_input", on_success=handlers.next_or_end),
         PASS,
+        BACK,
         CANCEL_EDIT,
-        Back(Const("Назад")),
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.title,
     ),
@@ -101,7 +103,7 @@ new = Dialog(
             handlers.task_description_handler, content_types=[ContentType.ANY]
         ),
         PASS,
-        Back(Const("Назад")),
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.description,
@@ -115,7 +117,7 @@ new = Dialog(
             items="priorities",
             on_click=handlers.on_priority,
         ),
-        Back(Const("Назад")),
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         getter=getters.priority,
@@ -130,7 +132,7 @@ new = Dialog(
             items="act_nssr",
             on_click=handlers.on_act,
         ),
-        Back(Const("Назад")),
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         getter=getters.acts,
@@ -146,15 +148,15 @@ new = Dialog(
                 items="slaves",
                 on_click=handlers.on_slave,
             ),
+            Button(
+                Const("Без исполнителя"),
+                id="del_performer",
+                on_click=handlers.on_del_performer,
+                when=F["dialog_data"]["finished"],
+            ),
             PASS,
         ),
-        Button(
-            Const("Убрать исполнителя"),
-            id="del_performer",
-            on_click=handlers.on_del_performer,
-            when=F["dialog_data"]["finished"],
-        ),
-        Back(Const("Назад")),
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.performer,
@@ -170,9 +172,14 @@ new = Dialog(
                 items="agreementers",
                 on_click=handlers.on_agreementer,
             ),
+            Button(
+                Const("Без согласования"),
+                id="without_agreement",
+                on_click=handlers.on_without_agreement,
+            ),
             PASS,
         ),
-        Back(Const("Назад")),
+        BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.agreement,
@@ -288,13 +295,15 @@ tasks = Dialog(
                 Const("Редактировать"),
                 id="edit_task",
                 on_click=handlers.edit_task,
-                when=F["status"].not_in(["закрыто", "проверка"]),
+                when=F["status"].not_in(["закрыто", "проверка", "выполнено"]),
             ),
             Button(
                 Const("Отложить"),
                 id="delay_task",
                 on_click=handlers.on_delay,
-                when=F["status"].not_in(["отложено", "проверка", "закрыто"]),
+                when=F["status"].not_in(
+                    ["отложено", "проверка", "закрыто", "выполнено"]
+                ),
             ),
             Button(
                 Const("Переместить в архив"),
@@ -319,9 +328,11 @@ tasks = Dialog(
             ),
             Button(
                 Const("Выполнено"),
-                id="close_task",
+                id="perform_task",
                 on_click=handlers.on_perform,
-                when=F["status"].not_in(["выполнено", "закрыто, 'проверка"]),
+                when=F["status"].not_in(
+                    ["выполнено", "закрыто", "проверка", "назначено"]
+                ),
             ),
             Button(
                 Const("Вернуть в работу"),

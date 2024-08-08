@@ -159,7 +159,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             scheduler.add_job(
                 new_task,
                 "interval",
-                minutes="5",
+                minutes=5,
                 next_run_time=datetime.datetime.now(),
                 args=[userid, task["title"], task["taskid"]],
                 id=str(userid) + str(task["taskid"]),
@@ -196,7 +196,7 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
 async def on_del_performer(clb: CallbackQuery, button, manager: DialogManager):
     manager.dialog_data["task"]["slave"] = None
     manager.dialog_data["task"]["username"] = None
-    await clb.answer("Исполнитель убран из заявки.", show_alert=True)
+    await next_or_end(clb, button, manager)
 
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -285,3 +285,14 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         state=OpCloseTaskSG.type_choice,
         data={"taskid": manager.dialog_data.get("taskid")},
     )
+
+
+async def on_without_agreement(callback: CallbackQuery, button, manager: DialogManager):
+    manager.dialog_data["task"]["agreement"] = None
+    await next_or_end(callback, button, manager)
+
+async def on_back(callback: CallbackQuery, button, manager: DialogManager):
+    if manager.dialog_data.get('finished'):
+        await manager.switch_to(state=states.NewSG.preview)
+    else:
+        await manager.back()

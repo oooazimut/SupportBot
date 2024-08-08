@@ -60,6 +60,8 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
             )
             if data:
                 tasks.extend(data)
+                wintitle = wintitle.format(data[0].get("name", ""))
+
     return {
         "wintitle": wintitle,
         "tasks": tasks,

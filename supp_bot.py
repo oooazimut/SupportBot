@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
@@ -40,7 +41,9 @@ async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
 
 async def main():
     SqLiteDataBase.create(script=CREATE_DB_SCRIPT)
-    bot = MyBot(config.TOKEN, parse_mode=ParseMode.HTML).get_instance()
+    bot = MyBot(
+        config.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    ).get_instance()
     storage = RedisStorage(
         Redis(), key_builder=DefaultKeyBuilder(with_destiny=True, with_bot_id=True)
     )

@@ -15,7 +15,8 @@ class SqLiteDataBase:
     def connector(func: Callable):
         def wrapper(cls, *args, **kwargs) -> list[Any]:
             with sq.connect(
-                DB_NAME, detect_types=sq.PARSE_COLNAMES | sq.PARSE_DECLTYPES
+                # DB_NAME, detect_types=sq.PARSE_COLNAMES | sq.PARSE_DECLTYPES
+                DB_NAME
             ) as con:
                 result = func(cls, con, *args, **kwargs)
                 return result

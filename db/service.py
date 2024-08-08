@@ -105,18 +105,22 @@ class TaskService:
         else:
             priority = "\U0001f525"
         SqDB.post_query(
-            "UPDATE tasks SET priority = ? WHERE taskid = ? RETURNING *", [priority, task_id]
+            "UPDATE tasks SET priority = ? WHERE taskid = ? RETURNING *",
+            [priority, task_id],
         )
 
     @staticmethod
     def change_status(task_id, status: str):
         SqDB.post_query(
-            "UPDATE tasks SET status = ? WHERE taskid = ? RETURNING *", [status, task_id]
+            "UPDATE tasks SET status = ? WHERE taskid = ? RETURNING *",
+            [status, task_id],
         )
 
     @staticmethod
     def change_worker(task_id, slave):
-        SqDB.post_query("UPDATE tasks SET slave = ? WHERE taskid = ? RETURNING *", [slave, task_id])
+        SqDB.post_query(
+            "UPDATE tasks SET slave = ? WHERE taskid = ? RETURNING *", [slave, task_id]
+        )
 
     @staticmethod
     def get_tasks_for_entity(entid):
@@ -127,9 +131,9 @@ class TaskService:
         ON em.userid = t.slave
         LEFT JOIN entities as en
         ON en.ent_id = t.entity
-        WHERE en.ent_id= ?
+        WHERE t.entity = ?
         """
-        SqDB.select_query(query, [entid])
+        return SqDB.select_query(query, [entid])
 
     @staticmethod
     def get_task_reminder() -> list:
@@ -160,24 +164,21 @@ class TaskService:
     def save_result(result, resultid, resulttype, taskid):
         params = [result, resulttype, resultid, taskid]
         SqDB.post_query(
-            "UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=? RETURNING *", params
+            "UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=? RETURNING *",
+            params,
         )
 
     @staticmethod
     def add_act(params: dict):
-        query = (
-            "UPDATE tasks SET actid = :actid, acttype = :acttype WHERE taskid = :taskid RETURNING *"
-        )
+        query = "UPDATE tasks SET actid = :actid, acttype = :acttype WHERE taskid = :taskid RETURNING *"
         SqDB.post_query(query, params)
 
     @classmethod
     def reopen(cls, taskid: int | str):
         task = cls.get_task(taskid)[0]
-        task['slave'] = None
-        task['username'] = None
-        task['status'] = 'открыто'
-        for i in task:
-            print(i, task[i])
+        task["slave"] = None
+        task["username"] = None
+        task["status"] = "открыто"
         cls.save_task(task)
 
 
@@ -186,7 +187,8 @@ class EmployeeService:
     def save_employee(userid: int, username: str, position: str):
         params = [userid, username, position]
         SqDB.post_query(
-            "INSERT INTO employees(userid, username, position) VALUES (?, ?, ?) RETURNING *", params
+            "INSERT INTO employees(userid, username, position) VALUES (?, ?, ?) RETURNING *",
+            params,
         )
 
     @staticmethod

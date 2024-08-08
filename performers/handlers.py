@@ -16,7 +16,7 @@ from . import states
 async def on_archive(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.start(
         state=tsk_states.TasksSG.tasks,
-        data={"wintitle": config.TasksTitles.ARCHIVE, "userid": callback.from_user.id},
+        data={"wintitle": config.TasksTitles.ARCHIVE.value, "userid": callback.from_user.id},
     )
 
 
@@ -34,7 +34,7 @@ async def entites_name_handler(
 async def on_entity(callback: CallbackQuery, select, manager: DialogManager, entid, /):
     await manager.start(
         tsk_states.TasksSG.tasks,
-        data={"wintitle": config.TasksTitles.ENTITY, "entid": entid},
+        data={"wintitle": config.TasksTitles.ENTITY.value, "entid": entid},
     )
 
 
