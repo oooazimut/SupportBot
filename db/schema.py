@@ -33,6 +33,8 @@ CREATE_DB_SCRIPT = """
         FOREIGN KEY (entity) REFERENCES entities (ent_id)
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 
+    CREATE TABLE IF NOT EXISTS clones (
+        taskid INTEGER
+        );
     COMMIT; 
     """
-

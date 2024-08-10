@@ -12,5 +12,4 @@ class OpDelayingSG(StatesGroup):
     main = State()
 
 class OpCloseTaskSG(StatesGroup):
-    type_choice = State()
     summary = State()

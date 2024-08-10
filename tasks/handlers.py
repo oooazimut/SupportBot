@@ -234,10 +234,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
 
 async def on_perform(callback: CallbackQuery, button: Button, manager: DialogManager):
     data = manager.dialog_data.get("task", {})
-    if data.get("act"):
-        await manager.start(prf_states.PrfPerformedSG.pin_act, data=data)
-    else:
-        await manager.start(prf_states.PrfPerformedSG.pin_videoreport, data=data)
+    await manager.start(prf_states.PrfPerformedSG.closing_choice, data=data)
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -282,8 +279,8 @@ async def show_act(callback: CallbackQuery, button, manager: DialogManager):
 
 async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     await manager.start(
-        state=OpCloseTaskSG.type_choice,
-        data={"taskid": manager.dialog_data.get("taskid")},
+        state=OpCloseTaskSG.summary,
+        data=manager.dialog_data.get("task"),
     )
 
 
@@ -291,8 +288,9 @@ async def on_without_agreement(callback: CallbackQuery, button, manager: DialogM
     manager.dialog_data["task"]["agreement"] = None
     await next_or_end(callback, button, manager)
 
+
 async def on_back(callback: CallbackQuery, button, manager: DialogManager):
-    if manager.dialog_data.get('finished'):
+    if manager.dialog_data.get("finished"):
         await manager.switch_to(state=states.NewSG.preview)
     else:
         await manager.back()

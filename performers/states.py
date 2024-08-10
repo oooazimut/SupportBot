@@ -7,5 +7,6 @@ class PrfMainMenuSG(StatesGroup):
     entities = State()
 
 class PrfPerformedSG(StatesGroup):
+    closing_choice = State()
     pin_act = State()
     pin_videoreport = State()

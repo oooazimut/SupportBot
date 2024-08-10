@@ -16,7 +16,10 @@ from . import states
 async def on_archive(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.start(
         state=tsk_states.TasksSG.tasks,
-        data={"wintitle": config.TasksTitles.ARCHIVE.value, "userid": callback.from_user.id},
+        data={
+            "wintitle": config.TasksTitles.ARCHIVE.value,
+            "userid": callback.from_user.id,
+        },
     )
 
 
@@ -73,6 +76,10 @@ async def pin_videoreport(
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
 
     TaskService.change_status(taskid, "выполнено")
+    TaskService.update_summary(taskid, manager.dialog_data.get('summary', ''))
+    if not manager.dialog_data.get('closing_type'):
+        TaskService.store_taskid(taskid)
+
     if not manager.start_data["act"]:
         scheduler.add_job(
             close_task,
@@ -104,3 +111,23 @@ async def pin_videoreport(
     await asyncio.sleep(5)
     await mes.delete()
     await manager.done()
+
+
+async def on_closing_type(
+    callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: str, /
+):
+    username = dialog_manager.start_data.get("username", "")
+    perform_report = username + " выполнил заявку "
+    act = dialog_manager.start_data.get("act")
+    dialog_manager.dialog_data['closing_type'] = int(c_type)
+
+    if int(c_type):
+        perform_report += "полностью"
+    else:
+        perform_report += "частично"
+    dialog_manager.dialog_data['summary'] = perform_report
+
+    if act:
+        await dialog_manager.next()
+    else:
+        await dialog_manager.switch_to(state=states.PrfPerformedSG.pin_videoreport)

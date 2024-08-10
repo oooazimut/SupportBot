@@ -1,19 +1,15 @@
+import config
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
     Cancel,
-    Column,
     Row,
-    Select,
     Start,
     WebApp,
 )
-from aiogram_dialog.widgets.text import Const, Format
-
-import config
+from aiogram_dialog.widgets.text import Const
 from db.service import TaskService
-from operators import getters
 from tasks import states as tsk_states
 
 from . import handlers, states
@@ -32,9 +28,7 @@ main = Dialog(
 
 def acts_are_existing(data, widget, dialog_manager: DialogManager) -> bool:
     userid = dialog_manager.event.from_user.id
-    return (
-        bool(TaskService.get_tasks_by_status("проверка")) and userid == config.DEV_ID
-    )
+    return bool(TaskService.get_tasks_by_status("проверка")) and userid == config.DEV_ID
 
 
 tasks = Dialog(
@@ -73,21 +67,6 @@ tasks = Dialog(
 )
 
 close_task = Dialog(
-    Window(
-        Const("Как вы хотите закрыть заявку?"),
-        Column(
-            Select(
-                Format(" {item[0]}"),
-                id="sel_type",
-                item_id_getter=lambda item: item[1],
-                items="c_types",
-                on_click=handlers.on_type,
-            ),
-        ),
-        Cancel(Const('Назад')),
-        getter=getters.closingtype_getter,
-        state=states.OpCloseTaskSG.type_choice,
-    ),
     Window(
         Const("Здесь можно добавить информацию по закрытию заявки:"),
         MessageInput(

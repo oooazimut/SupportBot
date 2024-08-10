@@ -20,8 +20,20 @@ class TaskService:
         )
         return SqDB.post_query(query, task)
 
+
     @staticmethod
-    def update_summary(taskid: int, summary: str):
+    def get_summary(taskid):
+        result = SqDB.select_query(
+            "SELECT summary FROM tasks WHERE taskid = ?", [taskid]
+        )[0]["summary"]
+
+        return result if result else ""
+
+
+    @classmethod
+    def update_summary(cls, taskid: int, new_summary: str):
+        summary = cls.get_summary(taskid)
+        summary += '\n'+new_summary
         query = "UPDATE tasks SET summary = ? where taskid = ? RETURNING *"
         return SqDB.post_query(query, [summary, taskid])
 
@@ -180,6 +192,22 @@ class TaskService:
         task["username"] = None
         task["status"] = "открыто"
         cls.save_task(task)
+
+    @staticmethod
+    def store_taskid(taskid):
+        query = "INSERT INTO clones VALUES(?) RETURNING *"
+        SqDB.post_query(query, [taskid])
+
+    @staticmethod
+    def get_stored_taskid(taskid):
+        query = "SELECT * FROM clones WHERE taskid = ?"
+        return SqDB.select_query(query, [taskid])
+
+    @staticmethod
+    def del_stored_taskid(taskid):
+        query = "DELETE FROM clones WHERE taskid = ? RETURNING *"
+        SqDB.post_query(query, [taskid])
+
 
 
 class EmployeeService:

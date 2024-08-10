@@ -201,6 +201,7 @@ new = Dialog(
             Const("Мультимедиа"),
             id="to_multimedia",
             on_click=handlers.show_operator_media,
+            when="media_id",
         ),
         Button(Const("Сохранить"), id="confirm_creating", on_click=handlers.on_confirm),
         SwitchTo(
@@ -264,14 +265,15 @@ tasks = Dialog(
     Window(
         Const("Заявка: \n"),
         Format("{created}"),
-        Format("Тема: {title}"),
         Format("Объект: {name}", when="name"),
+        Format("Тема: {title}"),
+        Format("Описание: {description}", when="description"),
         Format("Исполнитель: {username}", when="username"),
         Const("<b>Высокий приоритет!</b>", when="priority"),
         Format("Статус: {status}"),
         Format("\nНужен акт", when="act"),
         Format("<b><i><u>Согласование: {agreement}</u></i></b>", when="agreement"),
-        Format("\n <b>Информация по закрытию:</b> \n {summary}", when="summary"),
+        Format("\n <b>Информация по закрытию:</b>  {summary}", when="summary"),
         Button(
             Const("Мультимедиа от оператора"),
             id="mm_description",

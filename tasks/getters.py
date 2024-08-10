@@ -103,9 +103,11 @@ async def agreementers(dialog_manager: DialogManager, **k):
 async def result(dialog_manager: DialogManager, **kwargs):
     data: dict = dialog_manager.dialog_data["task"]
     phone = dialog_manager.find("phone_input").get_value()
-    data["phone"] = None if phone == "None" else phone
+    if phone != 'None':
+        data['phone'] = phone
     title = dialog_manager.find("title_input").get_value()
-    data["title"] = None if title == "None" else title
+    if title != 'None':
+        data['title'] = title
     dialog_manager.dialog_data["task"] = data
     dialog_manager.dialog_data["finished"] = True
     return data
