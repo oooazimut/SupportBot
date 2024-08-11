@@ -15,5 +15,5 @@ class MyBot(Bot):
             self.initialized = True
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls) -> Bot:
         return cls._instance
