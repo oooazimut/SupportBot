@@ -13,3 +13,6 @@ class OpDelayingSG(StatesGroup):
 
 class OpCloseTaskSG(StatesGroup):
     summary = State()
+
+class OpRemoveTaskSG(StatesGroup):
+    main = State()

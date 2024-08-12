@@ -8,6 +8,7 @@ from aiogram_dialog.widgets.kbd import (
     Cancel,
     Column,
     Group,
+    Multiselect,
     Select,
     SwitchTo,
 )
@@ -141,12 +142,12 @@ new = Dialog(
     Window(
         Const("Назначить работника"),
         Column(
-            Select(
+            Multiselect(
+                Format("✓  {item[username]}"),
                 Format("{item[username]}"),
-                id="choose_slave",
+                id="sel_slaves",
                 item_id_getter=lambda item: item["userid"],
                 items="slaves",
-                on_click=handlers.on_slave,
             ),
             Button(
                 Const("Без исполнителя"),
@@ -154,6 +155,7 @@ new = Dialog(
                 on_click=handlers.on_del_performer,
                 when=F["dialog_data"]["finished"],
             ),
+            Button(Const("Подтвердить"), id="confirm_prf_choice", on_click=handlers.on_slave_choice),
             PASS,
         ),
         BACK,
@@ -193,7 +195,7 @@ new = Dialog(
         <b>Тема</b>: {{title if title else ''}}
         <b>Описание</b>: {{description if description else ''}}
         <b>Приоритет</b>: {{priority if priority else ''}}
-        <b>Работник</b>: {{username if username else ''}}
+        <b>Работник[и]</b>: {{usernames or username  or ''}}
         <b>Акт</b>: {{'Да' if act else 'Нет'}}
         <b>Согласование</b>: {{agreement if agreement else ''}}
         """),
@@ -319,6 +321,7 @@ tasks = Dialog(
                 on_click=handlers.on_return,
                 when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
             ),
+            Button(Const('Удалить заявку'), id='rm_task', on_click=handlers.on_remove),
             when=user_is_operator,
         ),
         Group(

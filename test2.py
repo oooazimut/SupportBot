@@ -1,3 +1,5 @@
-a = dict()
-a.setdefault('dasfs', 1)
-print(a)
+a = [1, 2, None]
+for i in a:
+    if not i:
+        continue
+    print(i)

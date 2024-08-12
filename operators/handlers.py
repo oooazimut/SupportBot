@@ -85,3 +85,11 @@ async def delay_handler(
     messaga = await message.answer(f"Ваша заявка отложена до {trigger_data}")
     await asyncio.sleep(5)
     await messaga.delete()
+
+async def on_remove(callback: CallbackQuery, button, dialog_manager: DialogManager):
+    TaskService.remove_task(dialog_manager.start_data.get('taskid'))
+    await callback.answer('Заявка удалена', show_alert=True)
+    try:
+        await dialog_manager.done()
+    except IndexError:
+        await dialog_manager.done()

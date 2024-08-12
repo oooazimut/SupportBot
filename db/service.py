@@ -12,6 +12,11 @@ class TaskService:
         return SqDB.post_query(query, task)
 
     @staticmethod
+    def remove_task(taskid):
+        query = "DELETE FROM tasks WHERE taskid = ? RETURNING *"
+        SqDB.post_query(query, [taskid])
+
+    @staticmethod
     def update_task(task: dict):
         query = (
             "UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, act, entity, "
@@ -19,7 +24,6 @@ class TaskService:
             ":act, :entity, :slave, :agreement) WHERE taskid = :taskid RETURNING *"
         )
         return SqDB.post_query(query, task)
-
 
     @staticmethod
     def get_summary(taskid):
@@ -29,11 +33,10 @@ class TaskService:
 
         return result if result else ""
 
-
     @classmethod
     def update_summary(cls, taskid: int, new_summary: str):
         summary = cls.get_summary(taskid)
-        summary += '\n'+new_summary
+        summary += "\n" + new_summary
         query = "UPDATE tasks SET summary = ? where taskid = ? RETURNING *"
         return SqDB.post_query(query, [summary, taskid])
 
@@ -207,7 +210,6 @@ class TaskService:
     def del_stored_taskid(taskid):
         query = "DELETE FROM clones WHERE taskid = ? RETURNING *"
         SqDB.post_query(query, [taskid])
-
 
 
 class EmployeeService:

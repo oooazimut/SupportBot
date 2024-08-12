@@ -17,7 +17,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot import MyBot
 from db.service import EmployeeService, EntityService, TaskService
 from jobs import new_task
-from operators.states import OpDelayingSG, OpCloseTaskSG
+from operators.states import OpDelayingSG, OpCloseTaskSG, OpRemoveTaskSG
 
 from . import states
 
@@ -62,11 +62,10 @@ async def on_entity(event, select, dialog_manager: DialogManager, ent_id: str, /
     await next_or_end(event, select, dialog_manager)
 
 
-async def on_slave(event, select, dialog_manager: DialogManager, data: str, /):
-    dialog_manager.dialog_data["task"]["slave"] = data
-    user = EmployeeService.get_employee(data)
-    dialog_manager.dialog_data["task"]["username"] = user.get("username")
-    await next_or_end(event, select, dialog_manager)
+async def on_slave_choice(callback, button, dialog_manager: DialogManager):
+    users = dialog_manager.find("sel_slaves").get_checked()
+    dialog_manager.dialog_data["task"]["slaves"] = users
+    await next_or_end(callback, button, dialog_manager)
 
 
 async def on_agreementer(event, select, dialog_manager: DialogManager, data: str, /):
@@ -122,40 +121,14 @@ async def ent_name_handler(
 
 
 async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager):
+    await manager.find("sel_slaves").reset_checked()
+
     def is_exist(someone_task: dict):
-        return someone_task.get("taskid") is not None
+        return someone_task.get("taskid")
 
-    data: dict = manager.dialog_data.get("task", {})
-    data.setdefault("created", datetime.datetime.now().replace(microsecond=0))
-    data.setdefault("creator", clb.from_user.id)
-    if data.get("slave"):
-        data["status"] = "назначено"
-    data.setdefault("status", "открыто")
-    data.setdefault("slave", None)
-    data.setdefault("entity", None)
-    data.setdefault("agreement", None)
-    data.setdefault("priority", None)
-    if is_exist(data):
-        TaskService.update_task(data)
+    def send_newtask_note(userid, task):
         scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-        job = scheduler.get_job(job_id="delay" + str(data["taskid"]))
-        if job:
-            job.remove()
-        await clb.answer("Заявка отредактирована.", show_alert=True)
-    else:
-        task = TaskService.save_task(data)
-        await clb.answer(
-            "Заявка принята в обработку и скоро появится в списке заявок объекта.",
-            show_alert=True,
-        )
-        users = EmployeeService.get_employees_by_position("operator")
-        userids = [user["userid"] for user in users]
-        slaveid = data.get("slave")
-        if slaveid:
-            userids.append(slaveid)
-
-        scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-        for userid in userids:
+        if userid:
             scheduler.add_job(
                 new_task,
                 "interval",
@@ -165,6 +138,61 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 id=str(userid) + str(task["taskid"]),
                 replace_existing=True,
             )
+
+    data: dict = manager.dialog_data.get("task", {})
+    data.setdefault("created", datetime.datetime.now().replace(microsecond=0))
+    data.setdefault("creator", clb.from_user.id)
+
+    if data.get("slaves"):
+        data["status"] = "назначено"
+    else:
+        data.setdefault("slaves", []).append(None)
+
+    data.setdefault("status", "открыто")
+    for i in (
+        "entity",
+        "agreement",
+        "priority",
+        "phone",
+        "title",
+        "description",
+        "media_id",
+        "media_type",
+    ):
+        data.setdefault(i, None)
+
+    if is_exist(data):
+        slave = data.get("slaves", []).pop(0)
+        data["slave"] = slave
+        task = TaskService.update_task(data)
+        send_newtask_note(slave, task)
+
+        for slave in data.get("slaves", []):
+            data["slave"] = slave
+            task = TaskService.save_task(data)
+            send_newtask_note(slave, task)
+
+        scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
+        job = scheduler.get_job(job_id="delay" + str(data["taskid"]))
+        if job:
+            job.remove()
+
+        await clb.answer("Заявка отредактирована.", show_alert=True)
+
+    else:
+        for slave in data.get("slaves", []):
+            data["slave"] = slave
+            task = TaskService.save_task(data)
+            send_newtask_note(slave, task)
+        await clb.answer(
+            "Заявка создана.",
+            show_alert=True,
+        )
+        users = EmployeeService.get_employees_by_position("operator")
+        userids = [user["userid"] for user in users]
+
+        for userid in userids:
+            send_newtask_note(userid, task)
 
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -196,6 +224,8 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
 async def on_del_performer(clb: CallbackQuery, button, manager: DialogManager):
     manager.dialog_data["task"]["slave"] = None
     manager.dialog_data["task"]["username"] = None
+    manager.dialog_data["task"]["slaves"] = list()
+    await manager.find("sel_slaves").reset_checked()
     await next_or_end(clb, button, manager)
 
 
@@ -282,6 +312,10 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         state=OpCloseTaskSG.summary,
         data=manager.dialog_data.get("task"),
     )
+
+
+async def on_remove(callback: CallbackQuery, button, manager: DialogManager):
+    await manager.start(state=OpRemoveTaskSG.main, data=manager.dialog_data.get("task"))
 
 
 async def on_without_agreement(callback: CallbackQuery, button, manager: DialogManager):

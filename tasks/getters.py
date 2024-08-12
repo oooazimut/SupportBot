@@ -103,11 +103,14 @@ async def agreementers(dialog_manager: DialogManager, **k):
 async def result(dialog_manager: DialogManager, **kwargs):
     data: dict = dialog_manager.dialog_data["task"]
     phone = dialog_manager.find("phone_input").get_value()
-    if phone != 'None':
-        data['phone'] = phone
+    data["phone"] = phone if phone != "None" else data.get("phone", None)
     title = dialog_manager.find("title_input").get_value()
-    if title != 'None':
-        data['title'] = title
+    data["title"] = title if title != "None" else data.get("title", None)
+    usernames = list()
+    for userid in data.get("slaves", []):
+        usernames.append(EmployeeService.get_employee(userid).get("username"))
+    data["usernames"] = usernames
+
     dialog_manager.dialog_data["task"] = data
     dialog_manager.dialog_data["finished"] = True
     return data
