@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from db.service import TaskService
+from db.service import EntityService, TaskService
 from jobs import closed_task
 
 
@@ -93,3 +93,13 @@ async def on_remove(callback: CallbackQuery, button, dialog_manager: DialogManag
         await dialog_manager.done()
     except IndexError:
         await dialog_manager.done()
+
+async def entity_search(message: Message, message_input, manager: DialogManager):
+    manager.dialog_data['subentity'] = message.text or None
+    await manager.next()
+
+async def on_entity(callback: CallbackQuery, select, manager: DialogManager, entid: str, /):
+    entity = EntityService.get_entity(entid)[0]
+    manager.dialog_data['entid'] = entid
+    manager.dialog_data['entname'] = entity.get('name')
+    await manager.next()

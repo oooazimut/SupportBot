@@ -16,3 +16,10 @@ class OpCloseTaskSG(StatesGroup):
 
 class OpRemoveTaskSG(StatesGroup):
     main = State()
+
+class OpFiltrationSG(StatesGroup):
+    subentity = State()
+    entities = State()
+    performer = State()
+    datestamp = State()
+    status = State()

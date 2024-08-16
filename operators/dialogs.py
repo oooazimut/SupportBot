@@ -3,15 +3,20 @@ from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
+    Back,
     Button,
     Cancel,
+    Next,
     Row,
+    Select,
     Start,
+    SwitchTo,
     WebApp,
 )
-from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.text import Const, Format
 from db.service import TaskService
 from tasks import states as tsk_states
+from tasks.getters import entitites as ent_getter, slaves
 
 from . import handlers, states
 
@@ -29,7 +34,9 @@ main = Dialog(
 
 def acts_are_existing(data, widget, dialog_manager: DialogManager) -> bool:
     userid = dialog_manager.event.from_user.id
-    return bool(TaskService.get_tasks_by_status("проверка")) and userid == config.CHIEF_ID
+    return (
+        bool(TaskService.get_tasks_by_status("проверка")) and userid == config.CHIEF_ID
+    )
 
 
 tasks = Dialog(
@@ -55,6 +62,7 @@ tasks = Dialog(
                 data={"wintitle": config.TasksTitles.ARCHIVE.value},
             ),
         ),
+        Start(Const("Поиск"), id="to_filtration", state=states.OpFiltrationSG.entity),
         Start(
             Const("Проверить акты"),
             id="to_acts_checking",
@@ -76,7 +84,7 @@ close_task = Dialog(
                 ContentType.TEXT,
             ],
         ),
-        Cancel(Const('Назад')),
+        Cancel(Const("Назад")),
         state=states.OpCloseTaskSG.summary,
     ),
 )
@@ -92,10 +100,47 @@ delay = Dialog(
 )
 
 remove = Dialog(
-        Window(
-            Const('Вы уверены, что хотите БЕЗВОЗВРАТНО УДАЛИТЬ заявку?'),
-            Button(Const('Да'), id='confirm_del', on_click=handlers.on_remove),
-            Cancel(Const('Нет')),
-            state=states.OpRemoveTaskSG.main
-            )
-        )
+    Window(
+        Const("Вы уверены, что хотите БЕЗВОЗВРАТНО УДАЛИТЬ заявку?"),
+        Button(Const("Да"), id="confirm_del", on_click=handlers.on_remove),
+        Cancel(Const("Нет")),
+        state=states.OpRemoveTaskSG.main,
+    )
+)
+
+filtration = Dialog(
+    Window(
+        Const("Введите название объекта или его часть"),
+        MessageInput(func=handlers.entity_search, content_types=ContentType.TEXT),
+        SwitchTo(
+            Const("Все объекты"),
+            id="to_performer",
+            state=states.OpFiltrationSG.performer,
+        ),
+        Cancel(Const("Отмена")),
+        state=states.OpFiltrationSG.subentity,
+    ),
+    Window(
+        Const('Найденные объекты'),
+        Select(
+            Format('item[name]'),
+            id="entity",
+            item_id_getter=lambda x: x.get("ent_id"),
+            items="entities",
+            on_click=handlers.on_entity,
+            ),
+        Next(Const('Все объекты')),
+        Back(Const('Назад')),
+        Cancel(Const("Отмена")),
+        state=states.OpFiltrationSG.entities,
+        getter=ent_getter,
+        ),
+    Window(
+        Const('Выбор исполнителя'),
+        Select(
+            Format(),
+            ),
+        state=states.OpFiltrationSG.performer,
+        getter=slaves
+        ),
+)
