@@ -21,3 +21,10 @@ class TasksSG(StatesGroup):
 
 class MediaSG(StatesGroup):
     main = State()
+
+class FiltrationSG(StatesGroup):
+    subentity = State()
+    entities = State()
+    performer = State()
+    datestamp = State()
+    status = State()

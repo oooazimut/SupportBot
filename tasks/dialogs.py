@@ -1,3 +1,5 @@
+import config
+
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
@@ -9,11 +11,14 @@ from aiogram_dialog.widgets.kbd import (
     Column,
     Group,
     Multiselect,
+    Next,
+    ScrollingGroup,
     Select,
     SwitchTo,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
+from custom.babel_calendar import CustomCalendar
 from db.service import EmployeeService
 
 from . import getters, handlers, states
@@ -155,7 +160,11 @@ new = Dialog(
                 on_click=handlers.on_del_performer,
                 when=F["dialog_data"]["finished"],
             ),
-            Button(Const("Подтвердить"), id="confirm_prf_choice", on_click=handlers.on_slave_choice),
+            Button(
+                Const("Подтвердить"),
+                id="confirm_prf_choice",
+                on_click=handlers.on_slave_choice,
+            ),
             PASS,
         ),
         BACK,
@@ -250,14 +259,19 @@ def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
 tasks = Dialog(
     Window(
         Format("{wintitle}"),
-        Column(
-            Select(
-                JINJA_TEMPLATE,
-                id="sel_task",
-                item_id_getter=lambda x: x.get("taskid"),
-                items="tasks",
-                on_click=handlers.on_task,
-            )
+        ScrollingGroup(
+            Column(
+                Select(
+                    JINJA_TEMPLATE,
+                    id="sel_task",
+                    item_id_getter=lambda x: x.get("taskid"),
+                    items="tasks",
+                    on_click=handlers.on_task,
+                )
+            ),
+            id="scroll_tasks",
+            height=10,
+            hide_on_single_page=True,
         ),
         Button(Const("Обновить"), id="reload_tasks"),
         Cancel(Const("Назад")),
@@ -321,7 +335,7 @@ tasks = Dialog(
                 on_click=handlers.on_return,
                 when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
             ),
-            Button(Const('Удалить заявку'), id='rm_task', on_click=handlers.on_remove),
+            Button(Const("Удалить заявку"), id="rm_task", on_click=handlers.on_remove),
             when=user_is_operator,
         ),
         Group(
@@ -362,4 +376,85 @@ media = Dialog(
         state=states.MediaSG.main,
         getter=getters.media,
     )
+)
+
+
+async def on_fltr_start(data, manager: DialogManager):
+    manager.dialog_data["wintitle"] = config.TasksTitles.SEARCH_RESULT.value
+
+
+filtration = Dialog(
+    Window(
+        Const("Введите название объекта или его часть"),
+        MessageInput(func=handlers.entity_search, content_types=ContentType.TEXT),
+        SwitchTo(
+            Const("Пропустить"),
+            id="to_performer",
+            state=states.FiltrationSG.performer,
+        ),
+        Cancel(Const("Отмена")),
+        state=states.FiltrationSG.subentity,
+    ),
+    Window(
+        Const("Найденные объекты"),
+        Column(
+            Select(
+                Format("{item[name]}"),
+                id="entity",
+                item_id_getter=lambda x: x.get("ent_id"),
+                items="entities",
+                on_click=handlers.on_entity_fltr,
+            )
+        ),
+        Next(Const("Пропустить")),
+        Back(Const("Назад")),
+        Cancel(Const("Отмена")),
+        state=states.FiltrationSG.entities,
+        getter=getters.entitites,
+    ),
+    Window(
+        Const("Выбор исполнителя"),
+        Column(
+            Select(
+                Format("{item[username]}"),
+                id="performers_choice",
+                item_id_getter=lambda x: x.get("userid"),
+                items="slaves",
+                on_click=handlers.on_performer,
+            )
+        ),
+        Next(Const("Пропустить")),
+        Back(Const("Назад")),
+        Cancel(Const("Отмена")),
+        state=states.FiltrationSG.performer,
+        getter=getters.slaves,
+    ),
+    Window(
+        Const("Выбор даты"),
+        CustomCalendar(id="calendar", on_click=handlers.on_date),
+        Next(Const("Пропустить")),
+        Back(Const("Назад")),
+        Cancel(Const("Отмена")),
+        state=states.FiltrationSG.datestamp,
+    ),
+    Window(
+        Const("Статус заявки"),
+        Column(
+            Select(
+                Format("{item}"),
+                id="status_choice",
+                item_id_getter=lambda x: x,
+                items="statuses",
+                on_click=handlers.on_status,
+            )
+        ),
+        Button(
+            Const("Пропустить"), id="fltr_finished", on_click=handlers.filters_handler
+        ),
+        Back(Const("Назад")),
+        Cancel(Const("Отмена")),
+        state=states.FiltrationSG.status,
+        getter=getters.statuses_getter,
+    ),
+    on_start=on_fltr_start,
 )

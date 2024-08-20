@@ -40,6 +40,11 @@ main = Dialog(
                 id="tasks_for_entity",
                 state=states.PrfMainMenuSG.entities_choice,
             ),
+            Start(
+                Const("Поиск"),
+                id="to_filtration",
+                state=tsk_states.FiltrationSG.subentity,
+            ),
         ),
         state=states.PrfMainMenuSG.main,
     ),
@@ -82,7 +87,7 @@ performed = Dialog(
                 on_click=handlers.on_closing_type,
             )
         ),
-        Cancel(Const('Отмена')),
+        Cancel(Const("Отмена")),
         state=states.PrfPerformedSG.closing_choice,
         getter=getters.closing_types_geter,
     ),

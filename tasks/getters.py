@@ -24,11 +24,11 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 key=lambda x: x["priority"] if x["priority"] else "",
             )
             for item in (
-                delayed_tasks,
-                progress_tasks,
-                assigned_tasks,
-                new_tasks,
                 confirmed_tasks,
+                new_tasks,
+                assigned_tasks,
+                progress_tasks,
+                delayed_tasks,
             ):
                 tasks.extend(item)
         case TasksTitles.ARCHIVE.value:
@@ -61,7 +61,8 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
             if data:
                 tasks.extend(data)
                 wintitle = wintitle.format(data[0].get("name", ""))
-
+        case TasksTitles.SEARCH_RESULT.value:
+            tasks.extend(TaskService.get_tasks_with_filters(dialog_manager.start_data))
     return {
         "wintitle": wintitle,
         "tasks": tasks,
@@ -128,3 +129,17 @@ async def media(dialog_manager: DialogManager, **kwargs):
     m_id = dialog_manager.start_data.get("id")
     media = MediaAttachment(m_type, file_id=MediaId(m_id))
     return {"media": media, "wintitle": dialog_manager.start_data.get("wintitle")}
+
+
+async def statuses_getter(dialog_manager: DialogManager, **kwargs):
+    return {
+        "statuses": (
+            "открыто",
+            "назначено",
+            "в работе",
+            "выполнено",
+            "проверка",
+            "закрыто",
+            "отложено",
+        )
+    }
