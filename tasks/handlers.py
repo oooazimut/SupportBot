@@ -10,11 +10,11 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.formatting import Bold, Text
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram_dialog import DialogManager, ShowMode
+from aiogram_dialog import ChatEvent, DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from bot import MyBot
+from custom.bot import MyBot
 from db.service import EmployeeService, EntityService, TaskService
 from jobs import new_task
 from operators.states import OpDelayingSG, OpCloseTaskSG, OpRemoveTaskSG
@@ -328,3 +328,40 @@ async def on_back(callback: CallbackQuery, button, manager: DialogManager):
         await manager.switch_to(state=states.NewSG.preview)
     else:
         await manager.back()
+
+
+async def entity_search(message: Message, message_input, manager: DialogManager):
+    manager.dialog_data["subentity"] = message.text or None
+    await manager.next()
+
+
+async def on_entity_fltr(
+    callback: CallbackQuery, select, manager: DialogManager, entid: str, /
+):
+    manager.dialog_data["entid"] = entid
+    await manager.next()
+
+
+async def on_performer(
+    callback: CallbackQuery, select, manager: DialogManager, userid: str, /
+):
+    manager.dialog_data["userid"] = userid
+    await manager.next()
+
+
+async def on_date(
+    event: ChatEvent, widget, dialog_manager: DialogManager, date: datetime.date
+):
+    dialog_manager.dialog_data["date"] = date.strftime("%Y-%m-%d")
+    await dialog_manager.next()
+
+
+async def on_status(
+    callback: CallbackQuery, select, manager: DialogManager, status: str, /
+):
+    manager.dialog_data["status"] = status
+    await manager.start(state=states.TasksSG.tasks, data=manager.dialog_data)
+
+
+async def filters_handler(callback: CallbackQuery, button, manager: DialogManager):
+    await manager.start(state=states.TasksSG.tasks, data=manager.dialog_data)

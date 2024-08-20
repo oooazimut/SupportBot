@@ -59,8 +59,39 @@ class TaskService:
         return SqDB.select_query("SELECT * FROM tasks", params=None)
 
     @staticmethod
+    def get_tasks_with_filters(data: dict = {}):
+        query = """
+        SELECT *
+        FROM tasks as t
+        LEFT JOIN employees as em
+        ON em.userid = t.slave
+        LEFT JOIN entities as en
+        ON en.ent_id = t.entity
+        """
+        params = list()
+        adds = list()
+        if data.get("entid"):
+            adds.append("t.entity = ?")
+            params.append(data.get("entid"))
+        if data.get("userid"):
+            adds.append("t.slave = ?")
+            params.append(data.get("userid"))
+        if data.get("date"):
+            adds.append("DATE(t.created) = ?")
+            params.append(data.get("date"))
+        if data.get("status"):
+            adds.append("t.status = ?")
+            params.append(data.get("status"))
+        if adds:
+            query = query + " WHERE " + " AND ".join(adds)
+        query += " ORDER BY created"
+        # print(query)
+        # print(params)
+        return SqDB.select_query(query, params)
+
+    @staticmethod
     def get_tasks_by_status(status, userid=None) -> list:
-        finish = "order by created DESC LIMIT 50"
+        finish = "order by created"
         query = """
         SELECT *
         FROM tasks as t

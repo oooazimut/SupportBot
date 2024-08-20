@@ -1,24 +1,30 @@
-import config
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
-    Back,
     Button,
     Cancel,
-    Next,
     Row,
-    Select,
     Start,
-    SwitchTo,
     WebApp,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+import config
 from db.service import TaskService
 from tasks import states as tsk_states
-from tasks.getters import entitites as ent_getter, slaves
 
 from . import handlers, states
+
+
+async def on_start(any, manager: DialogManager):
+    scheduler: AsyncIOScheduler = manager.middleware_data.get("scheduler")
+    scheduler.print_jobs()
+    for i in scheduler.get_jobs():
+        if i.name in ("closed_task", "new_task", "confirmed_task"):
+            i.remove()
+
 
 main = Dialog(
     Window(
@@ -29,6 +35,7 @@ main = Dialog(
         ),
         state=states.OpMainMenuSG.main,
     ),
+    on_start=on_start,
 )
 
 
@@ -62,7 +69,9 @@ tasks = Dialog(
                 data={"wintitle": config.TasksTitles.ARCHIVE.value},
             ),
         ),
-        Start(Const("Поиск"), id="to_filtration", state=states.OpFiltrationSG.entity),
+        Start(
+            Const("Поиск"), id="to_filtration", state=tsk_states.FiltrationSG.subentity
+        ),
         Start(
             Const("Проверить акты"),
             id="to_acts_checking",
@@ -106,41 +115,4 @@ remove = Dialog(
         Cancel(Const("Нет")),
         state=states.OpRemoveTaskSG.main,
     )
-)
-
-filtration = Dialog(
-    Window(
-        Const("Введите название объекта или его часть"),
-        MessageInput(func=handlers.entity_search, content_types=ContentType.TEXT),
-        SwitchTo(
-            Const("Все объекты"),
-            id="to_performer",
-            state=states.OpFiltrationSG.performer,
-        ),
-        Cancel(Const("Отмена")),
-        state=states.OpFiltrationSG.subentity,
-    ),
-    Window(
-        Const('Найденные объекты'),
-        Select(
-            Format('item[name]'),
-            id="entity",
-            item_id_getter=lambda x: x.get("ent_id"),
-            items="entities",
-            on_click=handlers.on_entity,
-            ),
-        Next(Const('Все объекты')),
-        Back(Const('Назад')),
-        Cancel(Const("Отмена")),
-        state=states.OpFiltrationSG.entities,
-        getter=ent_getter,
-        ),
-    Window(
-        Const('Выбор исполнителя'),
-        Select(
-            Format(),
-            ),
-        state=states.OpFiltrationSG.performer,
-        getter=slaves
-        ),
 )

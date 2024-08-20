@@ -3,11 +3,12 @@ from typing import Any
 
 import config
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import DialogManager
+from aiogram_dialog import ChatEvent, DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from db.service import EntityService, TaskService
 from jobs import closed_task
+from tasks import states as tsk_states
 
 
 async def on_type(
@@ -18,20 +19,17 @@ async def on_type(
 
 
 async def on_close(message: Message, widget: Any, manager: DialogManager):
-    taskid = manager.start_data.get("taskid", '')
+    taskid = manager.start_data.get("taskid", "")
     operator = config.AGREEMENTERS.get(message.from_user.id, "")
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     summary = message.text if message.text and len(message.text) > 1 else ""
     summary += f"\nзакрыл {operator}."
     TaskService.update_summary(taskid, summary)
-    
+
     if TaskService.get_stored_taskid(taskid):
         TaskService.reopen(taskid)
 
-    if (
-        manager.start_data["status"] == "проверка"
-        or not manager.start_data["act"]
-    ):
+    if manager.start_data["status"] == "проверка" or not manager.start_data["act"]:
         TaskService.change_status(taskid, "закрыто")
         job = scheduler.get_job(job_id=str(taskid))
         if job:
@@ -86,20 +84,11 @@ async def delay_handler(
     await asyncio.sleep(5)
     await messaga.delete()
 
+
 async def on_remove(callback: CallbackQuery, button, dialog_manager: DialogManager):
-    TaskService.remove_task(dialog_manager.start_data.get('taskid'))
-    await callback.answer('Заявка удалена', show_alert=True)
+    TaskService.remove_task(dialog_manager.start_data.get("taskid"))
+    await callback.answer("Заявка удалена", show_alert=True)
     try:
         await dialog_manager.done()
     except IndexError:
         await dialog_manager.done()
-
-async def entity_search(message: Message, message_input, manager: DialogManager):
-    manager.dialog_data['subentity'] = message.text or None
-    await manager.next()
-
-async def on_entity(callback: CallbackQuery, select, manager: DialogManager, entid: str, /):
-    entity = EntityService.get_entity(entid)[0]
-    manager.dialog_data['entid'] = entid
-    manager.dialog_data['entname'] = entity.get('name')
-    await manager.next()

@@ -17,7 +17,7 @@ from db.schema import CREATE_DB_SCRIPT
 from db.service import EmployeeService
 import jobs
 import middlewares
-from bot import MyBot
+from custom.bot import MyBot
 from routers import finish_router, start_router
 from operators import dialogs as op_dialogs
 from performers import dialogs as prf_dialogs
@@ -54,7 +54,9 @@ async def main():
         op_dialogs.remove,
     )
     dp.include_routers(prf_dialogs.main, prf_dialogs.performed)
-    dp.include_routers(tsk_dialogs.new, tsk_dialogs.tasks, tsk_dialogs.media)
+    dp.include_routers(
+        tsk_dialogs.new, tsk_dialogs.tasks, tsk_dialogs.media, tsk_dialogs.filtration
+    )
     dp.include_router(finish_router.router)
     scheduler = AsyncIOScheduler()
     scheduler.add_jobstore(

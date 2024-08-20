@@ -1,11 +1,11 @@
 import asyncio
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot import MyBot
+from custom.bot import MyBot
 from db.service import TaskService
 
 
@@ -19,7 +19,7 @@ async def reminders_task_to_worker():
             )
             await asyncio.sleep(30)
             await messaga.delete()
-        except TelegramBadRequest:
+        except (TelegramBadRequest, TelegramForbiddenError):
             pass
 
 
@@ -57,7 +57,7 @@ async def new_task(slaveid: int, task: str, taskid: int):
         )
         await asyncio.sleep(295)
         await messaga.delete()
-    except TelegramBadRequest:
+    except (TelegramBadRequest, TelegramForbiddenError):
         pass
 
 
@@ -75,7 +75,7 @@ async def confirmed_task(operatorid, slave, title, taskid):
         )
         await asyncio.sleep(295)
         await messaga.delete()
-    except TelegramBadRequest:
+    except (TelegramBadRequest, TelegramForbiddenError):
         pass
 
 
@@ -93,7 +93,7 @@ async def closed_task(slaveid, task, taskid):
         )
         await asyncio.sleep(295)
         await messaga.delete()
-    except TelegramBadRequest:
+    except (TelegramBadRequest, TelegramForbiddenError):
         pass
 
 
@@ -111,5 +111,5 @@ async def returned_task(slaveid, task, taskid):
         )
         await asyncio.sleep(295)
         await messaga.delete()
-    except TelegramBadRequest:
+    except (TelegramBadRequest, TelegramForbiddenError):
         pass

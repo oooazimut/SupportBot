@@ -34,7 +34,7 @@ async def with_acts_getter(dialog_manager: DialogManager, **kwargs):
 
 async def closingtype_getter(dialog_manager: DialogManager, **kwargs):
     task = TaskService.get_task(taskid=dialog_manager.start_data.get("taskid"))[0]
-    dialog_manager.dialog_data['task'] = task
+    dialog_manager.dialog_data["task"] = task
     c_types = [
         ("частично", 0),
         ("полностью", 1),

@@ -270,7 +270,7 @@ tasks = Dialog(
                 )
             ),
             id="scroll_tasks",
-            height=10,
+            height=15,
             hide_on_single_page=True,
         ),
         Button(Const("Обновить"), id="reload_tasks"),
