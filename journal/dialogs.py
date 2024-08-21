@@ -79,7 +79,6 @@ search = Dialog(
     Window(
         Const("<b>Результат\n\n</b>"),
         List(Format('{item[dttm]}\n{item[record]}\n'), items="journal"),
-        Next(Const('Пропустить')),
         Back(Const("Назад")),
         Cancel(Const('Отмена')),
         state=states.JrSearchSG.result,
