@@ -1,3 +1,4 @@
+from datetime import datetime
 from .models import SqLiteDataBase as SqDB
 
 
@@ -84,14 +85,12 @@ class TaskService:
             params.append(data.get("status"))
         if adds:
             query = query + " WHERE " + " AND ".join(adds)
-        query += " ORDER BY created"
-        # print(query)
-        # print(params)
+        query += " ORDER BY created DESC"
         return SqDB.select_query(query, params)
 
     @staticmethod
     def get_tasks_by_status(status, userid=None) -> list:
-        finish = "order by created"
+        finish = "ORDER BY created"
         query = """
         SELECT *
         FROM tasks as t
@@ -253,12 +252,14 @@ class EmployeeService:
         )
 
     @staticmethod
-    def get_employee(userid) -> dict | None:
+    def get_employee(userid) -> dict:
         employee = SqDB.select_query(
             "SELECT * FROM employees WHERE userid = ?", [userid]
         )
         if employee:
             return employee[0]
+        else:
+            return {}
 
     @staticmethod
     def get_employees():
@@ -283,3 +284,40 @@ class EntityService:
     def get_entity(entid):
         query = "SELECT * FROM entities WHERE ent_id = ?"
         return SqDB.select_query(query, [entid])
+
+
+class JournalService:
+    @staticmethod
+    def new_record(data: dict):
+        data["dttm"] = datetime.now().replace(microsecond=0)
+        query = "INSERT INTO journal (dttm, employee, task, record) VALUES (:dttm, :employee, :task, :record) RETURNING *"
+        return SqDB.post_query(query, data)
+
+    @staticmethod
+    def get_records(data: dict = {}):
+        query = """
+        SELECT *
+        FROM journal as j
+        LEFT JOIN employees as e
+        ON e.userid = j.employee
+        LEFT JOIN tasks as t
+        ON t.taskid= j.task
+        """
+        # params = list()
+        adds = list()
+        if data.get("userid"):
+            adds.append("j.employee = :userid")
+            # params.append(data.get("userid"))
+        if data.get("date"):
+            adds.append("DATE(j.dttm) = :date")
+            # params.append(data.get("date"))
+        if adds:
+            query = query + " WHERE " + " AND ".join(adds)
+        query += " ORDER BY created DESC"
+        return SqDB.select_query(query, data)
+        
+    
+    @staticmethod
+    def del_record(recordid):
+        query = 'DELETE FROM journal WHERE recordid = ? RETURNING *'
+        SqDB.post_query(query, [recordid])
