@@ -2,7 +2,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
 from config import TasksStatuses, TasksTitles, AGREEMENTERS
-from db.service import EmployeeService, EntityService, TaskService
+from db.service import EmployeeService, EntityService, JournalService, TaskService
 
 
 async def tasks(dialog_manager: DialogManager, **kwargs):
@@ -143,3 +143,10 @@ async def statuses_getter(dialog_manager: DialogManager, **kwargs):
             "отложено",
         )
     }
+
+
+async def journal(dialog_manager: DialogManager, **kwargs):
+    journal = JournalService.get_records(
+        {"taskid": dialog_manager.dialog_data.get("task", {}).get("taskid")}
+    )
+    return {"journal": journal}

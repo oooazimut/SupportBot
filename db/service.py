@@ -303,16 +303,17 @@ class JournalService:
         LEFT JOIN tasks as t
         ON t.taskid= j.task
         """
-        # params = list()
         adds = list()
         if data.get("userid"):
             adds.append("j.employee = :userid")
-            # params.append(data.get("userid"))
         if data.get("date"):
             adds.append("DATE(j.dttm) = :date")
-            # params.append(data.get("date"))
+        if data.get('taskid'):
+            adds.append('j.task = :taskid')
+
         if adds:
             query = query + " WHERE " + " AND ".join(adds)
+
         query += " ORDER BY created DESC"
         return SqDB.select_query(query, data)
         

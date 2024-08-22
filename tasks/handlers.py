@@ -210,6 +210,16 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
         TaskService.change_status(taskid, "в работе")
     else:
         TaskService.change_status(taskid, "открыто")
+
+    user = EmployeeService.get_employee(clb.from_user.id)
+    recdata = {
+        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "task": taskid,
+        "employee": task.get("userid"),
+        "record": f'вернул в работу, {user.get("username")}',
+    }
+    JournalService.new_record(recdata)
+
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     job = scheduler.get_job(str(taskid))
     if job:
@@ -259,7 +269,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
     recdata = {
         "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
         "task": manager.dialog_data.get("task", {}).get("taskid"),
-        'employee': manager.dialog_data.get('task', {}).get('userid'),
+        "employee": manager.dialog_data.get("task", {}).get("userid"),
         "record": f'принята в работу, {manager.dialog_data.get("task", {}).get("username")}',
     }
     JournalService.new_record(recdata)
@@ -279,6 +289,16 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
     TaskService.change_status(
         manager.dialog_data.get("task", {}).get("taskid"), "в работе"
     )
+
+    user = EmployeeService.get_employee(callback.from_user.id)
+    recdata = {
+        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "task": manager.dialog_data.get("task", {}).get("taskid"),
+        "employee": manager.dialog_data.get("task", {}).get("userid"),
+        "record": f'вернул в работу, {user.get("username")}',
+    }
+    JournalService.new_record(recdata)
+
     await callback.answer(
         f'Заявка {manager.dialog_data.get("task", {}).get("title")} снова в работе.'
     )
