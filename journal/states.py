@@ -7,7 +7,6 @@ class JrMainMenuSG(StatesGroup):
     confirm = State()
 
 class JrSearchSG(StatesGroup):
-    user = State()
     datestamp = State()
     result = State()
     

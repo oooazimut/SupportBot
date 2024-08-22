@@ -17,7 +17,11 @@ async def users(dialog_manager: DialogManager, **kwargs):
 
 
 async def result(dialog_manager: DialogManager, **kwargs):
+    users = []
     if dialog_manager.start_data:
+        
+        
+
         dialog_manager.dialog_data['userid'] = dialog_manager.start_data.get('userid')
     journal = JournalService.get_records(dialog_manager.dialog_data)
     return {"journal": journal}
