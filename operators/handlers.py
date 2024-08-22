@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import ChatEvent, DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from db.service import EntityService, TaskService
+from db.service import EntityService, JournalService, TaskService
 from jobs import closed_task
 from tasks import states as tsk_states
 
@@ -26,21 +26,30 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
     summary += f"\nзакрыл {operator}."
     TaskService.update_summary(taskid, summary)
 
+    recdata = {
+        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "task": manager.start_data.get("taskid"),
+        "employee": manager.start_data.get("userid"),
+    }
+
     if TaskService.get_stored_taskid(taskid):
         TaskService.reopen(taskid)
 
     if manager.start_data["status"] == "проверка" or not manager.start_data["act"]:
         TaskService.change_status(taskid, "закрыто")
+        recdata["record"] = f"закрыл {operator}"
+
         job = scheduler.get_job(job_id=str(taskid))
         if job:
             job.remove()
         messaga = await message.answer("Заявка перемещена в архив.")
         await asyncio.sleep(3)
         await messaga.delete()
+
         slave = manager.start_data["slave"]
-        task = manager.start_data["title"]
-        taskid = manager.start_data["taskid"]
         if slave:
+            task = manager.start_data["title"]
+            taskid = manager.start_data["taskid"]
             scheduler.add_job(
                 closed_task,
                 "interval",
@@ -52,12 +61,14 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
             )
     else:
         TaskService.change_status(taskid, "проверка")
+        recdata["record"] = f"отправил на проверку {operator}"
         messaga = await message.answer(
             "Заявка ушла на проверку правильного заполнения акта."
         )
         await asyncio.sleep(3)
         await messaga.delete()
 
+    JournalService.new_record(recdata)
     await manager.done()
 
 

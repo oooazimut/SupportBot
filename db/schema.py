@@ -30,11 +30,20 @@ CREATE_DB_SCRIPT = """
         acttype TEXT,
         agreement TEXT,
         summary TEXT,
-        FOREIGN KEY (entity) REFERENCES entities (ent_id)
+        FOREIGN KEY (entity) REFERENCES entities (ent_id),
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 
     CREATE TABLE IF NOT EXISTS clones (
         taskid INTEGER
+        );
+    CREATE TABLE IF NOT EXISTS journal (
+        recordid INTEGER PRIMARY KEY AUTOINCREMENT,
+        dttm timestamp,
+        employee INTEGER,
+        task INTEGER,
+        record TEXT,
+        FOREIGN KEY (employee) REFERENCES employees (userid),
+        FOREIGN KEY (task) REFERENCES tasks (taskid)
         );
     COMMIT; 
     """

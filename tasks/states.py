@@ -17,6 +17,7 @@ class NewSG(StatesGroup):
 class TasksSG(StatesGroup):
     tasks = State()
     task = State()
+    journal = State()
 
 
 class MediaSG(StatesGroup):

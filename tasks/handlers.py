@@ -1,5 +1,4 @@
 import datetime
-import sqlite3
 from performers import states as prf_states
 from typing import Any
 
@@ -15,7 +14,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from custom.bot import MyBot
-from db.service import EmployeeService, EntityService, TaskService
+from db.service import EmployeeService, EntityService, JournalService, TaskService
 from jobs import new_task
 from operators.states import OpDelayingSG, OpCloseTaskSG, OpRemoveTaskSG
 
@@ -211,6 +210,16 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
         TaskService.change_status(taskid, "в работе")
     else:
         TaskService.change_status(taskid, "открыто")
+
+    user = EmployeeService.get_employee(clb.from_user.id)
+    recdata = {
+        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "task": taskid,
+        "employee": task.get("userid"),
+        "record": f'вернул в работу, {user.get("username")}',
+    }
+    JournalService.new_record(recdata)
+
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     job = scheduler.get_job(str(taskid))
     if job:
@@ -256,6 +265,15 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
     TaskService.change_status(
         manager.dialog_data.get("task", {}).get("taskid"), "в работе"
     )
+
+    recdata = {
+        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "task": manager.dialog_data.get("task", {}).get("taskid"),
+        "employee": manager.dialog_data.get("task", {}).get("userid"),
+        "record": f'принята в работу, {manager.dialog_data.get("task", {}).get("username")}',
+    }
+    JournalService.new_record(recdata)
+
     await callback.answer(
         f'Заявка {manager.dialog_data.get("task", {}).get("title")} принята в работу.'
     )
@@ -271,6 +289,16 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
     TaskService.change_status(
         manager.dialog_data.get("task", {}).get("taskid"), "в работе"
     )
+
+    user = EmployeeService.get_employee(callback.from_user.id)
+    recdata = {
+        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "task": manager.dialog_data.get("task", {}).get("taskid"),
+        "employee": manager.dialog_data.get("task", {}).get("userid"),
+        "record": f'вернул в работу, {user.get("username")}',
+    }
+    JournalService.new_record(recdata)
+
     await callback.answer(
         f'Заявка {manager.dialog_data.get("task", {}).get("title")} снова в работе.'
     )

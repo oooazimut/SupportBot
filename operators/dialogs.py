@@ -14,6 +14,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import config
 from db.service import TaskService
 from tasks import states as tsk_states
+from journal import states as jrn_states
 
 from . import handlers, states
 
@@ -29,10 +30,9 @@ async def on_start(any, manager: DialogManager):
 main = Dialog(
     Window(
         Const("Главное меню:"),
-        Row(
             Start(Const("Заявки"), id="tasks", state=states.OpTasksSG.main),
+            Start(Const('Журнал'), id="to_journal", state=jrn_states.JrMainMenuSG.main),
             WebApp(Const("Админка"), Const("https://azimut-asutp.ru/admin")),
-        ),
         state=states.OpMainMenuSG.main,
     ),
     on_start=on_start,
