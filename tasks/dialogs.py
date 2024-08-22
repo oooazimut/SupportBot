@@ -17,7 +17,7 @@ from aiogram_dialog.widgets.kbd import (
     SwitchTo,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Format, Jinja
+from aiogram_dialog.widgets.text import Const, Format, Jinja, List
 from custom.babel_calendar import CustomCalendar
 from db.service import EmployeeService
 
@@ -361,9 +361,17 @@ tasks = Dialog(
             ),
             when=user_is_performer,
         ),
+        Next(Const("Журнал заявки")),
         Back(Const("Назад")),
         state=states.TasksSG.task,
         getter=getters.task,
+    ),
+    Window(
+        Const("<b>Журнал заявки\n\n</b>"),
+        List(Format("{item[dttm]}\n{item[record]}\n"), items="journal"),
+        Back(Const('Назад')),
+        state=states.TasksSG.journal,
+        getter=getters.journal,
     ),
 )
 

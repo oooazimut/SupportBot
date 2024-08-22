@@ -22,6 +22,8 @@ from routers import finish_router, start_router
 from operators import dialogs as op_dialogs
 from performers import dialogs as prf_dialogs
 from tasks import dialogs as tsk_dialogs  # noqa: F401
+from journal import dialogs as jrn_dialogs
+from observers import dialogs as ob_dialogs
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
@@ -57,6 +59,8 @@ async def main():
     dp.include_routers(
         tsk_dialogs.new, tsk_dialogs.tasks, tsk_dialogs.media, tsk_dialogs.filtration
     )
+    dp.include_routers(jrn_dialogs.main, jrn_dialogs.search)
+    dp.include_router(ob_dialogs.main)
     dp.include_router(finish_router.router)
     scheduler = AsyncIOScheduler()
     scheduler.add_jobstore(

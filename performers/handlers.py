@@ -6,7 +6,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from db.service import EmployeeService, EntityService, TaskService
+from db.service import EmployeeService, EntityService, JournalService, TaskService
 from jobs import close_task, confirmed_task
 from tasks import states as tsk_states
 
@@ -79,6 +79,15 @@ async def pin_videoreport(
     TaskService.update_summary(taskid, manager.dialog_data.get('summary', ''))
     if not manager.dialog_data.get('closing_type'):
         TaskService.store_taskid(taskid)
+
+    recdata = {
+        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "task": manager.start_data.get("taskid"),
+        'employee': manager.start_data.get('userid'),
+        "record": f'выполнено, {manager.start_data.get("username")}',
+    }
+    JournalService.new_record(recdata)
+
 
     if not manager.start_data["act"]:
         scheduler.add_job(
