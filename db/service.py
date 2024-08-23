@@ -298,10 +298,9 @@ class JournalService:
         query = """
         SELECT *
         FROM journal as j
-        LEFT JOIN employees as e
-        ON e.userid = j.employee
-        LEFT JOIN tasks as t
-        ON t.taskid= j.task
+        LEFT JOIN employees as e ON e.userid = j.employee
+        LEFT JOIN tasks as t ON t.taskid= j.task
+        LEFT JOIN entities as ent ON ent.ent_id =  t.entity 
         """
         adds = list()
         if data.get("userid"):
@@ -309,7 +308,10 @@ class JournalService:
         if data.get("date"):
             adds.append("DATE(j.dttm) = :date")
         if data.get('taskid'):
-            adds.append('j.task = :taskid')
+            if data.get('taskid') == 'null':
+                adds.append('j.task IS NULL')
+            else:
+                adds.append('j.task = :taskid')
 
         if adds:
             query = query + " WHERE " + " AND ".join(adds)

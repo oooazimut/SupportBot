@@ -1,10 +1,19 @@
 from aiogram import F
 from aiogram_dialog import Dialog, Window
-from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Column, Next, Select
-from aiogram_dialog.widgets.text import Const, Format, List
+from aiogram_dialog.widgets.kbd import (
+    Back,
+    Button,
+    Cancel,
+    Column,
+    Next,
+    NumberedPager,
+    Select,
+    StubScroll,
+)
+from aiogram_dialog.widgets.text import Const, Format, List, Multi
 
 from custom.babel_calendar import CustomCalendar
-from tasks.handlers import on_date, on_performer
+from tasks.handlers import on_date
 
 from . import getters, handlers, states
 
@@ -55,16 +64,26 @@ search = Dialog(
     Window(
         Const("Выбор даты"),
         CustomCalendar(id="cal", on_click=on_date),
-        Next(Const('Пропустить')),
-        Back(Const("Назад"), when=~F['start_data']),
-        Cancel(Const('Отмена')),
+        Next(Const("Пропустить")),
+        Back(Const("Назад"), when=~F["start_data"]),
+        Cancel(Const("Отмена")),
         state=states.JrSearchSG.datestamp,
     ),
     Window(
-        Const("<b>Результат\n\n</b>"),
-        List(Format('{item[dttm]}\n{item[record]}\n'), items="journal"),
-        Back(Const("Назад")),
-        Cancel(Const('Отмена')),
+        Const("Журнал"),
+        Format("<b>{username}</b>\n\n", when="username"),
+        List(
+            Multi(
+                Format("{item[name]}", when=F['item']['name']),
+                Format("{item[title]}", when=F['item']['title']),
+                Format("{item[dttm]}\n{item[record]}\n"),
+            ),
+            items="journal",
+            when="journal",
+        ),
+        StubScroll(id="users_scroll", pages="pages"),
+        NumberedPager(scroll="users_scroll"),
+        Cancel(Const("Выход")),
         state=states.JrSearchSG.result,
         getter=getters.result,
     ),

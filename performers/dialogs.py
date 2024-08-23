@@ -45,11 +45,7 @@ main = Dialog(
                 id="to_filtration",
                 state=tsk_states.FiltrationSG.subentity,
             ),
-            Start(
-                Const("Поиск"),
-                id="to_filtration",
-                state=tsk_states.FiltrationSG.subentity,
-            ),
+            Back(Const('Назад')),
         ),
         state=states.PrfMainMenuSG.tasks,
     ),
@@ -87,3 +83,4 @@ performed = Dialog(
         state=states.PrfPerformedSG.pin_videoreport,
     ),
 )
+

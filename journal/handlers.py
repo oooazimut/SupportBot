@@ -34,9 +34,9 @@ async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
 
 async def on_search(callback: CallbackQuery, button, manager: DialogManager):
     user = EmployeeService.get_employee(callback.from_user.id)
-    if user.get("position") in ("worker", ):
-        await manager.start(
-            states.JrSearchSG.datestamp, data={"userid": user.get("userid")}
-        )
-    else:
-        await manager.start(states.JrSearchSG.user)
+    data = {}
+
+    if user.get("position") in ("worker",):
+        data["userid"] = user.get("userid")
+
+    await manager.start(states.JrSearchSG.datestamp, data=data)

@@ -194,7 +194,7 @@ dialog = Dialog(
         Format("Day by number is {day}"),
         StubScroll(id="stub_scroll", pages="pages"),
         NumberedPager(
-            scroll="stub_scroll",
+            scroll="users_scroll",
         ),
         MAIN_MENU_BTN,
         state=DialogSG.STUB,
