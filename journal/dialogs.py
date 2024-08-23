@@ -53,22 +53,6 @@ main = Dialog(
 
 search = Dialog(
     Window(
-        Const("Выбор сотрудника"),
-        Column(
-            Select(
-                Format("{item[username]}"),
-                id="performers_choice",
-                item_id_getter=lambda x: x.get("userid"),
-                items="users",
-                on_click=on_performer,
-            )
-        ),
-        Next(Const('Пропустить')),
-        Cancel(Const('Отмена')),
-        state=states.JrSearchSG.user,
-        getter=getters.users,
-    ),
-    Window(
         Const("Выбор даты"),
         CustomCalendar(id="cal", on_click=on_date),
         Next(Const('Пропустить')),
