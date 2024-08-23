@@ -205,11 +205,19 @@ class TaskService:
         )
         return data
 
-    @staticmethod
-    def save_result(result, resultid, resulttype, taskid):
-        params = [result, resulttype, resultid, taskid]
+    @classmethod
+    def update_result(cls, resultid, taskid):
+        data = list()
+        data.append(resultid)
+        old_result = cls.get_task(taskid)[0].get("resultid")
+        if old_result:
+            data.append(old_result)
+
+        result = ', '.join(data)
+
+        params = [result, taskid]
         SqDB.post_query(
-            "UPDATE tasks SET result=?, resulttype=?, resultid=? WHERE taskid=? RETURNING *",
+            "UPDATE tasks SET resultid=? WHERE taskid=? RETURNING *",
             params,
         )
 
@@ -307,20 +315,19 @@ class JournalService:
             adds.append("j.employee = :userid")
         if data.get("date"):
             adds.append("DATE(j.dttm) = :date")
-        if data.get('taskid'):
-            if data.get('taskid') == 'null':
-                adds.append('j.task IS NULL')
+        if data.get("taskid"):
+            if data.get("taskid") == "null":
+                adds.append("j.task IS NULL")
             else:
-                adds.append('j.task = :taskid')
+                adds.append("j.task = :taskid")
 
         if adds:
             query = query + " WHERE " + " AND ".join(adds)
 
         query += " ORDER BY created DESC"
         return SqDB.select_query(query, data)
-        
-    
+
     @staticmethod
     def del_record(recordid):
-        query = 'DELETE FROM journal WHERE recordid = ? RETURNING *'
+        query = "DELETE FROM journal WHERE recordid = ? RETURNING *"
         SqDB.post_query(query, [recordid])

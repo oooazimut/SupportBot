@@ -66,10 +66,8 @@ async def pin_videoreport(
     manager: DialogManager,
     callback=CallbackQuery,
 ):
-    txt = message.caption
     media_id = message.video.file_id
-    media_type = message.content_type
-    TaskService.save_result(txt, media_id, media_type, manager.start_data["taskid"])
+    TaskService.update_result(media_id, manager.start_data["taskid"])
 
     taskid = manager.start_data["taskid"]
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)

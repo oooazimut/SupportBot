@@ -22,8 +22,6 @@ CREATE_DB_SCRIPT = """
         priority TEXT,
         entity INTEGER,
         slave INTEGER,
-        result TEXT,
-        resulttype TEXT,
         resultid TEXT,
         act INTEGER,
         actid TEXT,
