@@ -22,6 +22,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
         if temp:
             journal.append(temp)
 
+
     data = []
     search_data = dict()
     rec_date = dialog_manager.dialog_data.get('date')
@@ -34,6 +35,8 @@ async def result(dialog_manager: DialogManager, **kwargs):
         append_data(search_data, data)
     else:
         users = EmployeeService.get_employees()
+        users.sort(key=lambda x: x['username'].split()[-1])
+        print(users)
         for user in users:
             search_data['userid'] = user.get('userid')
             append_data(search_data, data)

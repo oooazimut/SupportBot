@@ -29,8 +29,6 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
         "employee": manager.start_data.get("userid"),
     }
 
-    if TaskService.get_stored_taskid(taskid):
-        TaskService.reopen(taskid)
 
     if manager.start_data["status"] == "проверка" or not manager.start_data["act"]:
         TaskService.change_status(taskid, "закрыто")

@@ -191,47 +191,23 @@ class TaskService:
 
     @classmethod
     def update_result(cls, resultid, taskid):
-        data = list()
-        data.append(resultid)
         old_result = cls.get_task(taskid)[0].get("resultid")
         if old_result:
-            data.append(old_result)
+            resultid += f',{old_result}'
 
-        result = ",".join(data)
-
-        params = [result, taskid]
         SqDB.post_query(
             "UPDATE tasks SET resultid=? WHERE taskid=? RETURNING *",
-            params,
+            [resultid, taskid],
         )
 
-    @staticmethod
-    def add_act(params: dict):
-        query = "UPDATE tasks SET actid = :actid, acttype = :acttype WHERE taskid = :taskid RETURNING *"
-        SqDB.post_query(query, params)
-
     @classmethod
-    def reopen(cls, taskid: int | str):
-        task = cls.get_task(taskid)[0]
-        task["slave"] = None
-        task["username"] = None
-        task["status"] = "открыто"
-        cls.save_task(task)
+    def add_act(cls, params: dict):
+        actid = cls.get_task(params['taskid'])[0].get('actid')
+        if actid:
+            params['actid'] += f',{actid}'
 
-    @staticmethod
-    def store_taskid(taskid):
-        query = "INSERT INTO clones VALUES(?) RETURNING *"
-        SqDB.post_query(query, [taskid])
-
-    @staticmethod
-    def get_stored_taskid(taskid):
-        query = "SELECT * FROM clones WHERE taskid = ?"
-        return SqDB.select_query(query, [taskid])
-
-    @staticmethod
-    def del_stored_taskid(taskid):
-        query = "DELETE FROM clones WHERE taskid = ? RETURNING *"
-        SqDB.post_query(query, [taskid])
+        query = "UPDATE tasks SET actid = :actid WHERE taskid = :taskid RETURNING *"
+        SqDB.post_query(query, params)
 
 
 class EmployeeService:

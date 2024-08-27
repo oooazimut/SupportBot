@@ -24,18 +24,10 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
 
 
 async def act_handler(msg: Message, widget: MessageInput, manager: DialogManager):
-    actid = None
-    acttype = msg.content_type
-    match acttype:
-        case "document":
-            actid = msg.document.file_id
-        case "photo":
-            actid = msg.photo[-1].file_id
-
+    actid = msg.photo[-1].file_id
     data = {
         "taskid": manager.start_data.get("taskid"),
         "actid": actid,
-        "acttype": acttype,
     }
 
     TaskService.add_act(data)
@@ -73,11 +65,6 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
 
     TaskService.change_status(taskid, "выполнено")
-    if (
-        manager.dialog_data.get("closing_type") == "частично"
-        and task.get("status") != "проверка"
-    ):
-        TaskService.store_taskid(taskid)
 
     recdata = {
         "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),

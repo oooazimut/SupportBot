@@ -1,7 +1,5 @@
 import datetime
-from performers import states as prf_states
 from typing import Any
-
 
 from aiogram import Bot
 from aiogram.enums import ContentType
@@ -15,8 +13,9 @@ from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from custom.bot import MyBot
 from db.service import EmployeeService, EntityService, JournalService, TaskService
-from jobs import new_task, returned_task
-from operators.states import OpDelayingSG, OpCloseTaskSG, OpRemoveTaskSG
+from jobs import new_task
+from operators.states import OpCloseTaskSG, OpDelayingSG, OpRemoveTaskSG
+from performers import states as prf_states
 
 from . import states
 
@@ -164,10 +163,10 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         data.setdefault(i, None)
 
     if is_exist(data):
-        if data.get('slaves'):
-            data['slave'] = data.get('slaves', []).pop(0)
+        if data.get("slaves"):
+            data["slave"] = data.get("slaves", []).pop(0)
         task = TaskService.update_task(data)
-        send_newtask_note(data['slave'], task)
+        send_newtask_note(data["slave"], task)
         recdata["task"] = task["taskid"]
         recdata["record"] = f'Заявку отредактировал {operator.get("username")}'
         JournalService.new_record(recdata)
@@ -222,9 +221,15 @@ async def on_start(data, manager: DialogManager):
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
+
     task = manager.dialog_data.get("task", {})
     task["status"] = "в работе" if task["slave"] else "открыто"
     task["return"] = True
+
+    scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
+    job = scheduler.get_job(str(task['taskid']))
+    if job:
+        job.remove()
 
     await manager.start(state=states.NewSG.preview, data=task)
 
@@ -238,10 +243,6 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
     # }
     # JournalService.new_record(recdata)
 
-    # scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-    # job = scheduler.get_job(str(taskid))
-    # if job:
-    #     job.remove()
     #     await clb.answer("Заявка возвращена в работу.", show_alert=True)
     # else:
     #     await clb.answer("Заявка уже в работе.", show_alert=True)
@@ -343,11 +344,10 @@ async def show_performer_media(callback: CallbackQuery, button, manager: DialogM
 
 
 async def show_act(callback: CallbackQuery, button, manager: DialogManager):
-    mediatype = manager.dialog_data.get("task", {}).get("acttype")
-    mediaid = manager.dialog_data.get("task", {}).get("actid")
+    mediaid = manager.dialog_data.get("task", {}).get("actid").split(",")
     await manager.start(
         state=states.MediaSG.main,
-        data={"type": mediatype, "id": mediaid, "wintitle": "Акт"},
+        data={"type": ContentType.PHOTO, "id": mediaid, "wintitle": "Акт"},
     )
 
 
