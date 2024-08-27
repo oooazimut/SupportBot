@@ -27,23 +27,7 @@ class TaskService:
         return SqDB.post_query(query, task)
 
     @staticmethod
-    def get_summary(taskid):
-        result = SqDB.select_query(
-            "SELECT summary FROM tasks WHERE taskid = ?", [taskid]
-        )[0]["summary"]
-
-        return result if result else ""
-
-    @classmethod
-    def update_summary(cls, taskid: int, new_summary: str):
-        summary = cls.get_summary(taskid)
-        summary += "\n" + new_summary
-        query = "UPDATE tasks SET summary = ? where taskid = ? RETURNING *"
-        return SqDB.post_query(query, [summary, taskid])
-
-    @staticmethod
     def get_task(taskid) -> list:
-        # return SqDB.select_query('SELECT * FROM tasks WHERE id = ?', [taskid])
         query = """
         SELECT *
         FROM tasks as t
@@ -213,7 +197,7 @@ class TaskService:
         if old_result:
             data.append(old_result)
 
-        result = ', '.join(data)
+        result = ",".join(data)
 
         params = [result, taskid]
         SqDB.post_query(

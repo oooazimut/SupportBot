@@ -125,10 +125,16 @@ async def performed(dialog_manager: DialogManager, **kwargs):
 
 
 async def media(dialog_manager: DialogManager, **kwargs):
-    m_type = dialog_manager.start_data.get("type")
-    m_id = dialog_manager.start_data.get("id")
-    media = MediaAttachment(m_type, file_id=MediaId(m_id))
-    return {"media": media, "wintitle": dialog_manager.start_data.get("wintitle")}
+    m_type = dialog_manager.start_data.get("type", '')
+    m_ids = dialog_manager.start_data.get("id", [])
+    pages = len(m_ids)
+    index = await dialog_manager.find('media_scroll').get_page()
+    media = MediaAttachment(m_type, file_id=MediaId(m_ids[index]))
+    return {
+        "pages": pages,
+        "media": media,
+        "wintitle": dialog_manager.start_data.get("wintitle"),
+    }
 
 
 async def statuses_getter(dialog_manager: DialogManager, **kwargs):

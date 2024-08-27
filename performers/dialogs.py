@@ -45,7 +45,7 @@ main = Dialog(
                 id="to_filtration",
                 state=tsk_states.FiltrationSG.subentity,
             ),
-            Back(Const('Назад')),
+            Back(Const("Назад")),
         ),
         state=states.PrfMainMenuSG.tasks,
     ),
@@ -76,11 +76,20 @@ performed = Dialog(
         state=states.PrfPerformedSG.pin_act,
     ),
     Window(
-        Const("Для закрытия заявки добавьте видеоотчёт."),
-        MessageInput(handlers.pin_videoreport, content_types=[ContentType.VIDEO]),
+        Const("Добавление видеоотчёта:"),
+        MessageInput(func=handlers.pin_videoreport, content_types=[ContentType.VIDEO]),
         Back(Const("Назад")),
         Cancel(Const("Главное меню")),
         state=states.PrfPerformedSG.pin_videoreport,
     ),
+    Window(
+        Const("Подтверждение выполнения"),
+        Back(Const("Добавить еще одно видео")),
+        Cancel(
+            Const("Подтвердить выполнение"),
+            id="confirm_performing",
+            on_click=handlers.on_close,
+        ),
+        state=states.PrfPerformedSG.confirm,
+    ),
 )
-

@@ -23,24 +23,6 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
     )
 
 
-async def entites_name_handler(
-    message: Message, message_input: MessageInput, manager: DialogManager
-):
-    entities = EntityService.get_entities_by_substr(message.text)
-    if entities:
-        manager.dialog_data["entities"] = entities
-        await manager.switch_to(states.PrfMainMenuSG.entities)
-    else:
-        pass
-
-
-async def on_entity(callback: CallbackQuery, select, manager: DialogManager, entid, /):
-    await manager.start(
-        tsk_states.TasksSG.tasks,
-        data={"wintitle": config.TasksTitles.ENTITY.value, "entid": entid},
-    )
-
-
 async def act_handler(msg: Message, widget: MessageInput, manager: DialogManager):
     actid = None
     acttype = msg.content_type
@@ -60,32 +42,50 @@ async def act_handler(msg: Message, widget: MessageInput, manager: DialogManager
     await manager.next()
 
 
+async def on_closing_type(
+    callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: str, /
+):
+    act = dialog_manager.start_data.get("act")
+    dialog_manager.dialog_data["closing_type"] = (
+        "полностью" if int(c_type) else "частично"
+    )
+
+    if act:
+        await dialog_manager.next()
+    else:
+        await dialog_manager.switch_to(state=states.PrfPerformedSG.pin_videoreport)
+
+
 async def pin_videoreport(
     message: Message,
-    message_input: MessageInput,
+    message_input,
     manager: DialogManager,
-    callback=CallbackQuery,
 ):
     media_id = message.video.file_id
     TaskService.update_result(media_id, manager.start_data["taskid"])
+    await manager.next()
 
+
+async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     taskid = manager.start_data["taskid"]
+    task = TaskService.get_task(taskid)[0]
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
 
     TaskService.change_status(taskid, "выполнено")
-    TaskService.update_summary(taskid, manager.dialog_data.get('summary', ''))
-    if not manager.dialog_data.get('closing_type'):
+    if (
+        manager.dialog_data.get("closing_type") == "частично"
+        and task.get("status") != "проверка"
+    ):
         TaskService.store_taskid(taskid)
 
     recdata = {
         "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
         "task": manager.start_data.get("taskid"),
-        'employee': manager.start_data.get('userid'),
-        "record": f'выполнено, {manager.start_data.get("username")}',
+        "employee": manager.start_data.get("userid"),
+        "record": f'выполнено {manager.dialog_data.get("closing_type")}, {manager.start_data.get("username")}',
     }
     JournalService.new_record(recdata)
-
 
     if not manager.start_data["act"]:
         scheduler.add_job(
@@ -114,27 +114,4 @@ async def pin_videoreport(
         )
 
     text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
-    mes = await message.answer(text=text)
-    await asyncio.sleep(5)
-    await mes.delete()
-    await manager.done()
-
-
-async def on_closing_type(
-    callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: str, /
-):
-    username = dialog_manager.start_data.get("username", "")
-    perform_report = username + " выполнил заявку "
-    act = dialog_manager.start_data.get("act")
-    dialog_manager.dialog_data['closing_type'] = int(c_type)
-
-    if int(c_type):
-        perform_report += "полностью"
-    else:
-        perform_report += "частично"
-    dialog_manager.dialog_data['summary'] = perform_report
-
-    if act:
-        await dialog_manager.next()
-    else:
-        await dialog_manager.switch_to(state=states.PrfPerformedSG.pin_videoreport)
+    callback.answer(text, show_alert=True)

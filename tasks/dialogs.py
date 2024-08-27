@@ -12,8 +12,10 @@ from aiogram_dialog.widgets.kbd import (
     Group,
     Multiselect,
     Next,
+    NumberedPager,
     ScrollingGroup,
     Select,
+    StubScroll,
     SwitchTo,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
@@ -289,7 +291,6 @@ tasks = Dialog(
         Format("Статус: {status}"),
         Format("\nНужен акт", when="act"),
         Format("<b><i><u>Согласование: {agreement}</u></i></b>", when="agreement"),
-        Format("\n <b>Информация по закрытию:</b>  {summary}", when="summary"),
         Button(
             Const("Мультимедиа от оператора"),
             id="mm_description",
@@ -369,7 +370,7 @@ tasks = Dialog(
     Window(
         Const("<b>Журнал заявки\n\n</b>"),
         List(Format("{item[dttm]}\n{item[record]}\n"), items="journal"),
-        Back(Const('Назад')),
+        Back(Const("Назад")),
         state=states.TasksSG.journal,
         getter=getters.journal,
     ),
@@ -380,6 +381,8 @@ media = Dialog(
     Window(
         Format("{wintitle}"),
         DynamicMedia("media"),
+        StubScroll(id="media_scroll", pages="pages"),
+        NumberedPager(scroll="media_scroll", when=F["pages"] > 1),
         Cancel(Const("Назад")),
         state=states.MediaSG.main,
         getter=getters.media,

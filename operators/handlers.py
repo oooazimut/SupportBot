@@ -3,12 +3,11 @@ from typing import Any
 
 import config
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import ChatEvent, DialogManager
+from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from db.service import EntityService, JournalService, TaskService
+from db.service import JournalService, TaskService
 from jobs import closed_task
-from tasks import states as tsk_states
 
 
 async def on_type(
@@ -22,9 +21,7 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
     taskid = manager.start_data.get("taskid", "")
     operator = config.AGREEMENTERS.get(message.from_user.id, "")
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-    summary = message.text if message.text and len(message.text) > 1 else ""
-    summary += f"\nзакрыл {operator}."
-    TaskService.update_summary(taskid, summary)
+    manager.dialog_data['summary'] = message.text if message.text and len(message.text) > 1 else ""
 
     recdata = {
         "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
@@ -37,7 +34,7 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
 
     if manager.start_data["status"] == "проверка" or not manager.start_data["act"]:
         TaskService.change_status(taskid, "закрыто")
-        recdata["record"] = f"закрыл {operator}"
+        recdata["record"] = f"закрыл {operator}\n{manager.dialog_data.get('summary')}"
 
         job = scheduler.get_job(job_id=str(taskid))
         if job:
@@ -61,7 +58,7 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
             )
     else:
         TaskService.change_status(taskid, "проверка")
-        recdata["record"] = f"отправил на проверку {operator}"
+        recdata["record"] = f"отправил на проверку {operator}\n{manager.dialog_data.get('summary')}"
         messaga = await message.answer(
             "Заявка ушла на проверку правильного заполнения акта."
         )
@@ -69,6 +66,7 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
         await messaga.delete()
 
     JournalService.new_record(recdata)
+    del manager.dialog_data['summary']                                                                                 
     await manager.done()
 
 

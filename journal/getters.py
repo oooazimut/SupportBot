@@ -46,6 +46,5 @@ async def result(dialog_manager: DialogManager, **kwargs):
         journal = data[user_index]
 
     pages = len(data)
-    # print(pages)
 
     return {"pages": pages, "username": username, "journal": journal}
