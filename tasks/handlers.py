@@ -165,7 +165,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     if is_exist(data):
         if data.get("slaves"):
             data["slave"] = data.get("slaves", []).pop(0)
-        task = TaskService.update_task(data)
+        task = dict(TaskService.update_task(data))
         send_newtask_note(data["slave"], task)
         recdata["task"] = task["taskid"]
         recdata["record"] = f'Заявку отредактировал {operator.get("username")}'
@@ -173,7 +173,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
         for slave in data.get("slaves", []):
             data["slave"] = slave
-            task = TaskService.save_task(data)
+            task = dict(TaskService.save_task(data))
             send_newtask_note(slave, task)
             recdata["task"] = task.get("taskid")
             recdata["record"] = f'заявку создал {task.get("creator")}'
@@ -196,7 +196,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         for slave in data.get("slaves", []):
             data["slave"] = slave
             task = TaskService.save_task(data)
-            print(task)
             send_newtask_note(slave, task)
 
             recdata["task"] = task.get("taskid")

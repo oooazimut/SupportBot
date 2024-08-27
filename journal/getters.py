@@ -36,7 +36,6 @@ async def result(dialog_manager: DialogManager, **kwargs):
     else:
         users = EmployeeService.get_employees()
         users.sort(key=lambda x: x['username'].split()[-1])
-        print(users)
         for user in users:
             search_data['userid'] = user.get('userid')
             append_data(search_data, data)
