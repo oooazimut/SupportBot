@@ -147,6 +147,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         data["status"] = "назначено"
     else:
         data["status"] = "открыто"
+        data.setdefault('slaves', []).append(None)
     data.setdefault("status", "открыто")
 
     for i in (
@@ -195,7 +196,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     else:
         for slave in data.get("slaves", []):
             data["slave"] = slave
-            task = TaskService.save_task(data)
+            task = dict(TaskService.save_task(data))
             send_newtask_note(slave, task)
 
             recdata["task"] = task.get("taskid")
