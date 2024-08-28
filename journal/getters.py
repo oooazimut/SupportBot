@@ -20,7 +20,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
     def append_data(data: dict, journal: list):
         temp = JournalService.get_records(data)
         if temp:
-            journal.append(temp)
+            journal.append(sorted(temp, key=lambda x: x['dttm']))
 
 
     data = []

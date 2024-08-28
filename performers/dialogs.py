@@ -85,11 +85,20 @@ performed = Dialog(
     Window(
         Const("Подтверждение выполнения"),
         Back(Const("Добавить еще одно видео")),
+        Next(Const("Добавить текстовую заметку")),
         Cancel(
             Const("Подтвердить выполнение"),
             id="confirm_performing",
             on_click=handlers.on_close,
         ),
+        Cancel(Const("Главное меню")),
         state=states.PrfPerformedSG.confirm,
+    ),
+    Window(
+        Const("Введите текст"),
+        MessageInput(func=handlers.pin_text, content_types=ContentType.TEXT),
+        Back(Const('Назад')),
+        Cancel(Const("Главное меню")),
+        state=states.PrfPerformedSG.note,
     ),
 )

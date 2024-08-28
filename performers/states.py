@@ -11,3 +11,4 @@ class PrfPerformedSG(StatesGroup):
     pin_act = State()
     pin_videoreport = State()
     confirm = State()
+    note = State()

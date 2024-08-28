@@ -66,11 +66,15 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
     TaskService.change_status(taskid, "выполнено")
 
+    note = manager.dialog_data.get("note", "")
+    record = f'выполнено {manager.dialog_data.get("closing_type")}, {manager.start_data.get("username")}'
+    if note:
+        record += f"\n{note}"
     recdata = {
         "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
-        "record": f'выполнено {manager.dialog_data.get("closing_type")}, {manager.start_data.get("username")}',
+        "record": record,
     }
     JournalService.new_record(recdata)
 
@@ -100,5 +104,10 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
             replace_existing=True,
         )
 
-    text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
-    callback.answer(text, show_alert=True)
+    # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
+    # await callback.answer(text, show_alert=True)
+
+
+async def pin_text(message: Message, message_input, manager: DialogManager):
+    manager.dialog_data["note"] = message.text
+    await manager.back()
