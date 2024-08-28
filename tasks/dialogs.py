@@ -370,9 +370,11 @@ tasks = Dialog(
     Window(
         Const("<b>Журнал заявки\n\n</b>"),
         List(Format("{item[dttm]}\n{item[record]}\n"), items="journal"),
+        StubScroll(id="scroll_taskjournal", pages="pages"),
+        Group(NumberedPager(scroll="scroll_taskjournal", when=F["pages"] > 1), width=7),
         Back(Const("Назад")),
         state=states.TasksSG.journal,
-        getter=getters.journal,
+        getter=getters.journal_getter,
     ),
 )
 
@@ -382,7 +384,7 @@ media = Dialog(
         Format("{wintitle}"),
         DynamicMedia("media"),
         StubScroll(id="media_scroll", pages="pages"),
-        NumberedPager(scroll="media_scroll", when=F["pages"] > 1),
+        Group(NumberedPager(scroll="media_scroll", when=F["pages"] > 1), width=8),
         Cancel(Const("Назад")),
         state=states.MediaSG.main,
         getter=getters.media,

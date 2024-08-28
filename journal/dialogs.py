@@ -83,7 +83,7 @@ search = Dialog(
             when="journal",
         ),
         StubScroll(id="users_scroll", pages="pages"),
-        Group(NumberedPager(scroll="users_scroll"), width=8),
+        Group(NumberedPager(scroll="users_scroll", when=F["pages"] > 1), width=8),
         Cancel(Const("Выход")),
         state=states.JrSearchSG.result,
         getter=getters.result,

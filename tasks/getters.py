@@ -125,10 +125,10 @@ async def performed(dialog_manager: DialogManager, **kwargs):
 
 
 async def media(dialog_manager: DialogManager, **kwargs):
-    m_type = dialog_manager.start_data.get("type", '')
+    m_type = dialog_manager.start_data.get("type", "")
     m_ids = dialog_manager.start_data.get("id", [])
     pages = len(m_ids)
-    index = await dialog_manager.find('media_scroll').get_page()
+    index = await dialog_manager.find("media_scroll").get_page()
     media = MediaAttachment(m_type, file_id=MediaId(m_ids[index]))
     return {
         "pages": pages,
@@ -151,8 +151,14 @@ async def statuses_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
-async def journal(dialog_manager: DialogManager, **kwargs):
-    journal = JournalService.get_records(
+async def journal_getter(dialog_manager: DialogManager, **kwargs):
+    data = JournalService.get_records(
         {"taskid": dialog_manager.dialog_data.get("task", {}).get("taskid")}
     )
-    return {"journal": journal}
+    dates = list(set([item.get("dttm").split()[0] for item in data]))
+    dates.sort()
+    pages = len(dates)
+    curr_page = await dialog_manager.find("scroll_taskjournal").get_page()
+    journal = [item for item in data if dates[curr_page] in item.get('dttm')]
+
+    return {"journal": journal, "pages": pages}
