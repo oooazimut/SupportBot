@@ -5,8 +5,8 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
-from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from db.service import EmployeeService, EntityService, JournalService, TaskService
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from db.service import EmployeeService, JournalService, TaskService
 from jobs import close_task, confirmed_task
 from tasks import states as tsk_states
 

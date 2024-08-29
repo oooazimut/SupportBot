@@ -38,5 +38,12 @@ CREATE_DB_SCRIPT = """
         FOREIGN KEY (employee) REFERENCES employees (userid),
         FOREIGN KEY (task) REFERENCES tasks (taskid)
         );
+    CREATE TABLE IF NOT EXISTS receipts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dttm timestamp,
+        employee INTEGER,
+        receipt TEXT,
+        FOREIGN KEY (employee) REFERENCES employees (userid)
+        );
     COMMIT; 
     """

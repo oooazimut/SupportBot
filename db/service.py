@@ -193,7 +193,7 @@ class TaskService:
     def update_result(cls, resultid, taskid):
         old_result = cls.get_task(taskid)[0].get("resultid")
         if old_result:
-            resultid += f',{old_result}'
+            resultid += f",{old_result}"
 
         SqDB.post_query(
             "UPDATE tasks SET resultid=? WHERE taskid=? RETURNING *",
@@ -202,9 +202,9 @@ class TaskService:
 
     @classmethod
     def add_act(cls, params: dict):
-        actid = cls.get_task(params['taskid'])[0].get('actid')
+        actid = cls.get_task(params["taskid"])[0].get("actid")
         if actid:
-            params['actid'] += f',{actid}'
+            params["actid"] += f",{actid}"
 
         query = "UPDATE tasks SET actid = :actid WHERE taskid = :taskid RETURNING *"
         SqDB.post_query(query, params)
@@ -291,3 +291,24 @@ class JournalService:
     def del_record(recordid):
         query = "DELETE FROM journal WHERE recordid = ? RETURNING *"
         SqDB.post_query(query, [recordid])
+
+
+class ReceiptsService:
+    @staticmethod
+    def new_receipt(data: dict):
+        query = "INSERT INTO receipts (dttm, employee, receipt) VALUES (:dttm, :employee, :receipt) RETURNING *"
+        SqDB.post_query(query, data)
+
+    @staticmethod
+    def get_receipts(params={}):
+        query = "SELECT * FROM receipts"
+        adds = list()
+        if params.get("dttm"):
+            adds.append("DATE(dttm) = :dttm")
+        if params.get("employee"):
+            adds.append("employee = :employee")
+
+        if adds:
+            query += " WHERE " + " AND ".join(adds)
+
+        return SqDB.select_query(query, params)
