@@ -200,7 +200,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             send_newtask_note(slave, task)
 
             recdata["task"] = task.get("taskid")
-            recdata["record"] = f'заявку создал {task.get("creator")}'
+            recdata["record"] = f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
             JournalService.new_record(recdata)
 
         await clb.answer(

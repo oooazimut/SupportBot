@@ -1,6 +1,7 @@
-from aiogram.types import CallbackQuery
+from datetime import datetime
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
-from db.service import EmployeeService, JournalService
+from db.service import EmployeeService, JournalService, ReceiptsService
 
 from . import states
 
@@ -30,6 +31,18 @@ async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
     JournalService.new_record(manager.dialog_data)
     await manager.done()
     await callback.answer("Запись сделана", show_alert=True)
+
+
+async def pin_receipt(message: Message, message_input, manager: DialogManager):
+    dttm = datetime.now()
+    employee = message.from_user.id
+    receipt = message.photo[-1].file_id
+    caption = message.caption
+
+    ReceiptsService.new_receipt(
+        {"dttm": dttm, "employee": employee, "receipt": receipt, "caption": caption}
+    )
+    await manager.done()
 
 
 async def on_search(callback: CallbackQuery, button, manager: DialogManager):
