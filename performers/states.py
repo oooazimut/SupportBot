@@ -9,6 +9,7 @@ class PrfMainMenuSG(StatesGroup):
 class PrfPerformedSG(StatesGroup):
     closing_choice = State()
     pin_act = State()
+    act_or_video = State()
     pin_videoreport = State()
     confirm = State()
     note = State()

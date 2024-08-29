@@ -23,17 +23,6 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
     )
 
 
-async def act_handler(msg: Message, widget: MessageInput, manager: DialogManager):
-    actid = msg.photo[-1].file_id
-    data = {
-        "taskid": manager.start_data.get("taskid"),
-        "actid": actid,
-    }
-
-    TaskService.add_act(data)
-    await manager.next()
-
-
 async def on_closing_type(
     callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: str, /
 ):
@@ -48,22 +37,30 @@ async def on_closing_type(
         await dialog_manager.switch_to(state=states.PrfPerformedSG.pin_videoreport)
 
 
+async def act_handler(msg: Message, widget: MessageInput, manager: DialogManager):
+    manager.dialog_data.setdefault("actid", []).insert(0, msg.photo[-1].file_id)
+    await manager.next()
+
+
 async def pin_videoreport(
     message: Message,
     message_input,
     manager: DialogManager,
 ):
-    media_id = message.video.file_id
-    TaskService.update_result(media_id, manager.start_data["taskid"])
+    manager.dialog_data.setdefault("resultid", []).insert(0, message.video.file_id)
     await manager.next()
 
 
 async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     taskid = manager.start_data["taskid"]
-    task = TaskService.get_task(taskid)[0]
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
 
+    if manager.dialog_data.get("actid"):
+        actid = ",".join(manager.dialog_data["actid"])
+        TaskService.add_act({"taskid": taskid, "actid": actid})
+    resultid = ",".join(manager.dialog_data["resultid"])
+    TaskService.update_result(resultid, taskid)
     TaskService.change_status(taskid, "выполнено")
 
     note = manager.dialog_data.get("note", "")

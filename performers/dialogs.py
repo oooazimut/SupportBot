@@ -12,8 +12,8 @@ from aiogram_dialog.widgets.kbd import (
     Start,
 )
 from aiogram_dialog.widgets.text import Const, Format
-from tasks import states as tsk_states
 from journal import states as jrn_states
+from tasks import states as tsk_states
 
 from . import getters, handlers, states
 
@@ -69,17 +69,22 @@ performed = Dialog(
         getter=getters.closing_types_geter,
     ),
     Window(
-        Const("К этой заявке необходимо приложить фото акта."),
+        Const("Добавление акта."),
         MessageInput(func=handlers.act_handler, content_types=[ContentType.PHOTO]),
-        Back(Const("Назад")),
-        Cancel(Const("Главное меню")),
+        Cancel(Const("Отмена")),
         state=states.PrfPerformedSG.pin_act,
+    ),
+    Window(
+        Const("Что дальше?"),
+        Next(Const("К добавлению видео")),
+        Back(Const("Добавить еще один акт")),
+        Cancel(Const('Отмена')),
+        state=states.PrfPerformedSG.act_or_video,
     ),
     Window(
         Const("Добавление видеоотчёта:"),
         MessageInput(func=handlers.pin_videoreport, content_types=[ContentType.VIDEO]),
-        Back(Const("Назад")),
-        Cancel(Const("Главное меню")),
+        Cancel(Const("Отмена")),
         state=states.PrfPerformedSG.pin_videoreport,
     ),
     Window(
@@ -91,14 +96,14 @@ performed = Dialog(
             id="confirm_performing",
             on_click=handlers.on_close,
         ),
-        Cancel(Const("Главное меню")),
+        Cancel(Const("Отмена")),
         state=states.PrfPerformedSG.confirm,
     ),
     Window(
         Const("Введите текст"),
         MessageInput(func=handlers.pin_text, content_types=ContentType.TEXT),
-        Back(Const('Назад')),
-        Cancel(Const("Главное меню")),
+        Back(Const("Назад")),
+        Cancel(Const("Отмена")),
         state=states.PrfPerformedSG.note,
     ),
 )
