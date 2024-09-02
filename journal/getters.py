@@ -1,3 +1,4 @@
+from datetime import datetime
 from aiogram.enums import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
@@ -6,7 +7,12 @@ from db.service import EmployeeService, JournalService, ReceiptsService
 
 
 async def locations(dialog_manager: DialogManager, **kwargs):
-    return {"locations": ("Офис", "Дом", "Объект")}
+    journal = JournalService.get_records(
+        {"userid": dialog_manager.event.from_user.id, "date": datetime.today().date()}
+    )
+    if journal:
+        journal.sort(key=lambda x: x["dttm"])
+    return {"locations": ("Офис", "Дом", "Объект"), "journal": journal}
 
 
 async def actions(dialog_manager: DialogManager, **kwargs):

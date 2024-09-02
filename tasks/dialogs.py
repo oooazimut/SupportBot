@@ -362,7 +362,7 @@ tasks = Dialog(
             ),
             when=user_is_performer,
         ),
-        Next(Const("Журнал заявки")),
+        Next(Const("Журнал заявки"), on_click=handlers.reset_journal_page),
         Back(Const("Назад")),
         state=states.TasksSG.task,
         getter=getters.task,

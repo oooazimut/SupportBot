@@ -25,6 +25,15 @@ from . import getters, handlers, states
 main = Dialog(
     Window(
         Const("Журнал"),
+        List(
+            Multi(
+                Format("{item[name]}", when=F["item"]["name"]),
+                Format("{item[title]}", when=F["item"]["title"]),
+                Format("{item[dttm]}\n{item[record]}\n"),
+            ),
+            items="journal",
+            when="journal",
+        ),
         Column(
             Select(
                 Format("{item}"),
@@ -35,7 +44,9 @@ main = Dialog(
             )
         ),
         SwitchTo(
-            Const("Прикрепить чек"), id="to_receipt", state=states.JrMainMenuSG.pin_receipt
+            Const("Прикрепить чек"),
+            id="to_receipt",
+            state=states.JrMainMenuSG.pin_receipt,
         ),
         Button(Const("Поиск"), id="to_search", on_click=handlers.on_search),
         Cancel(Const("Отмена")),
@@ -79,7 +90,6 @@ search = Dialog(
         Const("Выбор даты"),
         CustomCalendar(id="cal", on_click=on_date),
         Next(Const("Пропустить")),
-        Back(Const("Назад"), when=~F["start_data"]),
         Cancel(Const("Отмена")),
         state=states.JrSearchSG.datestamp,
     ),
@@ -95,22 +105,22 @@ search = Dialog(
             items="journal",
             when="journal",
         ),
-        Next(Const('Чеки'), when=F['dialog_data']['receipts']),
+        Next(Const("Чеки"), when=F["dialog_data"]["receipts"]),
         StubScroll(id="users_scroll", pages="pages"),
         Group(NumberedPager(scroll="users_scroll", when=F["pages"] > 1), width=8),
         Cancel(Const("Выход")),
-        state=states.JrSearchSG.result, 
+        state=states.JrSearchSG.result,
         getter=getters.result,
     ),
     Window(
         Format("Чеки, {username}"),
         DynamicMedia("media"),
-        Format('{caption}', when='caption'),
-        StubScroll(id="receipts_scroll", pages='pages'),
+        Format("{caption}", when="caption"),
+        StubScroll(id="receipts_scroll", pages="pages"),
         Group(NumberedPager(scroll="receipts_scroll", when=F["pages"] > 1), width=8),
-        Back(Const('Назад')),
-        Cancel(Const('Выход')),
+        Back(Const("Назад")),
+        Cancel(Const("Выход")),
         state=states.JrSearchSG.receipts,
-        getter=getters.receipts_getter
+        getter=getters.receipts_getter,
     ),
 )
