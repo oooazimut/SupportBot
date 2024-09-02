@@ -159,6 +159,7 @@ async def journal_getter(dialog_manager: DialogManager, **kwargs):
     dates.sort()
     pages = len(dates)
     curr_page = await dialog_manager.find("scroll_taskjournal").get_page()
+
     journal = [item for item in data if dates[curr_page] in item.get('dttm')]
 
     return {"journal": journal, "pages": pages}

@@ -147,7 +147,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         data["status"] = "назначено"
     else:
         data["status"] = "открыто"
-        data.setdefault('slaves', []).append(None)
+        data.setdefault("slaves", []).append(None)
     data.setdefault("status", "открыто")
 
     for i in (
@@ -200,7 +200,9 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             send_newtask_note(slave, task)
 
             recdata["task"] = task.get("taskid")
-            recdata["record"] = f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
+            recdata["record"] = (
+                f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
+            )
             JournalService.new_record(recdata)
 
         await clb.answer(
@@ -221,13 +223,12 @@ async def on_start(data, manager: DialogManager):
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
-
     task = manager.dialog_data.get("task", {})
     task["status"] = "в работе" if task["slave"] else "открыто"
     task["return"] = True
 
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-    job = scheduler.get_job(str(task['taskid']))
+    job = scheduler.get_job(str(task["taskid"]))
     if job:
         job.remove()
 
@@ -409,3 +410,7 @@ async def on_status(
 
 async def filters_handler(callback: CallbackQuery, button, manager: DialogManager):
     await manager.start(state=states.TasksSG.tasks, data=manager.dialog_data)
+
+
+async def reset_journal_page(callback: CallbackQuery, button, manager: DialogManager):
+    await manager.find("scroll_taskjournal").set_page(0)
