@@ -43,6 +43,7 @@ CREATE_DB_SCRIPT = """
         dttm timestamp,
         employee INTEGER,
         receipt TEXT,
+        caption TEXT,
         FOREIGN KEY (employee) REFERENCES employees (userid)
         );
     COMMIT; 

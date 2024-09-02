@@ -49,7 +49,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
         dialog_manager.dialog_data["receipts"] = ReceiptsService.get_receipts(
             {"dttm": rec_date, "employee": userid}
         )
-        dialog_manager.dialog_data['username'] = username
+        dialog_manager.dialog_data["username"] = username
         journal = data[user_index]
 
     pages = len(data)
@@ -66,5 +66,11 @@ async def receipts_getter(dialog_manager: DialogManager, **kwargs):
             file_id=dialog_manager.dialog_data["receipts"][curr_page]["receipt"]
         ),
     )
-    return {"pages": pages, "media": media, 'username': dialog_manager.dialog_data['username']}
+    caption = dialog_manager.dialog_data["receipts"][curr_page]["caption"]
 
+    return {
+        "pages": pages,
+        "media": media,
+        "username": dialog_manager.dialog_data["username"],
+        "caption": caption,
+    }

@@ -296,7 +296,7 @@ class JournalService:
 class ReceiptsService:
     @staticmethod
     def new_receipt(data: dict):
-        query = "INSERT INTO receipts (dttm, employee, receipt) VALUES (:dttm, :employee, :receipt) RETURNING *"
+        query = "INSERT INTO receipts (dttm, employee, receipt, caption) VALUES (:dttm, :employee, :receipt, :caption) RETURNING *"
         SqDB.post_query(query, data)
 
     @staticmethod

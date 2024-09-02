@@ -37,9 +37,10 @@ async def pin_receipt(message: Message, message_input, manager: DialogManager):
     dttm = datetime.now()
     employee = message.from_user.id
     receipt = message.photo[-1].file_id
+    caption = message.caption
 
     ReceiptsService.new_receipt(
-        {"dttm": dttm, "employee": employee, "receipt": receipt}
+        {"dttm": dttm, "employee": employee, "receipt": receipt, "caption": caption}
     )
     await manager.done()
 

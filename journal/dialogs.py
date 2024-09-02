@@ -105,6 +105,7 @@ search = Dialog(
     Window(
         Format("Чеки, {username}"),
         DynamicMedia("media"),
+        Format('{caption}', when='caption'),
         StubScroll(id="receipts_scroll", pages='pages'),
         Group(NumberedPager(scroll="receipts_scroll", when=F["pages"] > 1), width=8),
         Back(Const('Назад')),
