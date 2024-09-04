@@ -177,7 +177,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             task = dict(TaskService.save_task(data))
             send_newtask_note(slave, task)
             recdata["task"] = task.get("taskid")
-            recdata["record"] = f'заявку создал {task.get("creator")}'
+            recdata["record"] = f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
             JournalService.new_record(recdata)
 
         scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
@@ -325,7 +325,7 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
 
 async def show_operator_media(callback: CallbackQuery, button, manager: DialogManager):
     mediatype = manager.dialog_data.get("task", {}).get("media_type")
-    mediaid = manager.dialog_data.get("task", {}).get("media_id")
+    mediaid = manager.dialog_data.get("task", {}).get("media_id").split(',')
     await manager.start(
         state=states.MediaSG.main,
         data={"type": mediatype, "id": mediaid, "wintitle": "Медиа от оператора"},
