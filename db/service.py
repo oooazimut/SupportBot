@@ -209,6 +209,18 @@ class TaskService:
         query = "UPDATE tasks SET actid = :actid WHERE taskid = :taskid RETURNING *"
         SqDB.post_query(query, params)
 
+    @classmethod
+    def reopen_task(cls, taskid):
+        task = cls.get_task(taskid)[0]
+        task["created"] = datetime.now()
+        task["status"] = "назначено"
+        cls.save_task(task)
+
+    @staticmethod
+    def new_clone(taskid):
+        query = "INSERT INTO clones VALUES (?) RETURNING *"
+        SqDB.post_query(query, [taskid])
+
 
 class EmployeeService:
     @staticmethod

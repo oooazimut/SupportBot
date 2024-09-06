@@ -100,7 +100,8 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
             id=str(operatorid) + str(taskid),
             replace_existing=True,
         )
-
+    if manager.dialog_data.get('closing_type') == 'частично':
+        TaskService.new_clone(taskid)
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     # await callback.answer(text, show_alert=True)
 
