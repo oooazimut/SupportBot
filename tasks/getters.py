@@ -15,14 +15,14 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
             confirmed_tasks = TaskService.get_tasks_by_status(
                 TasksStatuses.CONFIRMED.value
             )
-            assigned_tasks = sorted(
-                TaskService.get_tasks_by_status(TasksStatuses.ASSIGNED.value),
-                key=lambda x: x["priority"] if x["priority"] else "",
+            assigned_tasks = TaskService.get_tasks_by_status(
+                TasksStatuses.ASSIGNED.value
             )
-            progress_tasks = sorted(
-                TaskService.get_tasks_by_status(TasksStatuses.AT_WORK.value),
-                key=lambda x: x["priority"] if x["priority"] else "",
+
+            progress_tasks = TaskService.get_tasks_by_status(
+                TasksStatuses.AT_WORK.value
             )
+
             for item in (
                 confirmed_tasks,
                 new_tasks,
@@ -38,6 +38,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                     userid=dialog_manager.start_data.get("userid"),
                 )
             )
+            tasks.extend(TaskService.get_tasks_by_status(TasksStatuses.CHECKED.value))
         case TasksTitles.ASSIGNED.value:
             tasks.extend(
                 TaskService.get_tasks_by_status(
@@ -63,6 +64,8 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 wintitle = wintitle.format(data[0].get("name", ""))
         case TasksTitles.SEARCH_RESULT.value:
             tasks.extend(TaskService.get_tasks_with_filters(dialog_manager.start_data))
+
+    tasks.sort(key=lambda x: x['created'], reverse=True)
     return {
         "wintitle": wintitle,
         "tasks": tasks,
@@ -160,6 +163,6 @@ async def journal_getter(dialog_manager: DialogManager, **kwargs):
     pages = len(dates)
     curr_page = await dialog_manager.find("scroll_taskjournal").get_page()
 
-    journal = [item for item in data if dates[curr_page] in item.get('dttm')]
+    journal = [item for item in data if dates[curr_page] in item.get("dttm")]
 
     return {"journal": journal, "pages": pages}

@@ -46,8 +46,5 @@ CREATE_DB_SCRIPT = """
         caption TEXT,
         FOREIGN KEY (employee) REFERENCES employees (userid)
         );
-    CREATE TABLE IF NOT EXISTS clones (
-            taskid INTEGER
-        );
     COMMIT; 
     """

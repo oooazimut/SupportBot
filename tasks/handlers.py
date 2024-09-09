@@ -301,7 +301,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
 
 async def on_perform(callback: CallbackQuery, button: Button, manager: DialogManager):
     data = manager.dialog_data.get("task", {})
-    await manager.start(prf_states.PrfPerformedSG.closing_choice, data=data)
+    await manager.start(prf_states.PrfPerformedSG.pin_act, data=data)
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -354,7 +354,7 @@ async def show_act(callback: CallbackQuery, button, manager: DialogManager):
 
 async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     await manager.start(
-        state=OpCloseTaskSG.summary,
+        state=OpCloseTaskSG.closing_choice,
         data=manager.dialog_data.get("task"),
     )
 

@@ -217,9 +217,9 @@ class TaskService:
         cls.save_task(task)
 
     @staticmethod
-    def new_clone(taskid):
-        query = "INSERT INTO clones VALUES (?) RETURNING *"
-        SqDB.post_query(query, [taskid])
+    def change_dttm(taskid, dttm):
+        query = "UPDATE tasks SET created = ? WHERE taskid = ? RETURNING *"
+        SqDB.post_query(query, [dttm, taskid])
 
 
 class EmployeeService:

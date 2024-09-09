@@ -23,20 +23,6 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
     )
 
 
-async def on_closing_type(
-    callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: str, /
-):
-    act = dialog_manager.start_data.get("act")
-    dialog_manager.dialog_data["closing_type"] = (
-        "полностью" if int(c_type) else "частично"
-    )
-
-    if act:
-        await dialog_manager.next()
-    else:
-        await dialog_manager.switch_to(state=states.PrfPerformedSG.pin_videoreport)
-
-
 async def act_handler(msg: Message, widget: MessageInput, manager: DialogManager):
     manager.dialog_data.setdefault("actid", []).insert(0, msg.photo[-1].file_id)
     await manager.next()
@@ -64,7 +50,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     TaskService.change_status(taskid, "выполнено")
 
     note = manager.dialog_data.get("note", "")
-    record = f'выполнено {manager.dialog_data.get("closing_type")}, {manager.start_data.get("username")}'
+    record = f'выполнено, {manager.start_data.get("username")}'
     if note:
         record += f"\n{note}"
     recdata = {
@@ -100,9 +86,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
             id=str(operatorid) + str(taskid),
             replace_existing=True,
         )
-    if manager.dialog_data.get('closing_type') == 'частично':
-        TaskService.new_clone(taskid)
-    # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
+     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     # await callback.answer(text, show_alert=True)
 
 

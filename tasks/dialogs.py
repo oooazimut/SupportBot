@@ -51,7 +51,8 @@ JINJA_TEMPLATE = Jinja(
     '{% set ob = item.name if item.name else "" %}'
     '{% set tt = item.title if item.title else "" %}'
     '{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
-    "{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
+    '{% set vid = "\U0001F39E" if item.resultid else "" %}'
+    "{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
 )
 
 

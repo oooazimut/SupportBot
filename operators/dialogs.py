@@ -4,11 +4,13 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
     Button,
     Cancel,
+    Column,
     Row,
+    Select,
     Start,
     WebApp,
 )
-from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.text import Const, Format
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import config
@@ -16,7 +18,7 @@ from db.service import TaskService
 from tasks import states as tsk_states
 from journal import states as jrn_states
 
-from . import handlers, states
+from . import handlers, states, getters
 
 
 async def on_start(any, manager: DialogManager):
@@ -85,6 +87,21 @@ tasks = Dialog(
 )
 
 close_task = Dialog(
+    Window(
+        Const("Все ли сделано по этой заявке?"),
+        Column(
+            Select(
+                Format("{item[0]}"),
+                id="closing_types",
+                item_id_getter=lambda x: x[1],
+                items="closing_types",
+                on_click=handlers.on_closing_type,
+            )
+        ),
+        Cancel(Const("Отмена")),
+        state=states.OpCloseTaskSG.closing_choice,
+        getter=getters.closing_types_geter,
+    ),
     Window(
         Const("Здесь можно добавить информацию по закрытию заявки:"),
         MessageInput(

@@ -14,6 +14,7 @@ class OpDelayingSG(StatesGroup):
 
 
 class OpCloseTaskSG(StatesGroup):
+    closing_choice = State()
     summary = State()
 
 

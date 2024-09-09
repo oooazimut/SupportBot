@@ -17,6 +17,14 @@ async def on_type(
     await dialog_manager.next()
 
 
+async def on_closing_type(
+    callback: CallbackQuery, select, dialog_manager: DialogManager, c_type: str, /
+):
+    dialog_manager.dialog_data["closing_type"] = (
+        "полностью" if int(c_type) else "частично"
+    )
+    await dialog_manager.next()
+
 async def on_close(message: Message, widget: Any, manager: DialogManager):
     taskid = manager.start_data.get("taskid", "")
     operator = config.AGREEMENTERS.get(message.from_user.id, "")
@@ -29,6 +37,7 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
         "employee": manager.start_data.get("userid"),
     }
 
+    TaskService.change_dttm(taskid, datetime.datetime.now())
 
     if manager.start_data["status"] == "проверка" or not manager.start_data["act"]:
         TaskService.change_status(taskid, "закрыто")
@@ -65,6 +74,10 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
 
     JournalService.new_record(recdata)
     del manager.dialog_data['summary']                                                                                 
+
+    if manager.dialog_data.get('closing_type') == 'частично':
+        TaskService.reopen_task(taskid)
+
     await manager.done()
 
 

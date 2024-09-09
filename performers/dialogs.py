@@ -8,14 +8,13 @@ from aiogram_dialog.widgets.kbd import (
     Cancel,
     Column,
     Next,
-    Select,
     Start,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const
 from journal import states as jrn_states
 from tasks import states as tsk_states
 
-from . import getters, handlers, states
+from . import handlers, states
 
 main = Dialog(
     Window(
@@ -54,21 +53,6 @@ main = Dialog(
 
 performed = Dialog(
     Window(
-        Const("Все ли сделано по этой заявке?"),
-        Column(
-            Select(
-                Format("{item[0]}"),
-                id="closing_types",
-                item_id_getter=lambda x: x[1],
-                items="closing_types",
-                on_click=handlers.on_closing_type,
-            )
-        ),
-        Cancel(Const("Отмена")),
-        state=states.PrfPerformedSG.closing_choice,
-        getter=getters.closing_types_geter,
-    ),
-    Window(
         Const("Добавление акта."),
         MessageInput(func=handlers.act_handler, content_types=[ContentType.PHOTO]),
         Cancel(Const("Отмена")),
@@ -78,7 +62,7 @@ performed = Dialog(
         Const("Что дальше?"),
         Next(Const("К добавлению видео")),
         Back(Const("Добавить еще один акт")),
-        Cancel(Const('Отмена')),
+        Cancel(Const("Отмена")),
         state=states.PrfPerformedSG.act_or_video,
     ),
     Window(
