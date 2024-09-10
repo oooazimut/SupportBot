@@ -1,18 +1,24 @@
+from typing import Dict
 import config
 
 from aiogram import F
 from aiogram.enums import ContentType
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, SubManager, Window
 from aiogram_dialog.widgets.input import MessageInput, TextInput
 from aiogram_dialog.widgets.kbd import (
     Back,
     Button,
     Cancel,
+    Checkbox,
     Column,
     Group,
+    ListGroup,
+    ManagedCheckbox,
     Multiselect,
     Next,
     NumberedPager,
+    Radio,
+    Row,
     ScrollingGroup,
     Select,
     StubScroll,
@@ -51,9 +57,17 @@ JINJA_TEMPLATE = Jinja(
     '{% set ob = item.name if item.name else "" %}'
     '{% set tt = item.title if item.title else "" %}'
     '{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
-    '{% set vid = "\U0001F39E" if item.resultid else "" %}'
+    '{% set vid = "\U0001f39e" if item.resultid else "" %}'
     "{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
 )
+
+
+def when_checked(data: Dict, widget, manager: SubManager) -> bool:
+    # manager for our case is already adapted for current ListGroup row
+    # so `.find` returns widget adapted for current row
+    # if you need to find widgets outside the row, use `.find_in_parent`
+    check: ManagedCheckbox = manager.find("sel_slaves")
+    return check.is_checked()
 
 
 new = Dialog(
@@ -149,27 +163,38 @@ new = Dialog(
     ),
     Window(
         Const("Назначить работника"),
-        Column(
-            Multiselect(
+        ListGroup(
+            Checkbox(
                 Format("✓  {item[username]}"),
                 Format("{item[username]}"),
                 id="sel_slaves",
-                item_id_getter=lambda item: item["userid"],
-                items="slaves",
             ),
-            Button(
-                Const("Без исполнителя"),
-                id="del_performer",
-                on_click=handlers.on_del_performer,
-                when=F["dialog_data"]["finished"],
+            Row(
+                Radio(
+                    Format("🔘 {item}"),
+                    Format("⚪️ {item}"),
+                    id="prim_slave",
+                    item_id_getter=str,
+                    items=["гл", "пом"],
+                    when=when_checked,
+                ),
             ),
-            Button(
-                Const("Подтвердить"),
-                id="confirm_prf_choice",
-                on_click=handlers.on_slave_choice,
-            ),
-            PASS,
+            id="lg",
+            item_id_getter=lambda item: item["userid"],
+            items=F["slaves"],
         ),
+        Button(
+            Const("Без исполнителя"),
+            id="del_performer",
+            on_click=handlers.on_del_performer,
+            when=F["dialog_data"]["finished"],
+        ),
+        Button(
+            Const("Подтвердить"),
+            id="confirm_prf_choice",
+            on_click=handlers.on_slave_choice,
+        ),
+        PASS,
         BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),

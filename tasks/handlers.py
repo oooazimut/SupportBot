@@ -9,7 +9,12 @@ from aiogram.utils.formatting import Bold, Text
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram_dialog import ChatEvent, DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button
+from aiogram_dialog.widgets.kbd import (
+    Button,
+    ManagedCheckbox,
+    ManagedListGroup,
+    ManagedRadio,
+)
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from custom.bot import MyBot
 from db.service import EmployeeService, EntityService, JournalService, TaskService
@@ -61,8 +66,19 @@ async def on_entity(event, select, dialog_manager: DialogManager, ent_id: str, /
 
 
 async def on_slave_choice(callback, button, dialog_manager: DialogManager):
-    users = dialog_manager.find("sel_slaves").get_checked()
-    dialog_manager.dialog_data["task"]["slaves"] = users
+    dialog_manager.dialog_data["task"]["slaves"] = list()
+    slaves = EmployeeService.get_employees_by_position("worker")
+    lg: ManagedListGroup = dialog_manager.find("lg")
+
+    for slave in slaves:
+        x: ManagedCheckbox = lg.find_for_item("sel_slaves", str(slave["userid"]))
+        if x.is_checked():
+            dialog_manager.dialog_data["task"]["slaves"].append(slave["userid"])
+            y: ManagedRadio = lg.find_for_item("prim_slave", str(slave['userid']))
+            if not y.get_checked():
+                await y.set_checked('пом')
+            print(y.get_checked())
+
     await next_or_end(callback, button, dialog_manager)
 
 
@@ -177,7 +193,9 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             task = dict(TaskService.save_task(data))
             send_newtask_note(slave, task)
             recdata["task"] = task.get("taskid")
-            recdata["record"] = f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
+            recdata["record"] = (
+                f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
+            )
             JournalService.new_record(recdata)
 
         scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
@@ -325,7 +343,7 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
 
 async def show_operator_media(callback: CallbackQuery, button, manager: DialogManager):
     mediatype = manager.dialog_data.get("task", {}).get("media_type")
-    mediaid = manager.dialog_data.get("task", {}).get("media_id").split(',')
+    mediaid = manager.dialog_data.get("task", {}).get("media_id").split(",")
     await manager.start(
         state=states.MediaSG.main,
         data={"type": mediatype, "id": mediaid, "wintitle": "Медиа от оператора"},
