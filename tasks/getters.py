@@ -112,7 +112,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
     data["title"] = title if title != "None" else data.get("title", None)
     usernames = list()
     for userid in data.get("slaves", []):
-        usernames.append(EmployeeService.get_employee(userid).get("username"))
+        usernames.append(EmployeeService.get_employee(userid[0]).get("username"))
     data["usernames"] = usernames
 
     dialog_manager.dialog_data["task"] = data

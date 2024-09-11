@@ -73,11 +73,9 @@ async def on_slave_choice(callback, button, dialog_manager: DialogManager):
     for slave in slaves:
         x: ManagedCheckbox = lg.find_for_item("sel_slaves", str(slave["userid"]))
         if x.is_checked():
-            dialog_manager.dialog_data["task"]["slaves"].append(slave["userid"])
-            y: ManagedRadio = lg.find_for_item("prim_slave", str(slave['userid']))
-            if not y.get_checked():
-                await y.set_checked('пом')
-            print(y.get_checked())
+            y: ManagedRadio = lg.find_for_item("prim_slave", str(slave["userid"]))
+            user = (slave["userid"], y.get_checked())
+            dialog_manager.dialog_data["task"]["slaves"].append(user)
 
     await next_or_end(callback, button, dialog_manager)
 
@@ -157,13 +155,11 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     data.setdefault("creator", clb.from_user.id)
     operator = EmployeeService.get_employee(clb.from_user.id)
 
-    await manager.find("sel_slaves").reset_checked()
-
     if data.get("slaves") or data.get("slave"):
         data["status"] = "назначено"
     else:
         data["status"] = "открыто"
-        data.setdefault("slaves", []).append(None)
+        data.setdefault("slaves", []).append((None, None))
     data.setdefault("status", "открыто")
 
     for i in (
@@ -176,12 +172,17 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         "media_id",
         "media_type",
         "slave",
+        "simple_report",
     ):
         data.setdefault(i, None)
 
     if is_exist(data):
         if data.get("slaves"):
-            data["slave"] = data.get("slaves", []).pop(0)
+            first = data.get("slaves", []).pop(0)
+            data["slave"] = first[0]
+            if first[1] == "пом":
+                data["simple_report"] = 1
+
         task = dict(TaskService.update_task(data))
         send_newtask_note(data["slave"], task)
         recdata["task"] = task["taskid"]
@@ -189,7 +190,9 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         JournalService.new_record(recdata)
 
         for slave in data.get("slaves", []):
-            data["slave"] = slave
+            data["slave"] = slave[0]
+            if slave[1] == "пом":
+                data["simple_report"] = 1
             task = dict(TaskService.save_task(data))
             send_newtask_note(slave, task)
             recdata["task"] = task.get("taskid")
@@ -238,6 +241,12 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
 async def on_start(data, manager: DialogManager):
     manager.dialog_data["task"] = data or {}
+    lg = manager.find("lg")
+    users = EmployeeService.get_employees_by_position("worker")
+
+    for user in users:
+        chckbox: ManagedRadio = lg.find_for_item("prim_slave", str(user["userid"]))
+        await chckbox.set_checked("пом")
 
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
@@ -319,7 +328,10 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
 
 async def on_perform(callback: CallbackQuery, button: Button, manager: DialogManager):
     data = manager.dialog_data.get("task", {})
-    await manager.start(prf_states.PrfPerformedSG.pin_act, data=data)
+    if data.get("simple_report"):
+        await manager.start(prf_states.PrfPerformedSG.confirm, data=data)
+    else:
+        await manager.start(prf_states.PrfPerformedSG.pin_act, data=data)
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):

@@ -10,8 +10,6 @@ from db.service import EmployeeService, JournalService, TaskService
 from jobs import close_task, confirmed_task
 from tasks import states as tsk_states
 
-from . import states
-
 
 async def on_archive(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.start(
@@ -45,7 +43,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     if manager.dialog_data.get("actid"):
         actid = ",".join(manager.dialog_data["actid"])
         TaskService.add_act({"taskid": taskid, "actid": actid})
-    resultid = ",".join(manager.dialog_data["resultid"])
+    resultid = ",".join(manager.dialog_data.get("resultid", []))
     TaskService.update_result(resultid, taskid)
     TaskService.change_status(taskid, "выполнено")
 
@@ -86,7 +84,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
             id=str(operatorid) + str(taskid),
             replace_existing=True,
         )
-     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
+    # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     # await callback.answer(text, show_alert=True)
 
 

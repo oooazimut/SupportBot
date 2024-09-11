@@ -7,8 +7,8 @@ class TaskService:
     def save_task(task: dict):
         query = (
             "INSERT INTO tasks (created, creator, phone, title, description, media_type, media_id, status, "
-            "priority, act, entity, slave, agreement) VALUES (:created, :creator, :phone, :title, :description, "
-            ":media_type, :media_id, :status, :priority, :act, :entity, :slave, :agreement) RETURNING *"
+            "priority, act, entity, slave, agreement, simple_report) VALUES (:created, :creator, :phone, :title, :description, "
+            ":media_type, :media_id, :status, :priority, :act, :entity, :slave, :agreement, :simple_report) RETURNING *"
         )
         return SqDB.post_query(query, task)
 
@@ -21,8 +21,8 @@ class TaskService:
     def update_task(task: dict):
         query = (
             "UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, act, entity, "
-            "slave, agreement) = (:phone, :title, :description, :media_type, :media_id, :status, :priority, "
-            ":act, :entity, :slave, :agreement) WHERE taskid = :taskid RETURNING *"
+            "slave, agreement, simple_report) = (:phone, :title, :description, :media_type, :media_id, :status, :priority, "
+            ":act, :entity, :slave, :agreement, :simple_report) WHERE taskid = :taskid RETURNING *"
         )
         return SqDB.post_query(query, task)
 

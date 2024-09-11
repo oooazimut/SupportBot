@@ -1,3 +1,4 @@
+from aiogram import F
 import config
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window
@@ -73,7 +74,7 @@ performed = Dialog(
     ),
     Window(
         Const("Подтверждение выполнения"),
-        Back(Const("Добавить еще одно видео")),
+        Back(Const("Добавить еще одно видео"), when=~F["start_data"]["simple_report"]),
         Next(Const("Добавить текстовую заметку")),
         Cancel(
             Const("Подтвердить выполнение"),
