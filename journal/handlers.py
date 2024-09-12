@@ -22,7 +22,7 @@ async def on_action(
     dialog_manager.dialog_data["employee"] = user.get("userid")
     dialog_manager.dialog_data["task"] = None
     dialog_manager.dialog_data["record"] = (
-        f'{user.get("username")} {dialog_manager.dialog_data.get("location")} {dialog_manager.dialog_data.get("action")}'
+        f'{dialog_manager.dialog_data.get("location")} {dialog_manager.dialog_data.get("action")}'
     )
     await dialog_manager.next()
 

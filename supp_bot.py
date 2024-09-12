@@ -83,6 +83,8 @@ async def main():
         id="morning_report",
         replace_existing=True,
     )
+    scheduler.add_job(func=jobs.two_reports, trigger='cron', day_of_week='mon-sat', hour=3, id='gen_report', replace_existing=True)
+    scheduler.add_job(func=jobs.send_report, trigger='cron', day_of_week='mon-sat', hour=8, id='send_report', replace_existing=True)
     setup_dialogs(dp)
     dp.update.outer_middleware(middlewares.DataMiddleware({"scheduler": scheduler}))
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))

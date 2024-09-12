@@ -194,7 +194,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             if slave[1] == "пом":
                 data["simple_report"] = 1
             task = dict(TaskService.save_task(data))
-            send_newtask_note(slave, task)
+            send_newtask_note(data["slave"], task)
             recdata["task"] = task.get("taskid")
             recdata["record"] = (
                 f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
@@ -216,9 +216,11 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
     else:
         for slave in data.get("slaves", []):
-            data["slave"] = slave
+            data["slave"] = slave[0] 
+            if slave[1] == "пом":
+                data["simple_report"] = 1
             task = dict(TaskService.save_task(data))
-            send_newtask_note(slave, task)
+            send_newtask_note(data["slave"], task)
 
             recdata["task"] = task.get("taskid")
             recdata["record"] = (
@@ -280,7 +282,6 @@ async def on_del_performer(clb: CallbackQuery, button, manager: DialogManager):
     manager.dialog_data["task"]["slave"] = None
     manager.dialog_data["task"]["username"] = None
     manager.dialog_data["task"]["slaves"] = list()
-    await manager.find("sel_slaves").reset_checked()
     await next_or_end(clb, button, manager)
 
 
