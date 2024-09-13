@@ -221,8 +221,24 @@ async def two_reports():
                                 ),
                                 "объект не определён",
                             )
+                            recom_time = next(
+                                (
+                                    task.get("recom_time", None)
+                                    for task in tasks
+                                    if prev["dttm"] < task["dttm"] < curr["dttm"]
+                                    and curr["username"] == task["username"]
+                                ),
+                                None,
+                            )
+                            summary = ""  
+                            if  recom_time:
+                                summary += f"({recom_time}ч.)"
+                                if time_spent.total_seconds() / 3600 > recom_time:
+                                    summary += "ПРЕВЫШЕНО!"
+
                             print(
-                                f"    объект: {obj_name}, время: {time_spent}",
+                                f"    объект: {obj_name}, время: {time_spent}"
+                                + summary,
                                 file=report,
                             )
                             total_obj.append(time_spent)
