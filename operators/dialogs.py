@@ -25,7 +25,7 @@ async def on_start(any, manager: DialogManager):
     scheduler: AsyncIOScheduler = manager.middleware_data.get("scheduler")
     scheduler.print_jobs()
     # for i in scheduler.get_jobs():
-    #     if i.name in ("closed_task", "new_task", "confirmed_task"):
+    #     if i.name in ("closed_task", "new_task", "confirmed_task", 'send_report'):
     #         i.remove()
 
 

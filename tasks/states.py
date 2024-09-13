@@ -7,6 +7,7 @@ class NewSG(StatesGroup):
     phone = State()
     title = State()
     description = State()
+    recom_time = State()
     priority = State()
     act = State()
     performer = State()

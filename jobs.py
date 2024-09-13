@@ -2,6 +2,7 @@ import asyncio
 import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
+import os
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
@@ -9,9 +10,10 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from config import CHIEF_ID
+from config import CHIEF_ID, DEV_ID
 from custom.bot import MyBot
 from db.service import JournalService, TaskService
+from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
 
 
 async def reminders_task_to_worker():
@@ -172,10 +174,21 @@ async def two_reports():
 
     def generate_report(road, tasks):
         """Генерация текстового и CSV отчета."""
-        with open("отчет.txt", "w") as report, open(
-            "отчет.csv", "w", encoding="cp1251", newline=""
+
+        curr_date = datetime.now().date() - timedelta(days=1)
+        with open(f"{curr_date}.txt", "w") as report, open(
+            f"{curr_date}.csv", "w", encoding="cp1251", newline=""
         ) as csv_report:
             writer = csv.writer(csv_report, delimiter=";")
+
+            print(curr_date, file=report)
+            print(file=report)
+            writer.writerow(
+                [
+                    str(curr_date),
+                ]
+            )
+            writer.writerow([])
 
             for user, entries in road.items():
                 total_road, total_obj, total_office = [], [], []
@@ -224,15 +237,18 @@ async def two_reports():
                 print(file=report)
                 writer.writerow([])
 
+    curr_date = datetime.now().date() - timedelta(days=1)
     # Получение данных и вызов основных функций
-    data = JournalService.get_records(
-        data={"date": datetime.now().date() - timedelta(days=1)}
-    )
+    data = JournalService.get_records(data={"date": curr_date})
     road, tasks = process_records(data)
+
     generate_report(road, tasks)
 
+    root_folder = "Telegram/Reports"  # Корневая папка на Яндекс.Диске
+    for suff in ["csv", "txt"]:
+        file_name = f"{curr_date}." + suff
+        yandex_disk_path = get_yandex_disk_path(file_name, root_folder, curr_date)
 
-async def send_report():
-    bot: Bot = MyBot.get_instance()
-    await bot.send_document(1740579878, document=FSInputFile("отчет.csv"))
-    await bot.send_document(CHIEF_ID, document=FSInputFile("отчет.txt"))
+        # Загружаем файл на Яндекс.Диск
+        ensure_directories_exist(yandex_disk_path)
+        upload_to_yandex_disk(file_name, yandex_disk_path)

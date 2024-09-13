@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Dispatcher
+
 # from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
@@ -26,7 +27,7 @@ from tasks import dialogs as tsk_dialogs  # noqa: F401
 from journal import dialogs as jrn_dialogs
 from observers import dialogs as ob_dialogs
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s")
 
 
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
@@ -83,8 +84,14 @@ async def main():
         id="morning_report",
         replace_existing=True,
     )
-    scheduler.add_job(func=jobs.two_reports, trigger='cron', day_of_week='mon-sat', hour=3, id='gen_report', replace_existing=True)
-    scheduler.add_job(func=jobs.send_report, trigger='cron', day_of_week='mon-sat', hour=8, id='send_report', replace_existing=True)
+    scheduler.add_job(
+        func=jobs.two_reports,
+        trigger="cron",
+        day_of_week="mon-sat",
+        hour=8,
+        id="gen_report",
+        replace_existing=True,
+    )
     setup_dialogs(dp)
     dp.update.outer_middleware(middlewares.DataMiddleware({"scheduler": scheduler}))
     dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))

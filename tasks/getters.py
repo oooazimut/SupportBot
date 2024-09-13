@@ -110,6 +110,8 @@ async def result(dialog_manager: DialogManager, **kwargs):
     data["phone"] = phone if phone != "None" else data.get("phone", None)
     title = dialog_manager.find("title_input").get_value()
     data["title"] = title if title != "None" else data.get("title", None)
+    recom_time = dialog_manager.find('recom_time_input').get_value()
+    data['recom_time'] = recom_time if recom_time != 'None' else data.get('recom_time', 1)
     usernames = list()
     for userid in data.get("slaves", []):
         usernames.append(EmployeeService.get_employee(userid[0]).get("username"))

@@ -132,6 +132,15 @@ new = Dialog(
         state=states.NewSG.description,
     ),
     Window(
+        Const("Рекомендованное время выполнения заявки (в часах):"),
+        TextInput(id="recom_time_input", on_success=handlers.next_or_end),
+        PASS,
+        BACK,
+        CANCEL_EDIT,
+        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        state=states.NewSG.recom_time,
+    ),
+    Window(
         Const("Выбор приоритета:"),
         Select(
             Format("{item[0]}"),
@@ -190,11 +199,10 @@ new = Dialog(
             when=F["dialog_data"]["finished"],
         ),
         Button(
-            Const("Подтвердить"),
+            Const("Подтвердить/Пропустить"),
             id="confirm_prf_choice",
             on_click=handlers.on_slave_choice,
         ),
-        PASS,
         BACK,
         CANCEL_EDIT,
         Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
@@ -216,7 +224,6 @@ new = Dialog(
                 id="without_agreement",
                 on_click=handlers.on_without_agreement,
             ),
-            PASS,
         ),
         BACK,
         CANCEL_EDIT,
@@ -227,14 +234,15 @@ new = Dialog(
     Window(
         Jinja("""Ваша заявка:
 
-        <b>Объект</b>: {{name if name else ''}}
-        <b>Телефон</b>: {{phone if phone else ''}}
-        <b>Тема</b>: {{title if title else ''}}
-        <b>Описание</b>: {{description if description else ''}}
-        <b>Приоритет</b>: {{priority if priority else ''}}
+        <b>Объект</b>: {{name or ''}}
+        <b>Телефон</b>: {{phone or ''}}
+        <b>Тема</b>: {{title or ''}}
+        <b>Описание</b>: {{description or ''}}
+        <b>Расчетное время</b>: {{recom_time or '?'}}ч.
+        <b>Приоритет</b>: {{priority or ''}}
         <b>Работник[и]</b>: {{usernames or username  or ''}}
         <b>Акт</b>: {{'Да' if act else 'Нет'}}
-        <b>Согласование</b>: {{agreement if agreement else ''}}
+        <b>Согласование</b>: {{agreement or ''}}
         """),
         Button(
             Const("Мультимедиа"),
@@ -248,6 +256,11 @@ new = Dialog(
         ),
         SwitchTo(Const("Изменить телефон"), id="to_phone", state=states.NewSG.phone),
         SwitchTo(Const("Изменить Тему"), id="to_title", state=states.NewSG.title),
+        SwitchTo(
+            Const("Изменить расчетное время"),
+            id="to_recom_time",
+            state=states.NewSG.recom_time,
+        ),
         SwitchTo(
             Const("Изменить приоритет"), id="to_priority", state=states.NewSG.priority
         ),
@@ -312,6 +325,7 @@ tasks = Dialog(
         Format("Объект: {name}", when="name"),
         Format("Тема: {title}"),
         Format("Описание: {description}", when="description"),
+        Format("Расчетное время: {recom_time}ч.", when='recom_time'),
         Format("Исполнитель: {username}", when="username"),
         Const("<b>Высокий приоритет!</b>", when="priority"),
         Format("Статус: {status}"),

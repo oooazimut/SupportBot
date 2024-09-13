@@ -27,6 +27,7 @@ CREATE_DB_SCRIPT = """
         actid TEXT,
         agreement TEXT,
         simple_report TEXT,
+        recom_time INTEGER,
         FOREIGN KEY (entity) REFERENCES entities (ent_id),
         FOREIGN KEY (slave) REFERENCES employees (userid)
         ); 
