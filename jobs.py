@@ -125,7 +125,7 @@ async def returned_task(slaveid, task, taskid):
 async def two_reports():
     def process_records(data):
         """Функция обработки записей."""
-        keys = ["username", "record", "dttm", "name"]
+        keys = ["username", "record", "dttm", "name", "recom_time"]
         roadwords = ["приехал", "уехал"]
         taskwords = ["выполнено"]
 
@@ -230,9 +230,12 @@ async def two_reports():
                                 ),
                                 None,
                             )
-                            summary = "" if not recom_time else f"({recom_time}ч.)"
-                            if time_spent.total_seconds() / 3600 > recom_time:
-                                summary += "ПРЕВЫШЕНО!"
+                            summary = ""
+                            if recom_time:
+                                summary += f"({recom_time}ч.)"
+                                if time_spent.total_seconds() / 3600 > recom_time:
+                                    summary += "ПРЕВЫШЕНО!"
+
                             print(
                                 f"    объект: {obj_name}, время: {time_spent}"
                                 + summary,
