@@ -58,7 +58,8 @@ JINJA_TEMPLATE = Jinja(
     '{% set tt = item.title if item.title else "" %}'
     '{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
     '{% set vid = "\U0001f39e" if item.resultid else "" %}'
-    "{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
+    '{% set load = "\U0001F504" if item.status == "закрывается" else "" %}'
+    "{{load}}{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
 )
 
 

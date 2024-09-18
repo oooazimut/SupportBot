@@ -16,6 +16,7 @@ from aiogram_dialog.widgets.kbd import (
     ManagedRadio,
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from config import TasksStatuses
 from custom.bot import MyBot
 from db.service import EmployeeService, EntityService, JournalService, TaskService
 from jobs import new_task
@@ -216,7 +217,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
     else:
         for slave in data.get("slaves", []):
-            data["slave"] = slave[0] 
+            data["slave"] = slave[0]
             if slave[1] == "пом":
                 data["simple_report"] = 1
             task = dict(TaskService.save_task(data))
@@ -329,6 +330,8 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
 
 async def on_perform(callback: CallbackQuery, button: Button, manager: DialogManager):
     data = manager.dialog_data.get("task", {})
+    TaskService.change_status(data.get("taskid"), TasksStatuses.PERFORMING.value)
+    data["performed_time"] = str(datetime.datetime.now().replace(microsecond=0))
     if data.get("simple_report"):
         await manager.start(prf_states.PrfPerformedSG.confirm, data=data)
     else:

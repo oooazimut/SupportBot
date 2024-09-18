@@ -52,7 +52,9 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     if note:
         record += f"\n{note}"
     recdata = {
-        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "dttm": manager.start_data.get(
+            "performed_time" #, datetime.datetime.now().strftime("%Y-%m-%d")
+        ),
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
         "record": record,
@@ -86,6 +88,12 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         )
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     # await callback.answer(text, show_alert=True)
+
+
+async def on_cancel(clb, button, manager: DialogManager):
+    TaskService.change_status(
+        manager.start_data.get("taskid"), config.TasksStatuses.AT_WORK.value
+    )
 
 
 async def pin_text(message: Message, message_input, manager: DialogManager):

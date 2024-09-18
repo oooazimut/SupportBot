@@ -88,7 +88,7 @@ async def main():
         func=jobs.two_reports,
         trigger="cron",
         day_of_week="mon-sat",
-        hour=8,
+        hour=7,
         id="gen_report",
         replace_existing=True,
     )

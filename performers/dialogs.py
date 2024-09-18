@@ -51,25 +51,26 @@ main = Dialog(
     ),
 )
 
+CANCEL_PERFORMING = Cancel(Const("Отмена"), on_click=handlers.on_cancel)
 
 performed = Dialog(
     Window(
         Const("Добавление акта."),
         MessageInput(func=handlers.act_handler, content_types=[ContentType.PHOTO]),
-        Cancel(Const("Отмена")),
+        CANCEL_PERFORMING,
         state=states.PrfPerformedSG.pin_act,
     ),
     Window(
         Const("Что дальше?"),
         Next(Const("К добавлению видео")),
         Back(Const("Добавить еще один акт")),
-        Cancel(Const("Отмена")),
+        CANCEL_PERFORMING,
         state=states.PrfPerformedSG.act_or_video,
     ),
     Window(
         Const("Добавление видеоотчёта:"),
         MessageInput(func=handlers.pin_videoreport, content_types=[ContentType.VIDEO]),
-        Cancel(Const("Отмена")),
+        CANCEL_PERFORMING,
         state=states.PrfPerformedSG.pin_videoreport,
     ),
     Window(
@@ -81,14 +82,14 @@ performed = Dialog(
             id="confirm_performing",
             on_click=handlers.on_close,
         ),
-        Cancel(Const("Отмена")),
+        CANCEL_PERFORMING,
         state=states.PrfPerformedSG.confirm,
     ),
     Window(
         Const("Введите текст"),
         MessageInput(func=handlers.pin_text, content_types=ContentType.TEXT),
         Back(Const("Назад")),
-        Cancel(Const("Отмена")),
+        CANCEL_PERFORMING, 
         state=states.PrfPerformedSG.note,
     ),
 )

@@ -13,7 +13,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
             new_tasks = TaskService.get_tasks_by_status(TasksStatuses.OPENED.value)
             delayed_tasks = TaskService.get_tasks_by_status(TasksStatuses.DELAYED.value)
             confirmed_tasks = TaskService.get_tasks_by_status(
-                TasksStatuses.CONFIRMED.value
+                TasksStatuses.PERFORMED.value
             )
             assigned_tasks = TaskService.get_tasks_by_status(
                 TasksStatuses.ASSIGNED.value
@@ -23,12 +23,17 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 TasksStatuses.AT_WORK.value
             )
 
+            performing_tasks = TaskService.get_tasks_by_status(
+                TasksStatuses.PERFORMING.value
+            )
+
             for item in (
                 confirmed_tasks,
                 new_tasks,
                 assigned_tasks,
                 progress_tasks,
                 delayed_tasks,
+                performing_tasks
             ):
                 tasks.extend(item)
         case TasksTitles.ARCHIVE.value:
@@ -65,7 +70,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
         case TasksTitles.SEARCH_RESULT.value:
             tasks.extend(TaskService.get_tasks_with_filters(dialog_manager.start_data))
 
-    tasks.sort(key=lambda x: x['created'], reverse=True)
+    tasks.sort(key=lambda x: x["created"], reverse=True)
     return {
         "wintitle": wintitle,
         "tasks": tasks,
@@ -110,8 +115,10 @@ async def result(dialog_manager: DialogManager, **kwargs):
     data["phone"] = phone if phone != "None" else data.get("phone", None)
     title = dialog_manager.find("title_input").get_value()
     data["title"] = title if title != "None" else data.get("title", None)
-    recom_time = dialog_manager.find('recom_time_input').get_value()
-    data['recom_time'] = recom_time if recom_time != 'None' else data.get('recom_time', 1)
+    recom_time = dialog_manager.find("recom_time_input").get_value()
+    data["recom_time"] = (
+        recom_time if recom_time != "None" else data.get("recom_time", 1)
+    )
     usernames = list()
     for userid in data.get("slaves", []):
         usernames.append(EmployeeService.get_employee(userid[0]).get("username"))
