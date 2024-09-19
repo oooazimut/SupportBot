@@ -34,24 +34,38 @@ main = Dialog(
             items="journal",
             when="journal",
         ),
-        Column(
-            Select(
-                Format("{item}"),
-                id="sel_location",
-                item_id_getter=lambda x: x,
-                items="locations",
-                on_click=handlers.on_location,
-            )
-        ),
+        Next(Const("Сделать запись")),
+        Button(Const("Поиск"), id="to_search", on_click=handlers.on_search),
         SwitchTo(
             Const("Прикрепить чек"),
             id="to_receipt",
             state=states.JrMainMenuSG.pin_receipt,
         ),
-        Button(Const("Поиск"), id="to_search", on_click=handlers.on_search),
         Cancel(Const("Отмена")),
         state=states.JrMainMenuSG.main,
-        getter=getters.locations,
+        getter=getters.main_getter,
+    ),
+    Window(
+        Const("Выберите объект"),
+        Column(
+            Select(
+                Format("{item[name]}"),
+                id="sel_location",
+                item_id_getter=lambda x: x["ent_id"],
+                items="locations",
+                on_click=handlers.on_location,
+            )
+        ),
+        Next(Const("Объекта нет в списке")),
+        Back(Const("Назад")),
+        Cancel(Const("Отмена")),
+        state=states.JrMainMenuSG.location,
+        getter=getters.locations_getter,
+    ),
+    Window(
+        Const("Введите название объекта"),
+        MessageInput(func=handlers.object_input, content_types=ContentType.TEXT),
+        state=states.JrMainMenuSG.object_input,
     ),
     Window(
         Format("{dialog_data[location]}"),
@@ -59,14 +73,14 @@ main = Dialog(
             Select(
                 Format("{item}"),
                 id="sel_action",
-                item_id_getter=lambda x: x,
+                item_id_getter=str,
                 items="actions",
                 on_click=handlers.on_action,
             )
         ),
-        Back(Const("Назад")),
+        SwitchTo(Const("Назад"), id="to_location", state=states.JrMainMenuSG.location),
         Cancel(Const("Отмена")),
-        state=states.JrMainMenuSG.location,
+        state=states.JrMainMenuSG.action,
         getter=getters.actions,
     ),
     Window(

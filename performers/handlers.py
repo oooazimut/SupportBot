@@ -36,6 +36,7 @@ async def pin_videoreport(
 
 
 async def on_close(callback: CallbackQuery, button, manager: DialogManager):
+    print(manager.start_data.get("performed_time"))
     taskid = manager.start_data["taskid"]
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
@@ -52,9 +53,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     if note:
         record += f"\n{note}"
     recdata = {
-        "dttm": manager.start_data.get(
-            "performed_time" #, datetime.datetime.now().strftime("%Y-%m-%d")
-        ),
+        "dttm": manager.start_data.get("performed_time"),
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
         "record": record,
