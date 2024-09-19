@@ -150,7 +150,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 replace_existing=True,
             )
 
-    recdata = {"dttm": datetime.datetime.now().strftime("%Y-%m-%d"), "employee": None}
+    recdata = {"dttm": datetime.datetime.now().replace(microsecond=0), "employee": None}
     data: dict = manager.dialog_data.get("task", {})
     data.setdefault("created", datetime.datetime.now().replace(microsecond=0))
     data.setdefault("creator", clb.from_user.id)
@@ -315,7 +315,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
     )
 
     recdata = {
-        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "dttm": datetime.datetime.now().replace(microsecond=0),
         "task": manager.dialog_data.get("task", {}).get("taskid"),
         "employee": manager.dialog_data.get("task", {}).get("userid"),
         "record": f'принята в работу, {manager.dialog_data.get("task", {}).get("username")}',
@@ -345,7 +345,7 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
 
     user = EmployeeService.get_employee(callback.from_user.id)
     recdata = {
-        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "dttm": datetime.datetime.now().replace(microsecond=0),
         "task": manager.dialog_data.get("task", {}).get("taskid"),
         "employee": manager.dialog_data.get("task", {}).get("userid"),
         "record": f'вернул в работу, {user.get("username")}',

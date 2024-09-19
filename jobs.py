@@ -2,15 +2,12 @@ import asyncio
 import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
-import os
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from config import CHIEF_ID, DEV_ID
 from custom.bot import MyBot
 from db.service import JournalService, TaskService
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
@@ -127,7 +124,12 @@ async def two_reports():
         """Функция обработки записей."""
         keys = ["username", "record", "dttm", "name", "recom_time"]
         roadwords = ["приехал", "уехал"]
-        taskwords = ["выполнено"]
+
+        road = [
+            rec
+            for rec in data
+            if any(word in rec["record"].lower() for word in roadwords)
+        ]
 
         # Преобразуем дату и фильтруем данные по ключевым словам
         processed_data = [
@@ -138,24 +140,13 @@ async def two_reports():
                 for key in keys
                 if key in record
             }
-            for record in data
-        ]
-
-        road = [
-            rec
-            for rec in processed_data
-            if any(word in rec["record"].lower() for word in roadwords)
-        ]
-        tasks = [
-            rec
-            for rec in processed_data
-            if any(word in rec["record"].lower() for word in taskwords)
+            for record in road
         ]
 
         grouped_road = defaultdict(list)
-        for entry in sorted(road, key=lambda x: x["username"].split()[-1]):
+        for entry in sorted(processed_data, key=lambda x: x["username"].split()[-1]):
             grouped_road[entry["username"]].append(entry)
-        return grouped_road, tasks
+        return grouped_road
 
     def write_summary(writer, report, total_road, total_obj, total_office):
         """Вывод общей информации по времени."""
@@ -172,7 +163,7 @@ async def two_reports():
                 print(f"    {name}: {total_time}", file=report)
             writer.writerow([name, total_time])
 
-    def generate_report(road, tasks):
+    def generate_report(records):
         """Генерация текстового и CSV отчета."""
 
         curr_date = datetime.now().date() - timedelta(days=1)
@@ -190,14 +181,23 @@ async def two_reports():
             )
             writer.writerow([])
 
-            for user, entries in road.items():
+            for user, entries in records.items():
                 total_road, total_obj, total_office = [], [], []
+                print("-" * 50, file=report)
                 print(user, file=report)
                 writer.writerow([user, ""])
 
                 for i in range(1, len(entries)):
                     prev, curr = entries[i - 1], entries[i]
                     time_spent = curr["dttm"] - prev["dttm"]
+                    prev_obj, curr_obj = (
+                        prev["record"].rsplit(" ", 1)[0],
+                        curr["record"].rsplit(" ", 1)[0],
+                    )
+
+                    if prev_obj == curr_obj:
+                        print(f'    {curr_obj}', file=report)
+                        print(f'        prev['dttm]')
 
                     print(
                         f"  {prev['dttm'].time()} {prev['record']} {curr['dttm'].time()} {curr['record']}",
@@ -211,40 +211,33 @@ async def two_reports():
                         )
                         total_road.append(time_spent)
                     else:
-                        if "объект" in curr["record"].lower():
-                            obj_name = next(
-                                (
-                                    task["name"]
-                                    for task in tasks
-                                    if prev["dttm"] < task["dttm"] < curr["dttm"]
-                                    and curr["username"] == task["username"]
-                                ),
-                                "объект не определён",
-                            )
+                        obj_name = curr["record"].rsplit(" ", 1)[0]
+                        summary = ""
+
+                        if obj_name == "Офис":
+                            total_office.append(time_spent)
+                        else:
+                            total_obj.append(time_spent)
                             recom_time = next(
                                 (
-                                    task["recom_time"]
-                                    for task in tasks
-                                    if prev["dttm"] < task["dttm"] < curr["dttm"]
-                                    and curr["username"] == task["username"]
+                                    records["recom_time"]
+                                    for i in entries
+                                    if i["name"] == obj_name
+                                    and curr["username"] == i["username"]
+                                    and i["recom_time"]
                                 ),
                                 None,
                             )
-                            summary = ""
                             if recom_time:
-                                summary += f"({recom_time}ч.)"
+                                summary += f" ({recom_time}ч.)"
                                 if time_spent.total_seconds() / 3600 > recom_time:
-                                    summary += "ПРЕВЫШЕНО!"
+                                    summary += " ПРЕВЫШЕНО!"
 
-                            print(
-                                f"    объект: {obj_name}, время: {time_spent}"
-                                + summary,
-                                file=report,
-                            )
-                            total_obj.append(time_spent)
-                        else:
-                            print(f"    Офис, время: {time_spent}", file=report)
-                            total_office.append(time_spent)
+                        print(
+                            f"    время: {time_spent}" + summary,
+                            file=report,
+                        )
+                        total_obj.append(time_spent)
 
                     print(file=report)
 
@@ -256,9 +249,9 @@ async def two_reports():
     curr_date = datetime.now().date() - timedelta(days=1)
     # Получение данных и вызов основных функций
     data = JournalService.get_records(data={"date": curr_date})
-    road, tasks = process_records(data)
+    records = process_records(data)
 
-    generate_report(road, tasks)
+    generate_report(records)
 
     root_folder = "Telegram/Reports"  # Корневая папка на Яндекс.Диске
     for suff in ["csv", "txt"]:
@@ -266,5 +259,5 @@ async def two_reports():
         yandex_disk_path = get_yandex_disk_path(file_name, root_folder, curr_date)
 
         # Загружаем файл на Яндекс.Диск
-        ensure_directories_exist(yandex_disk_path)
-        upload_to_yandex_disk(file_name, yandex_disk_path)
+        # ensure_directories_exist(yandex_disk_path)
+        # upload_to_yandex_disk(file_name, yandex_disk_path)

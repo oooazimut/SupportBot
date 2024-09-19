@@ -1,18 +1,46 @@
 from datetime import datetime
+from typing import Any
 from aiogram.enums import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
-from db.service import EmployeeService, JournalService, ReceiptsService
+from config import TasksStatuses
+from db.service import (
+    EmployeeService,
+    EntityService,
+    JournalService,
+    ReceiptsService,
+    TaskService,
+)
 
 
-async def locations(dialog_manager: DialogManager, **kwargs):
-    journal = JournalService.get_records(
-        {"userid": dialog_manager.event.from_user.id, "date": datetime.today().date()}
-    )
+async def main_getter(dialog_manager: DialogManager, **kwargs):
+    data = {
+        "userid": dialog_manager.event.from_user.id,
+        "date": datetime.today().date(),
+    }
+
+    journal = JournalService.get_records(data)
     if journal:
         journal.sort(key=lambda x: x["dttm"])
-    return {"locations": ("Офис", "Дом", "Объект"), "journal": journal}
+
+    return {"journal": journal}
+
+
+async def locations_getter(dialog_manager: DialogManager, **kwargs):
+    data: dict[str, Any] = {"userid": dialog_manager.event.from_user.id}
+    locations = EntityService.get_home_and_office()
+    tasks = []
+
+    for i in [TasksStatuses.ASSIGNED.value, TasksStatuses.AT_WORK.value, TasksStatuses.PERFORMED.value]:
+        data["status"] = i
+        temp = TaskService.get_tasks_with_filters(data) or []
+        tasks.extend(temp)
+
+    objects = [{"ent_id": i["ent_id"], "name": i["name"]} for i in tasks]
+    locations.extend(objects)
+
+    return {"locations": locations}
 
 
 async def actions(dialog_manager: DialogManager, **kwargs):

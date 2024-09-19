@@ -1,7 +1,7 @@
 from datetime import datetime
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
-from db.service import EmployeeService, JournalService, ReceiptsService
+from db.service import EmployeeService, EntityService, JournalService, ReceiptsService
 
 from . import states
 
@@ -9,8 +9,9 @@ from . import states
 async def on_location(
     callback: CallbackQuery, select, dialog_manager: DialogManager, location: str, /
 ):
-    dialog_manager.dialog_data["location"] = location
-    await dialog_manager.next()
+    data = EntityService.get_entity(location)[0]["name"]
+    dialog_manager.dialog_data["location"] = data
+    await dialog_manager.switch_to(states.JrMainMenuSG.action)
 
 
 async def on_action(
@@ -31,6 +32,11 @@ async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
     JournalService.new_record(manager.dialog_data)
     await manager.done()
     await callback.answer("Запись сделана", show_alert=True)
+
+
+async def object_input(message: Message, message_input, manager: DialogManager):
+    manager.dialog_data["location"] = message.text
+    await manager.next()
 
 
 async def pin_receipt(message: Message, message_input, manager: DialogManager):

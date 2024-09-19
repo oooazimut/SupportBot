@@ -212,7 +212,7 @@ class TaskService:
     @classmethod
     def reopen_task(cls, taskid):
         task = cls.get_task(taskid)[0]
-        task["created"] = datetime.now()
+        task["created"] = datetime.now().replace(microsecond=0)
         task["status"] = "назначено"
         cls.save_task(task)
 
@@ -265,11 +265,16 @@ class EntityService:
         query = "SELECT * FROM entities WHERE ent_id = ?"
         return SqDB.select_query(query, [entid])
 
+    @staticmethod
+    def get_home_and_office():
+        query = "SELECT * from entities WHERE name in ('Офис', 'Дом')"
+        return SqDB.select_query(query)
+
 
 class JournalService:
     @staticmethod
     def new_record(data: dict):
-        data["dttm"] = datetime.now().replace(microsecond=0)
+        data.setdefault("dttm", datetime.now().replace(microsecond=0))
         query = "INSERT INTO journal (dttm, employee, task, record) VALUES (:dttm, :employee, :task, :record) RETURNING *"
         return SqDB.post_query(query, data)
 
