@@ -27,7 +27,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja, List
 from custom.babel_calendar import CustomCalendar
-from db.service import EmployeeService
+from db.service import EmployeeService, JournalService
 
 from . import getters, handlers, states
 
@@ -69,6 +69,12 @@ def when_checked(data: Dict, widget, manager: SubManager) -> bool:
     # if you need to find widgets outside the row, use `.find_in_parent`
     check: ManagedCheckbox = manager.find("sel_slaves")
     return check.is_checked()
+
+def ready_to_archived(task: dict, widget, manager: DialogManager) -> bool:
+    record = JournalService.get_records({'userid': task.get('slave')})
+    if record:
+        record = record[0]
+    return any(task['status'] != 'закрыто', )
 
 
 new = Dialog(
@@ -369,7 +375,7 @@ tasks = Dialog(
                 Const("Переместить в архив"),
                 id="close_task",
                 on_click=handlers.on_close,
-                when=F["status"] != "закрыто",
+                when=ready_to_archived
             ),
             Button(
                 Const("Вернуть в работу"),

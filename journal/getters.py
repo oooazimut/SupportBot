@@ -32,7 +32,7 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
     locations = EntityService.get_home_and_office()
     tasks = []
 
-    for i in [TasksStatuses.ASSIGNED.value, TasksStatuses.AT_WORK.value]:
+    for i in [TasksStatuses.ASSIGNED.value, TasksStatuses.AT_WORK.value, TasksStatuses.PERFORMED.value]:
         data["status"] = i
         temp = TaskService.get_tasks_with_filters(data) or []
         tasks.extend(temp)

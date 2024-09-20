@@ -36,7 +36,6 @@ async def pin_videoreport(
 
 
 async def on_close(callback: CallbackQuery, button, manager: DialogManager):
-    print(manager.start_data.get("performed_time"))
     taskid = manager.start_data["taskid"]
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
@@ -86,7 +85,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
             replace_existing=True,
         )
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
-    # await callback.answer(text, show_alert=True)
+    await callback.answer('Не забудьте внести запись в журнал о покидании объекта', show_alert=True)
 
 
 async def on_cancel(clb, button, manager: DialogManager):

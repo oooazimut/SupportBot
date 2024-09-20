@@ -32,7 +32,7 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
     manager.dialog_data['summary'] = message.text if message.text and len(message.text) > 1 else ""
 
     recdata = {
-        "dttm": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "dttm": datetime.datetime.now().replace(microsecond=0),
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
     }

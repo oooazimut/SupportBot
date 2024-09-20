@@ -212,7 +212,7 @@ class TaskService:
     @classmethod
     def reopen_task(cls, taskid):
         task = cls.get_task(taskid)[0]
-        task["created"] = datetime.now()
+        task["created"] = datetime.now().replace(microsecond=0)
         task["status"] = "назначено"
         cls.save_task(task)
 
