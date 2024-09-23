@@ -59,6 +59,9 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     }
     JournalService.new_record(recdata)
 
+    recdata["record"] = f"{manager.start_data.get('name')} Уехал"
+    JournalService.new_record(recdata)
+
     if not manager.start_data["act"]:
         scheduler.add_job(
             close_task,
@@ -85,7 +88,10 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
             replace_existing=True,
         )
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
-    await callback.answer('Не забудьте внести запись в журнал о покидании объекта', show_alert=True)
+    await callback.answer(
+        "Теперь не нужно отмечать покидание объекта (кроме офиса и дома), при закрытии заявки это делается автоматически.",
+        show_alert=True,
+    )
 
 
 async def on_cancel(clb, button, manager: DialogManager):

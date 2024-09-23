@@ -1,6 +1,6 @@
 from typing import Dict
-import config
 
+import config
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, SubManager, Window
@@ -27,7 +27,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja, List
 from custom.babel_calendar import CustomCalendar
-from db.service import EmployeeService, JournalService
+from db.service import EmployeeService
 
 from . import getters, handlers, states
 
@@ -58,7 +58,7 @@ JINJA_TEMPLATE = Jinja(
     '{% set tt = item.title if item.title else "" %}'
     '{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
     '{% set vid = "\U0001f39e" if item.resultid else "" %}'
-    '{% set load = "\U0001F504" if item.status == "закрывается" else "" %}'
+    '{% set load = "\U0001f504" if item.status == "закрывается" else "" %}'
     "{{load}}{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
 )
 
@@ -69,12 +69,6 @@ def when_checked(data: Dict, widget, manager: SubManager) -> bool:
     # if you need to find widgets outside the row, use `.find_in_parent`
     check: ManagedCheckbox = manager.find("sel_slaves")
     return check.is_checked()
-
-def ready_to_archived(task: dict, widget, manager: DialogManager) -> bool:
-    record = JournalService.get_records({'userid': task.get('slave')})
-    if record:
-        record = record[0]
-    return any(task['status'] != 'закрыто', )
 
 
 new = Dialog(
@@ -332,7 +326,7 @@ tasks = Dialog(
         Format("Объект: {name}", when="name"),
         Format("Тема: {title}"),
         Format("Описание: {description}", when="description"),
-        Format("Расчетное время: {recom_time}ч.", when='recom_time'),
+        Format("Расчетное время: {recom_time}ч.", when="recom_time"),
         Format("Исполнитель: {username}", when="username"),
         Const("<b>Высокий приоритет!</b>", when="priority"),
         Format("Статус: {status}"),
@@ -375,7 +369,7 @@ tasks = Dialog(
                 Const("Переместить в архив"),
                 id="close_task",
                 on_click=handlers.on_close,
-                when=ready_to_archived
+                when=F["status"] != "закрыто",
             ),
             Button(
                 Const("Вернуть в работу"),
@@ -410,6 +404,7 @@ tasks = Dialog(
             when=user_is_performer,
         ),
         Next(Const("Журнал заявки"), on_click=handlers.reset_journal_page),
+        Button(Const("Обновить"), id="reload"),
         Back(Const("Назад")),
         state=states.TasksSG.task,
         getter=getters.task,

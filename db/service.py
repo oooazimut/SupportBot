@@ -297,6 +297,8 @@ class JournalService:
                 adds.append("j.task IS NULL")
             else:
                 adds.append("j.task = :taskid")
+        if data.get("object"):
+            adds.append("ent.name = :object")
 
         if adds:
             query = query + " WHERE " + " AND ".join(adds)

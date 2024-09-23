@@ -32,7 +32,11 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
     locations = EntityService.get_home_and_office()
     tasks = []
 
-    for i in [TasksStatuses.ASSIGNED.value, TasksStatuses.AT_WORK.value, TasksStatuses.PERFORMED.value]:
+    for i in [
+        TasksStatuses.ASSIGNED.value,
+        TasksStatuses.AT_WORK.value,
+        TasksStatuses.PERFORMED.value,
+    ]:
         data["status"] = i
         temp = TaskService.get_tasks_with_filters(data) or []
         tasks.extend(temp)
@@ -44,7 +48,14 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def actions(dialog_manager: DialogManager, **kwargs):
-    return {"actions": ("Приехал", "Уехал")}
+    actions = ["Приехал", "Уехал"]
+    if (
+        dialog_manager.dialog_data["location"]
+        not in EntityService.get_home_and_office()
+    ):
+        actions.pop()
+
+    return {"actions": actions}
 
 
 async def users(dialog_manager: DialogManager, **kwargs):

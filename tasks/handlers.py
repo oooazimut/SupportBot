@@ -183,7 +183,8 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             data["slave"] = first[0]
             if first[1] == "пом":
                 data["simple_report"] = 1
-
+            else:
+                data["simple_report"] = None
         task = dict(TaskService.update_task(data))
         send_newtask_note(data["slave"], task)
         recdata["task"] = task["taskid"]
