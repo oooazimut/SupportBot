@@ -146,11 +146,13 @@ async def two_reports():
         ]
 
         grouped_road = defaultdict(list)
-        for entry in sorted(processed_data, key=lambda x: x["username"].split()[-1]):
+        for entry in sorted(processed_data, key=lambda x: x["dttm"]):
             grouped_road[entry["username"]].append(entry)
         grouped_tasks = defaultdict(list)
-        for entry in sorted(tasks, key=lambda x: x['username'].split()[-1]):
+        for entry in sorted(tasks, key=lambda x: x['dttm']):
             grouped_tasks[entry['username']].append(entry)
+
+        grouped_road = dict(sorted(grouped_road.items(), key=lambda x: x[0].split()[-1]))
 
         return grouped_road, grouped_tasks
 
@@ -251,10 +253,11 @@ async def two_reports():
                 print(file=report)
                 writer.writerow([])
 
-    curr_date = datetime.now().date()  # - timedelta(days=1)
+    curr_date = datetime.now().date() - timedelta(days=1)
     # Получение данных и вызов основных функций
     data = JournalService.get_records(data={"date": curr_date})
     records, tasks = process_records(data)
+    
 
     generate_report(records, tasks)
 
@@ -264,5 +267,5 @@ async def two_reports():
         yandex_disk_path = get_yandex_disk_path(file_name, root_folder, curr_date)
 
         # Загружаем файл на Яндекс.Диск
-        # ensure_directories_exist(yandex_disk_path)
-        # upload_to_yandex_disk(file_name, yandex_disk_path)
+        ensure_directories_exist(yandex_disk_path)
+        upload_to_yandex_disk(file_name, yandex_disk_path)

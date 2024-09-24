@@ -152,7 +152,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
     recdata = {"dttm": datetime.datetime.now().replace(microsecond=0), "employee": None}
     data: dict = manager.dialog_data.get("task", {})
-    data.setdefault("created", datetime.datetime.now().replace(microsecond=0))
+    data["created"] =  datetime.datetime.now().replace(microsecond=0)
     data.setdefault("creator", clb.from_user.id)
     operator = EmployeeService.get_employee(clb.from_user.id)
 
@@ -336,7 +336,10 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
     if data.get("simple_report"):
         await manager.start(prf_states.PrfPerformedSG.confirm, data=data)
     else:
-        await manager.start(prf_states.PrfPerformedSG.pin_act, data=data)
+        if data.get("act"):
+            await manager.start(prf_states.PrfPerformedSG.pin_act, data=data)
+        else:
+            await manager.start(prf_states.PrfPerformedSG.pin_videoreport, data=data)
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):

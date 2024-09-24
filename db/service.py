@@ -20,8 +20,8 @@ class TaskService:
     @staticmethod
     def update_task(task: dict):
         query = (
-            "UPDATE tasks SET (phone, title, description, media_type, media_id, status, priority, act, entity, "
-            "slave, agreement, simple_report, recom_time) = (:phone, :title, :description, :media_type, :media_id, :status, :priority, "
+            "UPDATE tasks SET (created, phone, title, description, media_type, media_id, status, priority, act, entity, "
+            "slave, agreement, simple_report, recom_time) = (:created, :phone, :title, :description, :media_type, :media_id, :status, :priority, "
             ":act, :entity, :slave, :agreement, :simple_report, :recom_time) WHERE taskid = :taskid RETURNING *"
         )
         return SqDB.post_query(query, task)
