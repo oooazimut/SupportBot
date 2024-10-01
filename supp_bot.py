@@ -27,7 +27,7 @@ from tasks import dialogs as tsk_dialogs  # noqa: F401
 from journal import dialogs as jrn_dialogs
 from observers import dialogs as ob_dialogs
 
-logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s")
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
 
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
@@ -70,20 +70,6 @@ async def main():
         "redis", jobs_key="example.jobs", run_times_key="example.run_times"
     )
     scheduler.start()
-    scheduler.add_job(
-        func=jobs.reminders_task_to_worker,
-        trigger="cron",
-        hour="9-16",
-        id="send_task_to_worker",
-        replace_existing=True,
-    )
-    scheduler.add_job(
-        jobs.reminders_task_to_morning,
-        trigger="cron",
-        hour=9,
-        id="morning_report",
-        replace_existing=True,
-    )
     scheduler.add_job(
         func=jobs.two_reports,
         trigger="cron",

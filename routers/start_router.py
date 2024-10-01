@@ -2,11 +2,14 @@ from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, StartMode
+from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import START_STATES
 from db.service import EmployeeService
 from jobs import TaskFactory
+
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
 router = Router()
 
@@ -26,15 +29,20 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
 
 
 @router.callback_query(TaskFactory.filter())
-async def get_task(callback: CallbackQuery, callback_data: TaskFactory, scheduler: AsyncIOScheduler):
+async def switch_off_notification(callback: CallbackQuery, callback_data: TaskFactory, scheduler: AsyncIOScheduler):
     jobid = str(callback.from_user.id) + callback_data.task
     job = scheduler.get_job(jobid)
     if job:
         job.remove()
     await callback.answer('Оповещение отключено')
-    if callback.message:
-        await callback.message.delete()
+    if callback.message and isinstance(callback.message, Message):
+            await callback.message.delete()
+    else:
+        logging.warning('Оповещение для удаления отсутствует')
+        logging.warning(callback.from_user.full_name, callback.from_user.id)
+        logging.warning(callback.message.text)
+
 
 @router.callback_query(F.data == 'agr_not_is_readed')
-async def close_message(callback: CallbackQuery):
+async def del_message(callback: CallbackQuery):
     await callback.message.delete()

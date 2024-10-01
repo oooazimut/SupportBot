@@ -13,31 +13,6 @@ from db.service import JournalService, TaskService
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
 
 
-async def reminders_task_to_worker():
-    tasks = TaskService.get_task_reminder()
-    bot: Bot = MyBot.get_instance()
-    for task in tasks:
-        try:
-            messaga = await bot.send_message(
-                chat_id=task["slave"], text="Есть заявки с высоким приоритетом!"
-            )
-            await asyncio.sleep(30)
-            await messaga.delete()
-        except (TelegramBadRequest, TelegramForbiddenError):
-            pass
-
-
-async def reminders_task_to_morning():
-    tasks = TaskService.get_task_reminder_for_morning()
-    bot: Bot = MyBot.get_instance()
-    for task in tasks:
-        messaga = await bot.send_message(
-            chat_id=task["slave"], text="У вас еще остались незавершенные дела"
-        )
-        await asyncio.sleep(60)
-        await messaga.delete()
-
-
 async def close_task(taskid: int):
     TaskService.change_status(taskid, "закрыто")
 
@@ -47,20 +22,18 @@ class TaskFactory(CallbackData, prefix="taskfctr"):
     task: str
 
 
-async def new_task(slaveid: int, task: str, taskid: int):
+async def new_task_notification(slaveid: int, task_title: str, taskid: int):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
     keyboard.button(
         text="Хорошо", callback_data=TaskFactory(action="get", task=str(taskid))
     )
     try:
-        messaga = await bot.send_message(
+        await bot.send_message(
             chat_id=slaveid,
-            text=f"Новая заявка: {task}",
+            text=f"Новая заявка: {task_title}",
             reply_markup=keyboard.as_markup(),
         )
-        await asyncio.sleep(295)
-        await messaga.delete()
     except (TelegramBadRequest, TelegramForbiddenError):
         pass
 
@@ -83,20 +56,18 @@ async def confirmed_task(operatorid, slave, title, taskid):
         pass
 
 
-async def closed_task(slaveid, task, taskid):
+async def closed_task_notification(slaveid, task_title, taskid):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
     keyboard.button(
         text="Хорошо", callback_data=TaskFactory(action="closed", task=str(taskid))
     )
     try:
-        messaga = await bot.send_message(
+        await bot.send_message(
             chat_id=slaveid,
-            text=f"Заявка {task} закрыта и перемещена в архив.",
+            text=f"Заявка {task_title} закрыта и перемещена в архив.",
             reply_markup=keyboard.as_markup(),
         )
-        await asyncio.sleep(295)
-        await messaga.delete()
     except (TelegramBadRequest, TelegramForbiddenError):
         pass
 
@@ -131,7 +102,7 @@ async def two_reports():
             if any(word in rec["record"].lower() for word in roadwords)
         ]
 
-        tasks = [rec for rec in data if rec["recom_time"] and rec['username']]
+        tasks = [rec for rec in data if rec["recom_time"] and rec["username"]]
 
         # Преобразуем дату и фильтруем данные по ключевым словам
         processed_data = [
@@ -149,13 +120,14 @@ async def two_reports():
         for entry in sorted(processed_data, key=lambda x: x["dttm"]):
             grouped_road[entry["username"]].append(entry)
         grouped_tasks = defaultdict(list)
-        for entry in sorted(tasks, key=lambda x: x['dttm']):
-            grouped_tasks[entry['username']].append(entry)
+        for entry in sorted(tasks, key=lambda x: x["dttm"]):
+            grouped_tasks[entry["username"]].append(entry)
 
-        grouped_road = dict(sorted(grouped_road.items(), key=lambda x: x[0].split()[-1]))
+        grouped_road = dict(
+            sorted(grouped_road.items(), key=lambda x: x[0].split()[-1])
+        )
 
         return grouped_road, grouped_tasks
-
 
     def write_summary(writer, report, total_road, total_obj, total_office):
         """Вывод общей информации по времени."""
@@ -257,7 +229,6 @@ async def two_reports():
     # Получение данных и вызов основных функций
     data = JournalService.get_records(data={"date": curr_date})
     records, tasks = process_records(data)
-    
 
     generate_report(records, tasks)
 

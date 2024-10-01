@@ -19,7 +19,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config import TasksStatuses
 from custom.bot import MyBot
 from db.service import EmployeeService, EntityService, JournalService, TaskService
-from jobs import new_task
+from jobs import new_task_notification
 from operators.states import OpCloseTaskSG, OpDelayingSG, OpRemoveTaskSG
 from performers import states as prf_states
 
@@ -137,22 +137,30 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     def is_exist(someone_task: dict):
         return someone_task.get("taskid")
 
-    def send_newtask_note(userid, task):
-        scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-        if userid:
-            scheduler.add_job(
-                new_task,
-                "interval",
-                minutes=5,
-                next_run_time=datetime.datetime.now(),
-                args=[userid, task["title"], task["taskid"]],
-                id=str(userid) + str(task["taskid"]),
-                replace_existing=True,
+    async def group_new_tasks(data: dict):
+        for user, role in data.get("slaves", []):
+            data["slave"] = user
+            if role == "пом":
+                data["simple_report"] = 1
+            else:
+                data["simple_report"] = None
+
+            task = dict(TaskService.save_task(data))
+            await new_task_notification(task["slave"], task["title"], task["taskid"])
+
+            recdata["task"] = task.get("taskid")
+            recdata["record"] = (
+                f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
             )
+            JournalService.new_record(recdata)
+
+    async def send_newtask_note(userid, task):
+        if userid:
+            await new_task_notification(userid, task.get("title"), task.get("taskid"))
 
     recdata = {"dttm": datetime.datetime.now().replace(microsecond=0), "employee": None}
     data: dict = manager.dialog_data.get("task", {})
-    data["created"] =  datetime.datetime.now().replace(microsecond=0)
+    data["created"] = datetime.datetime.now().replace(microsecond=0)
     data.setdefault("creator", clb.from_user.id)
     operator = EmployeeService.get_employee(clb.from_user.id)
 
@@ -185,23 +193,15 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 data["simple_report"] = 1
             else:
                 data["simple_report"] = None
+
         task = dict(TaskService.update_task(data))
-        send_newtask_note(data["slave"], task)
+        await new_task_notification(task["slave"], task["title"], task["taskid"])
+
         recdata["task"] = task["taskid"]
         recdata["record"] = f'Заявку отредактировал {operator.get("username")}'
         JournalService.new_record(recdata)
 
-        for slave in data.get("slaves", []):
-            data["slave"] = slave[0]
-            if slave[1] == "пом":
-                data["simple_report"] = 1
-            task = dict(TaskService.save_task(data))
-            send_newtask_note(data["slave"], task)
-            recdata["task"] = task.get("taskid")
-            recdata["record"] = (
-                f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
-            )
-            JournalService.new_record(recdata)
+        await group_new_tasks(data)
 
         scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
         job = scheduler.get_job(job_id="delay" + str(data["taskid"]))
@@ -217,19 +217,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         await clb.answer("Заявка отредактирована.", show_alert=True)
 
     else:
-        for slave in data.get("slaves", []):
-            data["slave"] = slave[0]
-            if slave[1] == "пом":
-                data["simple_report"] = 1
-            task = dict(TaskService.save_task(data))
-            send_newtask_note(data["slave"], task)
-
-            recdata["task"] = task.get("taskid")
-            recdata["record"] = (
-                f'заявку создал {EmployeeService.get_employee(task.get("creator")).get("username")}'
-            )
-            JournalService.new_record(recdata)
-
+        await group_new_tasks(data)
         await clb.answer(
             "Заявка создана.",
             show_alert=True,

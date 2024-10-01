@@ -7,7 +7,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from db.service import JournalService, TaskService
-from jobs import closed_task
+from jobs import closed_task_notification
 
 
 async def on_type(
@@ -52,17 +52,9 @@ async def on_close(message: Message, widget: Any, manager: DialogManager):
 
         slave = manager.start_data["slave"]
         if slave:
-            task = manager.start_data["title"]
+            task_title = manager.start_data["title"]
             taskid = manager.start_data["taskid"]
-            scheduler.add_job(
-                closed_task,
-                "interval",
-                minutes=5,
-                next_run_time=datetime.datetime.now(),
-                args=[slave, task, taskid],
-                id=str(slave) + str(taskid),
-                replace_existing=True,
-            )
+            await closed_task_notification(slave, task_title, taskid)
     else:
         TaskService.change_status(taskid, "проверка")
         recdata["record"] = f"отправил на проверку {operator}\n{manager.dialog_data.get('summary')}"
