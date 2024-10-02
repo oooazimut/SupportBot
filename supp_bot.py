@@ -27,7 +27,7 @@ from tasks import dialogs as tsk_dialogs  # noqa: F401
 from journal import dialogs as jrn_dialogs
 from observers import dialogs as ob_dialogs
 
-logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
 
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):

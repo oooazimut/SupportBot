@@ -1,4 +1,5 @@
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, StartMode
@@ -36,7 +37,10 @@ async def switch_off_notification(callback: CallbackQuery, callback_data: TaskFa
         job.remove()
     await callback.answer('Оповещение отключено')
     if callback.message and isinstance(callback.message, Message):
+        try:
             await callback.message.delete()
+        except TelegramBadRequest:
+            logging.error('Сообщение невозможно удалить:', TelegramBadRequest)
     else:
         logging.warning('Оповещение для удаления отсутствует')
         logging.warning(callback.from_user.full_name, callback.from_user.id)

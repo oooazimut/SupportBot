@@ -137,7 +137,10 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     def is_exist(someone_task: dict):
         return someone_task.get("taskid")
 
-    async def group_new_tasks(data: dict):
+    async def group_new_tasks(data: dict) -> dict | None:
+        if not data.get("slaves"):
+            return
+
         for user, role in data.get("slaves", []):
             data["slave"] = user
             if role == "пом":
@@ -154,9 +157,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             )
             JournalService.new_record(recdata)
 
-    async def send_newtask_note(userid, task):
-        if userid:
-            await new_task_notification(userid, task.get("title"), task.get("taskid"))
+        return task
 
     recdata = {"dttm": datetime.datetime.now().replace(microsecond=0), "employee": None}
     data: dict = manager.dialog_data.get("task", {})
@@ -217,7 +218,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         await clb.answer("Заявка отредактирована.", show_alert=True)
 
     else:
-        await group_new_tasks(data)
+        task = await group_new_tasks(data)
         await clb.answer(
             "Заявка создана.",
             show_alert=True,
@@ -226,7 +227,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         userids = [user["userid"] for user in users]
 
         for userid in userids:
-            send_newtask_note(userid, task)
+            await new_task_notification(userid, task["title"], task["taskid"])
 
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 

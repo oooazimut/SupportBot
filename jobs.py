@@ -9,7 +9,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from custom.bot import MyBot
-from db.service import JournalService, TaskService
+from db.service import EmployeeService, JournalService, TaskService
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
 
 
@@ -123,6 +123,16 @@ async def two_reports():
         for entry in sorted(tasks, key=lambda x: x["dttm"]):
             grouped_tasks[entry["username"]].append(entry)
 
+        users = EmployeeService.get_employees()
+        users = [
+            user
+            for user in users
+            if user["username"]
+            not in ["Директор", "Надежда Половинкина", "Сергей Попов", "Роберт"]
+        ]
+        for user in users:
+            grouped_road.setdefault(user["username"], [])
+
         grouped_road = dict(
             sorted(grouped_road.items(), key=lambda x: x[0].split()[-1])
         )
@@ -155,11 +165,9 @@ async def two_reports():
 
             print(curr_date, file=report)
             print(file=report)
-            writer.writerow(
-                [
-                    str(curr_date),
-                ]
-            )
+            writer.writerow([
+                str(curr_date),
+            ])
             writer.writerow([])
 
             for user, entries in records.items():
@@ -176,7 +184,10 @@ async def two_reports():
                         curr["record"].rsplit(" ", 1)[0],
                     )
 
-                    if "приехал" in prev["record"].lower():
+                    if (
+                        "приехал" in prev["record"].lower()
+                        and "уехал" in curr["record"].lower()
+                    ):
                         summary = ""
                         if any(i == "Офис" for i in (prev_obj, curr_obj)):
                             total_office.append(time_spent)
@@ -208,7 +219,10 @@ async def two_reports():
                             f"        {time_spent}ч. на объекте {summary}", file=report
                         )
 
-                    else:
+                    elif (
+                        "уехал" in prev["record"].lower()
+                        and "приехал" in curr["record"].lower()
+                    ):
                         print(
                             "            ----------",
                             f"        {time_spent} в дороге",
@@ -217,6 +231,17 @@ async def two_reports():
                             file=report,
                         )
                         total_road.append(time_spent)
+
+                    else:
+                        print('    Ошибка, нет пары "приехал-уехал":', file=report)
+                        print(
+                            f'        {str(prev["dttm"]).split()[1]}: {prev["record"].rsplit(" ", 1)[1]}',
+                            file=report,
+                        )
+                        print(
+                            f'        {str(curr["dttm"]).split()[1]}: {curr["record"].rsplit(" ", 1)[1]}',
+                            file=report,
+                        )
 
                     print(file=report)
 
@@ -238,5 +263,5 @@ async def two_reports():
         yandex_disk_path = get_yandex_disk_path(file_name, root_folder, curr_date)
 
         # Загружаем файл на Яндекс.Диск
-        ensure_directories_exist(yandex_disk_path)
-        upload_to_yandex_disk(file_name, yandex_disk_path)
+        # ensure_directories_exist(yandex_disk_path)
+        # upload_to_yandex_disk(file_name, yandex_disk_path)
