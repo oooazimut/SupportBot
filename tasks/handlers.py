@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Any
 
 from aiogram import Bot
@@ -16,7 +17,7 @@ from aiogram_dialog.widgets.kbd import (
     ManagedRadio,
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from config import TasksStatuses
+from config import CONTENT_ATTR_MAP, TasksStatuses
 from custom.bot import MyBot
 from db.service import EmployeeService, EntityService, JournalService, TaskService
 from jobs import new_task_notification
@@ -24,6 +25,8 @@ from operators.states import OpCloseTaskSG, OpDelayingSG, OpRemoveTaskSG
 from performers import states as prf_states
 
 from . import states
+
+logger = logging.getLogger(__name__)
 
 
 async def on_task(
@@ -89,38 +92,28 @@ async def on_agreementer(event, select, dialog_manager: DialogManager, data: str
 async def task_description_handler(
     message: Message, message_input: MessageInput, manager: DialogManager
 ):
-    def is_empl(userid):
-        user = EmployeeService.get_employee(userid)
-        if user:
-            return True
-
-    txt = ""
-    media_id = None
-    match message.content_type:
-        case ContentType.TEXT:
-            txt = message.text
-        case ContentType.PHOTO:
-            media_id = message.photo[-1].file_id
-            txt = message.caption
-        case ContentType.DOCUMENT:
-            media_id = message.document.file_id
-            txt = message.caption
-        case ContentType.VIDEO:
-            media_id = message.video.file_id
-            txt = message.caption
-        case ContentType.AUDIO:
-            media_id = message.audio.file_id
-            txt = message.caption
-        case ContentType.VOICE:
-            media_id = message.voice.file_id
-        case ContentType.VIDEO_NOTE:
-            media_id = message.video_note.file_id
     media_type = message.content_type
-    manager.dialog_data["task"]["description"] = txt
-    manager.dialog_data["task"]["media_id"] = media_id
-    manager.dialog_data["task"]["media_type"] = media_type
 
-    if is_empl(message.from_user.id) and not manager.dialog_data.get("finished"):
+    if media_type in CONTENT_ATTR_MAP:
+        media_id, txt = CONTENT_ATTR_MAP[media_type](message)
+    else:
+        media_id, txt = "", ""
+
+    media_type = media_type.value if media_id else None
+
+    manager.dialog_data["task"].update({
+        "description": txt,
+        "media_id": f'{media_id or ""},{manager.dialog_data["task"].get("media_id") or ""}'.strip(
+            ","
+        ),
+        "media_type": f'{media_type or ""},{manager.dialog_data["task"].get("media_type") or ""}'.strip(
+            ","
+        ),
+    })
+
+    if EmployeeService.get_employee(
+        message.from_user.id
+    ) and not manager.dialog_data.get("finished"):
         await manager.next()
     else:
         await manager.switch_to(states.NewSG.preview)
@@ -159,9 +152,10 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
         return task
 
-    recdata = {"dttm": datetime.datetime.now().replace(microsecond=0), "employee": None}
+    current_dttm = datetime.datetime.now().replace(microsecond=0)
+    recdata = {"dttm": current_dttm, "employee": None}
     data: dict = manager.dialog_data.get("task", {})
-    data["created"] = datetime.datetime.now().replace(microsecond=0)
+    data["created"] = current_dttm
     data.setdefault("creator", clb.from_user.id)
     operator = EmployeeService.get_employee(clb.from_user.id)
 
@@ -351,7 +345,7 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
 
 
 async def show_operator_media(callback: CallbackQuery, button, manager: DialogManager):
-    mediatype = manager.dialog_data.get("task", {}).get("media_type")
+    mediatype = manager.dialog_data.get("task", {}).get("media_type").split(",")
     mediaid = manager.dialog_data.get("task", {}).get("media_id").split(",")
     await manager.start(
         state=states.MediaSG.main,

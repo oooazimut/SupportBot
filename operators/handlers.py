@@ -1,6 +1,8 @@
 import datetime
 from typing import Any
 
+from apscheduler.executors.base import logging
+
 import config
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
@@ -25,49 +27,74 @@ async def on_closing_type(
     )
     await dialog_manager.next()
 
-async def on_close(message: Message, widget: Any, manager: DialogManager):
+
+async def summary_handler(message: Message, message_input, manager: DialogManager):
+    media_type = message.content_type
+
+    if media_type in config.CONTENT_ATTR_MAP:
+        media_id, txt = config.CONTENT_ATTR_MAP[media_type](message)
+    else:
+        media_id, txt = None, ""
+
+    media_type = media_type.value if media_id else None
+
+    manager.dialog_data.update({"summary": txt or ""})
+    manager.start_data.update({
+        "media_id": f'{media_id or ""},{manager.start_data.get("media_id") or ""}'.strip(","),
+        "media_type": f'{media_type or ""},{manager.start_data.get("media_type") or ""}'.strip(
+            ","
+        ),
+    })
+    await message.answer("Добавлено")
+    await asyncio.sleep(1)
+    await manager.back()
+
+
+async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager):
     taskid = manager.start_data.get("taskid", "")
-    operator = config.AGREEMENTERS.get(message.from_user.id, "")
+    operator = config.AGREEMENTERS.get(callback.from_user.id, "")
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-    manager.dialog_data['summary'] = message.text if message.text and len(message.text) > 1 else ""
+    current_dttm = datetime.datetime.now().replace(microsecond=0)
 
     recdata = {
-        "dttm": datetime.datetime.now().replace(microsecond=0),
+        "dttm": current_dttm,
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
     }
 
     TaskService.change_dttm(taskid, datetime.datetime.now())
 
-    if manager.start_data["status"] == "проверка" or not manager.start_data["act"]:
-        TaskService.change_status(taskid, "закрыто")
-        recdata["record"] = f"закрыл {operator}\n{manager.dialog_data.get('summary')}"
+    is_checking = (
+        manager.start_data["status"] == "проверка" or not manager.start_data["act"]
+    )
+    new_status = "закрыто" if is_checking else "проверка"
+    manager.start_data.update({"status": new_status, "created": current_dttm})
 
+    TaskService.update_task(manager.start_data)
+
+    if new_status == "закрыто":
         job = scheduler.get_job(job_id=str(taskid))
         if job:
             job.remove()
-        messaga = await message.answer("Заявка перемещена в архив.")
-        await asyncio.sleep(3)
-        await messaga.delete()
 
-        slave = manager.start_data["slave"]
+        slave = manager.start_data.get("slave")
         if slave:
             task_title = manager.start_data["title"]
-            taskid = manager.start_data["taskid"]
             await closed_task_notification(slave, task_title, taskid)
-    else:
-        TaskService.change_status(taskid, "проверка")
-        recdata["record"] = f"отправил на проверку {operator}\n{manager.dialog_data.get('summary')}"
-        messaga = await message.answer(
-            "Заявка ушла на проверку правильного заполнения акта."
-        )
-        await asyncio.sleep(3)
-        await messaga.delete()
 
+    message_text = (
+        "Заявка перемещена в архив."
+        if new_status == "закрыто"
+        else "Заявка ушла на проверку правильного заполнения акта."
+    )
+    await callback.answer(message_text, show_alert=True)
+
+    action = "закрыл" if new_status == "закрыто" else "отправил на проверку"
+    recdata["record"] = f"{action} {operator}\n{manager.dialog_data.get('summary')}"
     JournalService.new_record(recdata)
-    del manager.dialog_data['summary']                                                                                 
+    del manager.dialog_data["summary"]
 
-    if manager.dialog_data.get('closing_type') == 'частично':
+    if manager.dialog_data.get("closing_type") == "частично":
         TaskService.reopen_task(taskid)
 
     await manager.done()

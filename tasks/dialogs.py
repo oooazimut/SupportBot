@@ -52,10 +52,10 @@ JINJA_TEMPLATE = Jinja(
     '{% set d = "\U0000231b" if item.status == "отложено" else "" %}'
     '{% set st = "\U00002705" if item.status == "выполнено" else "\U0001f7e9" if item.status == '
     '"в работе" else "" %}'
-    '{% set sl = item.username if item.username else "\U00002753" %}'
-    '{% set pr = item.priority if item.priority else "" %}'
-    '{% set ob = item.name if item.name else "" %}'
-    '{% set tt = item.title if item.title else "" %}'
+    '{% set sl = item.username or "\U00002753" %}'
+    '{% set pr = item.priority or "" %}'
+    '{% set ob = item.name or "" %}'
+    '{% set tt = item.title or "" %}'
     '{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
     '{% set vid = "\U0001f39e" if item.resultid else "" %}'
     '{% set load = "\U0001f504" if item.status == "закрывается" else "" %}'
@@ -328,6 +328,7 @@ tasks = Dialog(
         Format("Описание: {description}", when="description"),
         Format("Расчетное время: {recom_time}ч.", when="recom_time"),
         Format("Исполнитель: {username}", when="username"),
+        Jinja('{{"помощник" if simple_report else "главный"}}'),
         Const("<b>Высокий приоритет!</b>", when="priority"),
         Format("Статус: {status}"),
         Format("\nНужен акт", when="act"),

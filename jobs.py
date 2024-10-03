@@ -7,6 +7,7 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from pydantic import ValidationError
 
 from custom.bot import MyBot
 from db.service import EmployeeService, JournalService, TaskService
@@ -34,24 +35,23 @@ async def new_task_notification(slaveid: int, task_title: str, taskid: int):
             text=f"Новая заявка: {task_title}",
             reply_markup=keyboard.as_markup(),
         )
-    except (TelegramBadRequest, TelegramForbiddenError):
+    except (TelegramBadRequest, TelegramForbiddenError, ValidationError):
         pass
+    
 
 
-async def confirmed_task(operatorid, slave, title, taskid):
+async def confirmed_task_notification(operatorid, slave, title, taskid):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
     keyboard.button(
         text="Хорошо", callback_data=TaskFactory(action="сonfirmed", task=str(taskid))
     )
     try:
-        messaga = await bot.send_message(
+        await bot.send_message(
             chat_id=operatorid,
             text=f"{slave} выполнил заявку {title}.",
             reply_markup=keyboard.as_markup(),
         )
-        await asyncio.sleep(295)
-        await messaga.delete()
     except (TelegramBadRequest, TelegramForbiddenError):
         pass
 
@@ -235,11 +235,11 @@ async def two_reports():
                     else:
                         print('    Ошибка, нет пары "приехал-уехал":', file=report)
                         print(
-                            f'        {str(prev["dttm"]).split()[1]}: {prev["record"].rsplit(" ", 1)[1]}',
+                            f'        {str(prev["dttm"]).split()[1]}: {prev["record"]}',
                             file=report,
                         )
                         print(
-                            f'        {str(curr["dttm"]).split()[1]}: {curr["record"].rsplit(" ", 1)[1]}',
+                            f'        {str(curr["dttm"]).split()[1]}: {curr["record"]}',
                             file=report,
                         )
 
@@ -263,5 +263,5 @@ async def two_reports():
         yandex_disk_path = get_yandex_disk_path(file_name, root_folder, curr_date)
 
         # Загружаем файл на Яндекс.Диск
-        # ensure_directories_exist(yandex_disk_path)
-        # upload_to_yandex_disk(file_name, yandex_disk_path)
+        ensure_directories_exist(yandex_disk_path)
+        upload_to_yandex_disk(file_name, yandex_disk_path)

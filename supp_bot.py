@@ -9,7 +9,7 @@ from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.types import ErrorEvent
 from aiogram_dialog import DialogManager, StartMode, setup_dialogs
-from aiogram_dialog.api.exceptions import UnknownIntent
+from aiogram_dialog.api.exceptions import OutdatedIntent, UnknownIntent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from redis.asyncio.client import Redis
 
@@ -27,7 +27,6 @@ from tasks import dialogs as tsk_dialogs  # noqa: F401
 from journal import dialogs as jrn_dialogs
 from observers import dialogs as ob_dialogs
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
 
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
@@ -43,6 +42,7 @@ async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
 
 
 async def main():
+    logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
     SqLiteDataBase.create(script=CREATE_DB_SCRIPT)
     bot = MyBot(config.TOKEN, parse_mode=ParseMode.HTML).get_instance()
     # bot = MyBot(config.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -80,7 +80,7 @@ async def main():
     )
     setup_dialogs(dp)
     dp.update.outer_middleware(middlewares.DataMiddleware({"scheduler": scheduler}))
-    dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent))
+    dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent, OutdatedIntent))
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 

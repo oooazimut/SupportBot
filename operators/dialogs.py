@@ -5,12 +5,14 @@ from aiogram_dialog.widgets.kbd import (
     Button,
     Cancel,
     Column,
+    Next,
     Row,
     Select,
     Start,
     WebApp,
 )
 from aiogram_dialog.widgets.text import Const, Format
+from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import config
@@ -20,6 +22,7 @@ from journal import states as jrn_states
 
 from . import handlers, states, getters
 
+logger = logging.getLogger(__name__)
 
 async def on_start(any, manager: DialogManager):
     scheduler: AsyncIOScheduler = manager.middleware_data.get("scheduler")
@@ -32,9 +35,9 @@ async def on_start(any, manager: DialogManager):
 main = Dialog(
     Window(
         Const("Главное меню:"),
-            Start(Const("Заявки"), id="tasks", state=states.OpTasksSG.main),
-            Start(Const('Журнал'), id="to_journal", state=jrn_states.JrMainMenuSG.main),
-            WebApp(Const("Админка"), Const("https://azimut-asutp.ru/admin")),
+        Start(Const("Заявки"), id="tasks", state=states.OpTasksSG.main),
+        Start(Const("Журнал"), id="to_journal", state=jrn_states.JrMainMenuSG.main),
+        WebApp(Const("Админка"), Const("https://azimut-asutp.ru/admin")),
         state=states.OpMainMenuSG.main,
     ),
     on_start=on_start,
@@ -103,16 +106,26 @@ close_task = Dialog(
         getter=getters.closing_types_geter,
     ),
     Window(
-        Const("Здесь можно добавить информацию по закрытию заявки:"),
+        Const("В архив или добавляем информацию?"),
+        Next(Const("Добавить заметку или медиа")),
+        Button(
+            Const("Отправить в архив"), id="confirm_closing", on_click=handlers.on_close
+        ),
+        Cancel(Const("Отмена")),
+        state=states.OpCloseTaskSG.confirm_closing,
+    ),
+    Window(
+        Const("Здесь можно добавить информацию по закрытию заявки в любом формате:"),
         MessageInput(
-            func=handlers.on_close,
+            func=handlers.summary_handler,
             content_types=[
-                ContentType.TEXT,
+                ContentType.ANY,
             ],
         ),
         Cancel(Const("Назад")),
         state=states.OpCloseTaskSG.summary,
     ),
+
 )
 
 

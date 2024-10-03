@@ -10,7 +10,7 @@ from config import START_STATES
 from db.service import EmployeeService
 from jobs import TaskFactory
 
-logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 router = Router()
 
@@ -42,9 +42,9 @@ async def switch_off_notification(callback: CallbackQuery, callback_data: TaskFa
         except TelegramBadRequest:
             logging.error('Сообщение невозможно удалить:', TelegramBadRequest)
     else:
-        logging.warning('Оповещение для удаления отсутствует')
-        logging.warning(callback.from_user.full_name, callback.from_user.id)
-        logging.warning(callback.message.text)
+        logger.warning('Оповещение для удаления отсутствует')
+        logger.warning(callback.from_user.full_name, callback.from_user.id)
+        logger.warning(callback.message.text)
 
 
 @router.callback_query(F.data == 'agr_not_is_readed')

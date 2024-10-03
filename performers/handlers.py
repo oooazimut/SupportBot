@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from db.service import EmployeeService, JournalService, TaskService
-from jobs import close_task, confirmed_task
+from jobs import close_task, confirmed_task_notification
 from tasks import states as tsk_states
 
 
@@ -78,20 +78,9 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         slave = manager.start_data["username"]
         task = manager.start_data["title"]
         taskid = manager.start_data["taskid"]
-        scheduler.add_job(
-            confirmed_task,
-            "interval",
-            minutes=5,
-            next_run_time=datetime.datetime.now(),
-            args=[operatorid, slave, task, taskid],
-            id=str(operatorid) + str(taskid),
-            replace_existing=True,
-        )
+        await confirmed_task_notification(operatorid, slave, task, taskid)
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
-    await callback.answer(
-        "Теперь не нужно отмечать покидание объекта (кроме офиса и дома), при закрытии заявки это делается автоматически.",
-        show_alert=True,
-    )
+    # await callback.answer("", show_alert=True)
 
 
 async def on_cancel(clb, button, manager: DialogManager):

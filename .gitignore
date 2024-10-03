@@ -162,3 +162,4 @@ cython_debug/
 test*.*
 config.py
 Support.db
+scroll_example.py
