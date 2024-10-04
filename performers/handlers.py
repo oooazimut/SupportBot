@@ -58,9 +58,11 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "record": record,
     }
     JournalService.new_record(recdata)
-
-    recdata["record"] = f"{manager.start_data.get('name')} Уехал"
-    JournalService.new_record(recdata)
+    
+    record = f"{manager.start_data.get('name')} Уехал"
+    if record != JournalService.get_last_record(callback.from_user.id):
+        recdata["record"] = record
+        JournalService.new_record(recdata)
 
     if not manager.start_data["act"]:
         scheduler.add_job(

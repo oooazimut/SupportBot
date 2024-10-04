@@ -49,10 +49,8 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
 
 async def actions(dialog_manager: DialogManager, **kwargs):
     actions = ["Приехал", "Уехал"]
-    if (
-        dialog_manager.dialog_data["location"]
-        not in EntityService.get_home_and_office()
-    ):
+    home_and_office = [loc["name"] for loc in EntityService.get_home_and_office()]
+    if dialog_manager.dialog_data["location"] not in home_and_office:
         actions.pop()
 
     return {"actions": actions}
@@ -91,9 +89,10 @@ async def result(dialog_manager: DialogManager, **kwargs):
     if data:
         username = data[user_index][0]["username"]
         userid = data[user_index][0]["userid"]
-        dialog_manager.dialog_data["receipts"] = ReceiptsService.get_receipts(
-            {"dttm": rec_date, "employee": userid}
-        )
+        dialog_manager.dialog_data["receipts"] = ReceiptsService.get_receipts({
+            "dttm": rec_date,
+            "employee": userid,
+        })
         dialog_manager.dialog_data["username"] = username
         journal = data[user_index]
 

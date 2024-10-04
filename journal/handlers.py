@@ -18,13 +18,17 @@ async def on_action(
     callback: CallbackQuery, select, dialog_manager: DialogManager, action: str, /
 ):
     user = EmployeeService.get_employee(callback.from_user.id)
+    last_record = JournalService.get_last_record(callback.from_user.id)
+    current_record = f"{dialog_manager.dialog_data.get('location')} {action}"
+    if last_record and action in last_record:
+        await callback.answer(
+            f"ПРЕДУПРЕЖДЕНИЕ!\nВ ПРЕДЫДУЩЕЙ ЗАПИСИ ТАКОЕ ЖЕ ДЕЙСТВИЕ!\nПредыдущая запись: {last_record}\nТекущая запись: {current_record}",
+            show_alert=True,
+        )
 
-    dialog_manager.dialog_data["action"] = action
     dialog_manager.dialog_data["employee"] = user.get("userid")
     dialog_manager.dialog_data["task"] = None
-    dialog_manager.dialog_data["record"] = (
-        f'{dialog_manager.dialog_data.get("location")} {dialog_manager.dialog_data.get("action")}'
-    )
+    dialog_manager.dialog_data["record"] = current_record
     await dialog_manager.next()
 
 

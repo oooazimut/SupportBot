@@ -2,6 +2,7 @@ import asyncio
 import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
+import logging
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
@@ -13,6 +14,7 @@ from custom.bot import MyBot
 from db.service import EmployeeService, JournalService, TaskService
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
 
+logger = logging.getLogger(__name__)
 
 async def close_task(taskid: int):
     TaskService.change_status(taskid, "закрыто")
@@ -275,4 +277,7 @@ async def journal_reminder():
 
     for user in users:
         if user not in ignored_users:
-            await bot.send_message(user.get('userid'), message_text)
+            try:
+                await bot.send_message(user.get('userid'), message_text)
+            except TelegramForbiddenError:
+                logger.error(f'Пользователь {user.get("username")} заблокировал бота!')
