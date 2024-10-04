@@ -307,6 +307,15 @@ class JournalService:
         return SqDB.select_query(query, data)
 
     @staticmethod
+    def get_last_record(userid):
+        curr_date = datetime.today().date() 
+        query = 'SELECT record, dttm FROM journal WHERE employee = ? AND DATE(dttm) = ? AND (record LIKE "%Приехал" OR record LIKE "%Уехал") ORDER BY dttm DESC LIMIT 1'
+        result = SqDB.select_query(query, [userid, curr_date])
+        if not result:
+            return
+        return result[0]["record"]
+
+    @staticmethod
     def del_record(recordid):
         query = "DELETE FROM journal WHERE recordid = ? RETURNING *"
         SqDB.post_query(query, [recordid])

@@ -90,9 +90,10 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     await callback.answer(message_text, show_alert=True)
 
     action = "закрыл" if new_status == "закрыто" else "отправил на проверку"
-    recdata["record"] = f"{action} {operator}\n{manager.dialog_data.get('summary')}"
+    recdata["record"] = f"{action} {operator}\n{manager.dialog_data.get('summary') or ''}"
     JournalService.new_record(recdata)
-    del manager.dialog_data["summary"]
+    if manager.dialog_data.get('summary'):
+        del manager.dialog_data["summary"]
 
     if manager.dialog_data.get("closing_type") == "частично":
         TaskService.reopen_task(taskid)
