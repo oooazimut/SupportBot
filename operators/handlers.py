@@ -68,7 +68,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
         manager.start_data["status"] == "проверка" or not manager.start_data["act"]
     )
     new_status = "закрыто" if is_checking else "проверка"
-    manager.start_data.update({"status": new_status, "created": current_dttm})
+    manager.start_data.update({"status": new_status})
 
     TaskService.update_task(manager.start_data)
 

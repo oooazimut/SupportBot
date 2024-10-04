@@ -265,3 +265,14 @@ async def two_reports():
         # Загружаем файл на Яндекс.Диск
         ensure_directories_exist(yandex_disk_path)
         upload_to_yandex_disk(file_name, yandex_disk_path)
+
+
+async def journal_reminder():
+    bot = MyBot.get_instance()
+    users = EmployeeService.get_employees()
+    message_text = "Не забываем отмечаться в журнале!"
+    ignored_users = [1740579878, ]
+
+    for user in users:
+        if user not in ignored_users:
+            await bot.send_message(user.get('userid'), message_text)

@@ -28,7 +28,6 @@ from journal import dialogs as jrn_dialogs
 from observers import dialogs as ob_dialogs
 
 
-
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
     userid = dialog_manager.middleware_data["event_from_user"].id
     user = EmployeeService.get_employee(userid=userid)
@@ -42,7 +41,9 @@ async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
 
 
 async def main():
-    logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s"
+    )
     SqLiteDataBase.create(script=CREATE_DB_SCRIPT)
     bot = MyBot(config.TOKEN, parse_mode=ParseMode.HTML).get_instance()
     # bot = MyBot(config.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -78,9 +79,27 @@ async def main():
         id="gen_report",
         replace_existing=True,
     )
+    scheduler.add_job(
+        jobs.journal_reminder,
+        "cron",
+        day_of_week="mon-fri",
+        hour=8,
+        id="morning_reminder",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        jobs.journal_reminder,
+        "cron",
+        day_of_week="mon-fri",
+        hour=16,
+        id="evening_reminder",
+        replace_existing=True,
+    )
     setup_dialogs(dp)
     dp.update.outer_middleware(middlewares.DataMiddleware({"scheduler": scheduler}))
-    dp.errors.register(ui_error_handler, ExceptionTypeFilter(UnknownIntent, OutdatedIntent))
+    dp.errors.register(
+        ui_error_handler, ExceptionTypeFilter(UnknownIntent, OutdatedIntent)
+    )
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
