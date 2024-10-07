@@ -3,6 +3,7 @@ from typing import Any
 from aiogram.enums import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
+from redis.asyncio.client import Redis
 
 from config import TasksStatuses
 from db.service import (
@@ -28,7 +29,21 @@ async def main_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def locations_getter(dialog_manager: DialogManager, **kwargs):
-    data: dict[str, Any] = {"userid": dialog_manager.event.from_user.id}
+    last_record = JournalService.get_last_record(dialog_manager.event.from_user.id)
+
+    if last_record and last_record.split()[-1] == "Приехал":
+        curr_location = last_record.rsplit(maxsplit=1)[0]
+        checked_location = EntityService.get_entity_by_name(curr_location)
+        if checked_location:
+            locations = checked_location
+        else:
+            locations = [{"ent_id": "0", "name": curr_location}]
+        dialog_manager.dialog_data['curr_location'] = curr_location
+        return {"locations": locations}
+        
+
+    userid = dialog_manager.event.from_user.id
+    data: dict[str, Any] = {"userid": userid}
     locations = EntityService.get_home_and_office()
     tasks = []
 
@@ -49,9 +64,20 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
 
 async def actions(dialog_manager: DialogManager, **kwargs):
     actions = ["Приехал", "Уехал"]
-    home_and_office = [loc["name"] for loc in EntityService.get_home_and_office()]
-    if dialog_manager.dialog_data["location"] not in home_and_office:
-        actions.pop()
+    base_locations = ['Дом', 'Офис']
+    rec_location = dialog_manager.dialog_data.get('location')
+    userid = dialog_manager.event.from_user.id
+    last_record = JournalService.get_last_record(userid)
+    
+    if dialog_manager.dialog_data.get('curr_location'):
+        del actions[0]
+        if rec_location not in base_locations and EntityService.get_entity_by_name(rec_location):
+            del actions[-1]
+    else:
+        if not last_record and rec_location == 'Дом':
+            del actions[0]
+        else:
+            del actions[-1]
 
     return {"actions": actions}
 
@@ -89,10 +115,12 @@ async def result(dialog_manager: DialogManager, **kwargs):
     if data:
         username = data[user_index][0]["username"]
         userid = data[user_index][0]["userid"]
-        dialog_manager.dialog_data["receipts"] = ReceiptsService.get_receipts({
-            "dttm": rec_date,
-            "employee": userid,
-        })
+        dialog_manager.dialog_data["receipts"] = ReceiptsService.get_receipts(
+            {
+                "dttm": rec_date,
+                "employee": userid,
+            }
+        )
         dialog_manager.dialog_data["username"] = username
         journal = data[user_index]
 

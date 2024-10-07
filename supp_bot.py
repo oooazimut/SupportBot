@@ -84,6 +84,7 @@ async def main():
         "cron",
         day_of_week="mon-fri",
         hour=8,
+        minute=30,
         id="morning_reminder",
         replace_existing=True,
     )

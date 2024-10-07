@@ -314,6 +314,12 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
 
 async def on_perform(callback: CallbackQuery, button: Button, manager: DialogManager):
     data = manager.dialog_data.get("task", {})
+    last_record = JournalService.get_last_record(callback.from_user.id)
+
+    if last_record and 'Уехал' in last_record :
+        await callback.answer("Вы не сделали запись о прибытии на объект.", show_alert=True)
+        return
+
     TaskService.change_status(data.get("taskid"), TasksStatuses.PERFORMING.value)
     data["performed_time"] = str(datetime.datetime.now().replace(microsecond=0))
     if data.get("simple_report"):

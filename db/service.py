@@ -266,6 +266,12 @@ class EntityService:
         return SqDB.select_query(query, [entid])
 
     @staticmethod
+    def get_entity_by_name(ent_name):
+        query = 'SELECT * FROM entities WHERE name = ?'
+        return SqDB.select_query(query, [ent_name])
+
+
+    @staticmethod
     def get_home_and_office():
         query = "SELECT * from entities WHERE name in ('Офис', 'Дом')"
         return SqDB.select_query(query)

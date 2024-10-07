@@ -119,7 +119,7 @@ search = Dialog(
             items="journal",
             when="journal",
         ),
-        Next(Const("Чеки"), when=F["dialog_data"]["receipts"]),
+        Next(Const("Чеки"), on_click=handlers.on_checks, when=F["dialog_data"]["receipts"]),
         StubScroll(id="users_scroll", pages="pages"),
         Group(NumberedPager(scroll="users_scroll", when=F["pages"] > 1), width=8),
         Cancel(Const("Выход")),
