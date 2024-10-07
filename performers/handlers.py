@@ -83,6 +83,8 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         await confirmed_task_notification(operatorid, slave, task, taskid)
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     # await callback.answer("", show_alert=True)
+    await manager.done()
+    await manager.done()
 
 
 async def on_cancel(clb, button, manager: DialogManager):

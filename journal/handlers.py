@@ -1,6 +1,7 @@
 from datetime import datetime
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
+from redis.asyncio.client import Redis
 from db.service import EmployeeService, EntityService, JournalService, ReceiptsService
 
 from . import states
@@ -9,7 +10,14 @@ from . import states
 async def on_location(
     callback: CallbackQuery, select, dialog_manager: DialogManager, location: str, /
 ):
-    data = EntityService.get_entity(location)[0]["name"]
+    if not int(location):
+        r = Redis()
+        data = await r.get(str(callback.from_user.id))
+        data = data.decode('utf-8')
+        await r.aclose()
+    else:
+        data = EntityService.get_entity(location)[0]["name"]
+
     dialog_manager.dialog_data["location"] = data
     await dialog_manager.switch_to(states.JrMainMenuSG.action)
 
@@ -34,12 +42,23 @@ async def on_action(
 
 async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
     JournalService.new_record(manager.dialog_data)
+
+    if manager.dialog_data["record"].split()[-1] == "уехал":
+        r = Redis()
+        await r.delete(str(callback.from_user.id))
+        await r.aclose()
+
     await manager.done()
     await callback.answer("Запись сделана", show_alert=True)
 
 
 async def object_input(message: Message, message_input, manager: DialogManager):
     manager.dialog_data["location"] = message.text
+
+    r = Redis()
+    await r.set(str(message.from_user.id), message.text)
+    await r.aclose()
+
     await manager.next()
 
 
@@ -63,3 +82,7 @@ async def on_search(callback: CallbackQuery, button, manager: DialogManager):
         data["userid"] = user.get("userid")
 
     await manager.start(states.JrSearchSG.datestamp, data=data)
+
+async def on_checks(callback: CallbackQuery, button, manager: DialogManager): 
+    await manager.find("receipts_scroll").set_page(0)
+
