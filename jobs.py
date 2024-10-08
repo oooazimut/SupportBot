@@ -10,6 +10,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pydantic import ValidationError
 
+from config import CHIEF_ID
 from custom.bot import MyBot
 from db.service import EmployeeService, JournalService, TaskService
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
@@ -273,10 +274,10 @@ async def journal_reminder():
     bot = MyBot.get_instance()
     users = EmployeeService.get_employees()
     message_text = "Не забываем отмечаться в журнале!"
-    ignored_users = [1740579878, ]
+    ignored_users = [1740579878, CHIEF_ID]
 
     for user in users:
-        if user not in ignored_users:
+        if user['userid'] not in ignored_users:
             try:
                 await bot.send_message(user.get('userid'), message_text)
             except TelegramForbiddenError:
