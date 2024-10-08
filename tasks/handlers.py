@@ -316,7 +316,7 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
     data = manager.dialog_data.get("task", {})
     last_record = JournalService.get_last_record(callback.from_user.id)
 
-    if last_record and 'Уехал' in last_record :
+    if data.get('name') and 'Уехал' in last_record and data.get('name') not in last_record:
         await callback.answer("Вы не сделали запись о прибытии на объект.", show_alert=True)
         return
 
