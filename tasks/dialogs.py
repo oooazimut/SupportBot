@@ -378,6 +378,12 @@ tasks = Dialog(
                 on_click=handlers.on_return,
                 when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
             ),
+            SwitchTo(
+                Const("Добавить медиа"),
+                id="add_media",
+                state=states.TasksSG.add_media,
+                when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
+            ),
             Button(Const("Удалить заявку"), id="rm_task", on_click=handlers.on_remove),
             when=user_is_operator,
         ),
@@ -419,6 +425,7 @@ tasks = Dialog(
         state=states.TasksSG.journal,
         getter=getters.journal_getter,
     ),
+    Window(Const("Добавление медиа"), MessageInput(func=handlers.add_media), state=states.TasksSG.add_media),
 )
 
 

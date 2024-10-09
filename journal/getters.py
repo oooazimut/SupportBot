@@ -16,12 +16,9 @@ from db.service import (
 
 
 async def main_getter(dialog_manager: DialogManager, **kwargs):
-    data = {
-        "userid": dialog_manager.event.from_user.id,
-        "date": datetime.today().date(),
-    }
-
-    journal = JournalService.get_records(data)
+    journal = JournalService.get_records(
+        userid=dialog_manager.event.from_user.id, date=datetime.today().date()
+    )
     if journal:
         journal.sort(key=lambda x: x["dttm"])
 
@@ -38,9 +35,8 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
             locations = checked_location
         else:
             locations = [{"ent_id": "0", "name": curr_location}]
-        dialog_manager.dialog_data['curr_location'] = curr_location
+        dialog_manager.dialog_data["curr_location"] = curr_location
         return {"locations": locations}
-        
 
     userid = dialog_manager.event.from_user.id
     data: dict[str, Any] = {"userid": userid}
@@ -50,7 +46,6 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
     for i in [
         TasksStatuses.ASSIGNED.value,
         TasksStatuses.AT_WORK.value,
-        TasksStatuses.PERFORMED.value,
     ]:
         data["status"] = i
         temp = TaskService.get_tasks_with_filters(data) or []
@@ -64,17 +59,19 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
 
 async def actions(dialog_manager: DialogManager, **kwargs):
     actions = ["Приехал", "Уехал"]
-    base_locations = ['Дом', 'Офис']
-    rec_location = dialog_manager.dialog_data.get('location')
+    base_locations = ["Дом", "Офис"]
+    rec_location = dialog_manager.dialog_data.get("location")
     userid = dialog_manager.event.from_user.id
     last_record = JournalService.get_last_record(userid)
-    
-    if dialog_manager.dialog_data.get('curr_location'):
+
+    if dialog_manager.dialog_data.get("curr_location"):
         del actions[0]
-        if rec_location not in base_locations and EntityService.get_entity_by_name(rec_location):
+        if rec_location not in base_locations and EntityService.get_entity_by_name(
+            rec_location
+        ):
             del actions[-1]
     else:
-        if not last_record and rec_location == 'Дом':
+        if not last_record and rec_location == "Дом":
             del actions[0]
         else:
             del actions[-1]
@@ -89,7 +86,7 @@ async def users(dialog_manager: DialogManager, **kwargs):
 
 async def result(dialog_manager: DialogManager, **kwargs):
     def append_data(data: dict, journal: list):
-        temp = JournalService.get_records(data)
+        temp = JournalService.get_records(**data)
         if temp:
             journal.append(sorted(temp, key=lambda x: x["dttm"]))
 

@@ -58,11 +58,15 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "record": record,
     }
     JournalService.new_record(recdata)
-    
+
     record = f"{manager.start_data.get('name')} Уехал"
-    if record != JournalService.get_last_record(callback.from_user.id):
-        recdata["record"] = record
-        JournalService.new_record(recdata)
+
+    last_rec = JournalService.get_last(callback.from_user.id)
+    if last_rec and record == last_rec.get("record"):
+        JournalService.del_record(last_rec.get("recordid"))
+
+    recdata["record"] = record
+    JournalService.new_record(recdata)
 
     if not manager.start_data["act"]:
         scheduler.add_job(
@@ -83,7 +87,6 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         await confirmed_task_notification(operatorid, slave, task, taskid)
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     # await callback.answer("", show_alert=True)
-    await manager.done()
     await manager.done()
 
 

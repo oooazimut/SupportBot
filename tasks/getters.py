@@ -33,7 +33,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 assigned_tasks,
                 progress_tasks,
                 delayed_tasks,
-                performing_tasks
+                performing_tasks,
             ):
                 tasks.extend(item)
         case TasksTitles.ARCHIVE.value:
@@ -137,12 +137,12 @@ async def performed(dialog_manager: DialogManager, **kwargs):
 
 
 async def media(dialog_manager: DialogManager, **kwargs):
-    m_type = dialog_manager.start_data.get("type", '')
+    m_type = dialog_manager.start_data.get("type", "")
     m_ids = dialog_manager.start_data.get("id", [])
     pages = len(m_ids)
     index = await dialog_manager.find("media_scroll").get_page()
 
-    if  isinstance(m_type, list):
+    if isinstance(m_type, list):
         media = MediaAttachment(m_type[index], file_id=MediaId(m_ids[index]))
     else:
         media = MediaAttachment(m_type, file_id=MediaId(m_ids[index]))
@@ -170,7 +170,7 @@ async def statuses_getter(dialog_manager: DialogManager, **kwargs):
 
 async def journal_getter(dialog_manager: DialogManager, **kwargs):
     data = JournalService.get_records(
-        {"taskid": dialog_manager.dialog_data.get("task", {}).get("taskid")}
+        taskid=dialog_manager.dialog_data.get("task", {}).get("taskid")
     )
     dates = list(set([item.get("dttm").split()[0] for item in data]))
     dates.sort()
