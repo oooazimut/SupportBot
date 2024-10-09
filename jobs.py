@@ -255,7 +255,7 @@ async def two_reports():
 
     curr_date = datetime.now().date() - timedelta(days=1)
     # Получение данных и вызов основных функций
-    data = JournalService.get_records(data={"date": curr_date})
+    data = JournalService.get_records(date=curr_date)
     records, tasks = process_records(data)
 
     generate_report(records, tasks)

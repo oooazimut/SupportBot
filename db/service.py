@@ -267,9 +267,8 @@ class EntityService:
 
     @staticmethod
     def get_entity_by_name(ent_name):
-        query = 'SELECT * FROM entities WHERE name = ?'
+        query = "SELECT * FROM entities WHERE name = ?"
         return SqDB.select_query(query, [ent_name])
-
 
     @staticmethod
     def get_home_and_office():
@@ -285,7 +284,13 @@ class JournalService:
         return SqDB.post_query(query, data)
 
     @staticmethod
-    def get_records(data: dict = {}):
+    def update_rec_dttm(dttm, recordid):
+        query = "UPDATE journal set dttm = ? where recordid = ? RETURNING *"
+        return SqDB.post_query(query, [dttm, recordid])
+
+    @staticmethod
+    def get_records(**kwargs):
+        data = kwargs
         query = """
         SELECT *
         FROM journal as j
@@ -305,6 +310,8 @@ class JournalService:
                 adds.append("j.task = :taskid")
         if data.get("object"):
             adds.append("ent.name = :object")
+        if data.get("record"):
+            adds.append('ent.record LIKE "%:record%"')
 
         if adds:
             query = query + " WHERE " + " AND ".join(adds)
@@ -313,13 +320,21 @@ class JournalService:
         return SqDB.select_query(query, data)
 
     @staticmethod
-    def get_last_record(userid)-> str:
-        curr_date = datetime.today().date() 
-        query = 'SELECT record, dttm FROM journal WHERE employee = ? AND DATE(dttm) = ? AND (record LIKE "%Приехал" OR record LIKE "%Уехал") ORDER BY dttm DESC LIMIT 1'
-        result = SqDB.select_query(query, [userid, curr_date])
-        if not result:
-            return ''
-        return result[0]["record"]
+    def get_last(userid) -> dict | None:
+        curr_date = datetime.today().date()
+        query = 'SELECT * FROM journal WHERE employee = ? AND DATE(dttm) = ? AND (record LIKE "%Приехал" OR record LIKE "%Уехал") ORDER BY dttm DESC LIMIT 1'
+        res = SqDB.select_query(query, [userid, curr_date])
+        return res[0] if res else None
+
+    @classmethod
+    def get_last_record(cls, userid) -> str:
+        result = cls.get_last(userid)
+        return result["record"] if result else ""
+
+    @classmethod
+    def get_last_record_id(cls, userid) -> int:
+        result = cls.get_last(userid)
+        return result["recordid"] if result else 0
 
     @staticmethod
     def del_record(recordid):

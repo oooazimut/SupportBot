@@ -16,7 +16,7 @@ from aiogram_dialog.widgets.kbd import (
     ManagedListGroup,
     ManagedRadio,
 )
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from config import CONTENT_ATTR_MAP, TasksStatuses
 from custom.bot import MyBot
 from db.service import EmployeeService, EntityService, JournalService, TaskService
@@ -101,15 +101,17 @@ async def task_description_handler(
 
     media_type = media_type.value if media_id else None
 
-    manager.dialog_data["task"].update({
-        "description": txt,
-        "media_id": f'{media_id or ""},{manager.dialog_data["task"].get("media_id") or ""}'.strip(
-            ","
-        ),
-        "media_type": f'{media_type or ""},{manager.dialog_data["task"].get("media_type") or ""}'.strip(
-            ","
-        ),
-    })
+    manager.dialog_data["task"].update(
+        {
+            "description": txt,
+            "media_id": f'{media_id or ""},{manager.dialog_data["task"].get("media_id") or ""}'.strip(
+                ","
+            ),
+            "media_type": f'{media_type or ""},{manager.dialog_data["task"].get("media_type") or ""}'.strip(
+                ","
+            ),
+        }
+    )
 
     if EmployeeService.get_employee(
         message.from_user.id
@@ -316,8 +318,14 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
     data = manager.dialog_data.get("task", {})
     last_record = JournalService.get_last_record(callback.from_user.id)
 
-    if data.get('name') and 'Уехал' in last_record and data.get('name') not in last_record:
-        await callback.answer("Вы не сделали запись о прибытии на объект.", show_alert=True)
+    if (
+        data.get("name")
+        and "Уехал" in last_record
+        and data.get("name") not in last_record
+    ):
+        await callback.answer(
+            "Вы не сделали запись о прибытии на объект.", show_alert=True
+        )
         return
 
     TaskService.change_status(data.get("taskid"), TasksStatuses.PERFORMING.value)
@@ -441,3 +449,31 @@ async def filters_handler(callback: CallbackQuery, button, manager: DialogManage
 
 async def reset_journal_page(callback: CallbackQuery, button, manager: DialogManager):
     await manager.find("scroll_taskjournal").set_page(0)
+
+
+async def add_media(message: Message, message_input, manager: DialogManager):
+    media_type = message.content_type
+
+    if media_type in CONTENT_ATTR_MAP:
+        media_id = CONTENT_ATTR_MAP[media_type](message)[0]
+    else:
+        media_id = ""
+
+    media_type = media_type.value if media_id else None
+
+    manager.dialog_data["task"].update(
+        {
+            "media_id": f'{media_id or ""},{manager.dialog_data["task"].get("media_id") or ""}'.strip(
+                ","
+            ),
+            "media_type": f'{media_type or ""},{manager.dialog_data["task"].get("media_type") or ""}'.strip(
+                ","
+            ),
+        }
+    )
+    TaskService.update_task(manager.dialog_data["task"])
+    messg = await message.answer("Медиа добавлено")
+    await manager.switch_to(states.TasksSG.task)
+    await asyncio.sleep(1)
+    await messg.delete()
+
