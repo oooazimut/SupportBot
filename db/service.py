@@ -214,6 +214,7 @@ class TaskService:
         task = cls.get_task(taskid)[0]
         task["created"] = datetime.now().replace(microsecond=0)
         task["status"] = "назначено"
+        task['slave'] = None
         cls.save_task(task)
 
     @staticmethod
@@ -327,7 +328,7 @@ class JournalService:
         return res[0] if res else None
 
     @classmethod
-    def get_last_record(cls, userid) -> str:
+    def get_last_record(cls, userid: str | int) -> str:
         result = cls.get_last(userid)
         return result["record"] if result else ""
 

@@ -43,7 +43,7 @@ async def on_action(
 async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
     JournalService.new_record(manager.dialog_data)
 
-    if manager.dialog_data["record"].split()[-1] == "уехал":
+    if manager.dialog_data["record"].split()[-1] == "Уехал":
         r = Redis()
         await r.delete(str(callback.from_user.id))
         await r.aclose()

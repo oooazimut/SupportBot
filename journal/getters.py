@@ -26,6 +26,7 @@ async def main_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def locations_getter(dialog_manager: DialogManager, **kwargs):
+    locations = EntityService.get_home_and_office()
     last_record = JournalService.get_last_record(dialog_manager.event.from_user.id)
 
     if last_record and last_record.split()[-1] == "Приехал":
@@ -38,22 +39,6 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
         dialog_manager.dialog_data["curr_location"] = curr_location
         return {"locations": locations}
 
-    userid = dialog_manager.event.from_user.id
-    data: dict[str, Any] = {"userid": userid}
-    locations = EntityService.get_home_and_office()
-    tasks = []
-
-    for i in [
-        TasksStatuses.ASSIGNED.value,
-        TasksStatuses.AT_WORK.value,
-    ]:
-        data["status"] = i
-        temp = TaskService.get_tasks_with_filters(data) or []
-        tasks.extend(temp)
-
-    objects = [{"ent_id": i["ent_id"], "name": i["name"]} for i in tasks]
-    locations.extend(objects)
-
     return {"locations": locations}
 
 
@@ -63,13 +48,17 @@ async def actions(dialog_manager: DialogManager, **kwargs):
     rec_location = dialog_manager.dialog_data.get("location")
     userid = dialog_manager.event.from_user.id
     last_record = JournalService.get_last_record(userid)
+    curr_location = dialog_manager.dialog_data.get("curr_location")
 
-    if dialog_manager.dialog_data.get("curr_location"):
+    if curr_location:
         del actions[0]
         if rec_location not in base_locations and EntityService.get_entity_by_name(
             rec_location
         ):
             del actions[-1]
+        if EntityService.get_entity_by_name(curr_location) and curr_location not in base_locations:
+            actions = []
+        
     else:
         if not last_record and rec_location == "Дом":
             del actions[0]
