@@ -395,6 +395,12 @@ tasks = Dialog(
                 when=F["status"] == "назначено",
             ),
             Button(
+                Const("Приехал на объект"),
+                id="arrived_to_object",
+                on_click=handlers.on_arrived,
+                when=F["status"].in_("в работе"),
+            ),
+            Button(
                 Const("Выполнено"),
                 id="perform_task",
                 on_click=handlers.on_perform,
@@ -425,7 +431,19 @@ tasks = Dialog(
         state=states.TasksSG.journal,
         getter=getters.journal_getter,
     ),
-    Window(Const("Добавление медиа"), MessageInput(func=handlers.add_media), state=states.TasksSG.add_media),
+    Window(
+        Const("Добавление медиа"),
+        MessageInput(func=handlers.add_media),
+        state=states.TasksSG.add_media,
+    ),
+    Window(
+        Format(
+            "В журнал будет добавлена запись о том, что вы прибыли на объект {dialog_data[task][name]}"
+        ),
+        Button(Const("Подтвердить"), id="confirm_arrived", on_click=handlers.confirm_arrived),
+        SwitchTo(Const("Назад"), id="back_to_task", state=states.TasksSG.task),
+        state=states.TasksSG.confirm_arrived,
+    ),
 )
 
 
