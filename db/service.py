@@ -327,7 +327,7 @@ class JournalService:
         return res[0] if res else None
 
     @classmethod
-    def get_last_record(cls, userid) -> str:
+    def get_last_record(cls, userid: str | int) -> str:
         result = cls.get_last(userid)
         return result["record"] if result else ""
 

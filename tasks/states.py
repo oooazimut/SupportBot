@@ -20,6 +20,7 @@ class TasksSG(StatesGroup):
     task = State()
     journal = State()
     add_media = State()
+    confirm_arrived = State()
 
 
 class MediaSG(StatesGroup):

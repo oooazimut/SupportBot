@@ -477,3 +477,28 @@ async def add_media(message: Message, message_input, manager: DialogManager):
     await asyncio.sleep(1)
     await messg.delete()
 
+
+async def on_arrived(callback: CallbackQuery, button, manager: DialogManager):
+    last_record = JournalService.get_last_record(callback.from_user.id)
+    if "Приехал" in last_record:
+        await callback.answer(
+            f"Нет записи о том, что вы покинули предыдущий объект ({last_record.rsplit(maxsplit=1)[0]})!",
+            show_alert=True,
+        )
+    else: 
+        await manager.switch_to(states.TasksSG.confirm_arrived)
+
+
+async def confirm_arrived(callback: CallbackQuery, button, manager: DialogManager):
+    record = f'{manager.dialog_data.get("task", {}).get("name")} Приехал'
+    data = dict(
+        employee=callback.from_user.id,
+        task=manager.dialog_data.get("task", {}).get("taskid"),
+        record=record,
+    )
+    JournalService.new_record(data)
+    await callback.answer(
+        f'Запись о прибытии на объект {manager.dialog_data.get("task", {}).get("name")} добавлена',
+        show_alert=True,
+    )
+    await manager.switch_to(state=states.TasksSG.task)
