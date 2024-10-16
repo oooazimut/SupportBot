@@ -384,6 +384,7 @@ tasks = Dialog(
                 state=states.TasksSG.add_media,
                 when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
             ),
+            Button(Const('Клонировать заявку'), id='clone_task', on_click=handlers.on_clone),
             Button(Const("Удалить заявку"), id="rm_task", on_click=handlers.on_remove),
             when=user_is_operator,
         ),

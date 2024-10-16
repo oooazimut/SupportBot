@@ -502,3 +502,9 @@ async def confirm_arrived(callback: CallbackQuery, button, manager: DialogManage
         show_alert=True,
     )
     await manager.switch_to(state=states.TasksSG.task)
+
+async def on_clone(callback: CallbackQuery, button, manager: DialogManager):
+    taskid = manager.dialog_data.get('task', {}).get('taskid')
+    TaskService.clone_task(taskid)
+    await callback.answer('Заявка клонирована', show_alert=True)
+

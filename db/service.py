@@ -214,7 +214,19 @@ class TaskService:
         task = cls.get_task(taskid)[0]
         task["created"] = datetime.now().replace(microsecond=0)
         task["status"] = "назначено"
-        task['slave'] = None
+        task["slave"] = None
+        cls.save_task(task)
+
+    @classmethod
+    def clone_task(cls, taskid):
+        task = cls.get_task(taskid)[0]
+        task["created"] = datetime.now().replace(microsecond=0)
+        task["status"] = "открыто"
+
+        keys = ["slave", "resultid", "actid", "simple_report"]
+        for key in keys:
+            task[key] = None
+
         cls.save_task(task)
 
     @staticmethod
