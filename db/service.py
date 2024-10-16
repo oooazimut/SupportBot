@@ -214,6 +214,7 @@ class TaskService:
         task = cls.get_task(taskid)[0]
         task["created"] = datetime.now().replace(microsecond=0)
         task["status"] = "назначено"
+        task['slave'] = None
         cls.save_task(task)
 
     @staticmethod
