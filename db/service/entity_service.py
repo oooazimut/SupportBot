@@ -1,21 +1,26 @@
-from ..models import SqLiteDataBase as SqDB
+from sqlite3 import Connection
+from db.tools import connector
 
 
-def get_entities_by_substr(substr):
+@connector
+def get_entities_by_substr(con: Connection, substr: str) -> list:
     query = "SELECT * FROM entities WHERE MY_LOWER(name) LIKE MY_LOWER(?)"
-    return SqDB.select_query(query, [f"%{substr}%"])
+    return con.execute(query, [f"%{substr}%"]).fetchall()
 
 
-def get_entity(entid):
+@connector
+def get_entity(con: Connection, entid: str | int) -> dict | None:
     query = "SELECT * FROM entities WHERE ent_id = ?"
-    return SqDB.select_query(query, [entid])
+    return con.execute(query, [entid]).fetchone()
 
 
-def get_entity_by_name(ent_name):
-    query = "SELECT * FROM entities WHERE name = ?"
-    return SqDB.select_query(query, [ent_name])
+@connector
+def get_entity_by_name(con: Connection, ent_name: str) -> dict | None:
+    result = con.execute("SELECT * FROM entities WHERE name = ?", [ent_name]).fetchone()
+    return result
 
 
-def get_home_and_office():
+@connector
+def get_home_and_office(con: Connection) -> list:
     query = "SELECT * from entities WHERE name in ('Офис', 'Дом')"
-    return SqDB.select_query(query)
+    return con.execute(query).fetchall()

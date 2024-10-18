@@ -1,31 +1,34 @@
-from ..models import SqLiteDataBase as SqDB
+from sqlite3 import Connection
 
-def save_employee(userid: int, username: str, position: str):
+from db.tools import connector
+
+
+@connector
+def save_employee(con: Connection, userid: int, username: str, position: str):
     params = [userid, username, position]
-    SqDB.post_query(
-        "INSERT INTO employees(userid, username, position) VALUES (?, ?, ?) RETURNING *",
+    con.execute(
+        "INSERT INTO employees(userid, username, position) VALUES (?, ?, ?)",
         params,
     )
 
 
-def get_employee(userid) -> dict:
-    employee = SqDB.select_query(
+@connector
+def get_employee(con: Connection, userid: str | int) -> dict | None:
+    employee = con.execute(
         "SELECT * FROM employees WHERE userid = ?", [userid]
-    )
-    if employee:
-        return employee[0]
-    else:
-        return {}
+    ).fetchone()
+    return employee
 
 
-def get_employees():
-    data = SqDB.select_query("SELECT * FROM employees", params=None)
+@connector
+def get_employees(con: Connection) -> list:
+    data = con.execute("SELECT * FROM employees").fetchall()
     return data
 
 
-def get_employees_by_position(position):
-    data = SqDB.select_query(
+@connector
+def get_employees_by_position(con: Connection, position: str) -> list:
+    data = con.execute(
         "SELECT * FROM employees WHERE position = ?", [position]
-    )
+    ).fetchall()
     return data
-

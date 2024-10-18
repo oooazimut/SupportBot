@@ -2,7 +2,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
 from config import TasksStatuses, TasksTitles, AGREEMENTERS
-from db.service import EmployeeService, EntityService, JournalService, TaskService
+from db.service import employee_service, entity_service, journal_service, task_service
 
 
 async def tasks(dialog_manager: DialogManager, **kwargs):
@@ -10,20 +10,20 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
     tasks = list()
     match wintitle:
         case TasksTitles.OPENED.value:
-            new_tasks = TaskService.get_tasks_by_status(TasksStatuses.OPENED.value)
-            delayed_tasks = TaskService.get_tasks_by_status(TasksStatuses.DELAYED.value)
-            confirmed_tasks = TaskService.get_tasks_by_status(
+            new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED.value)
+            delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED.value)
+            confirmed_tasks = task_service.get_tasks_by_status(
                 TasksStatuses.PERFORMED.value
             )
-            assigned_tasks = TaskService.get_tasks_by_status(
+            assigned_tasks = task_service.get_tasks_by_status(
                 TasksStatuses.ASSIGNED.value
             )
 
-            progress_tasks = TaskService.get_tasks_by_status(
+            progress_tasks = task_service.get_tasks_by_status(
                 TasksStatuses.AT_WORK.value
             )
 
-            performing_tasks = TaskService.get_tasks_by_status(
+            performing_tasks = task_service.get_tasks_by_status(
                 TasksStatuses.PERFORMING.value
             )
 
@@ -38,37 +38,37 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 tasks.extend(item)
         case TasksTitles.ARCHIVE.value:
             tasks.extend(
-                TaskService.get_tasks_by_status(
+                task_service.get_tasks_by_status(
                     TasksStatuses.ARCHIVE.value,
                     userid=dialog_manager.start_data.get("userid"),
                 )
             )
-            tasks.extend(TaskService.get_tasks_by_status(TasksStatuses.CHECKED.value))
+            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED.value))
         case TasksTitles.ASSIGNED.value:
             tasks.extend(
-                TaskService.get_tasks_by_status(
+                task_service.get_tasks_by_status(
                     TasksStatuses.ASSIGNED.value,
                     userid=dialog_manager.event.from_user.id,
                 )
             )
         case TasksTitles.IN_PROGRESS.value:
             tasks.extend(
-                TaskService.get_tasks_by_status(
+                task_service.get_tasks_by_status(
                     TasksStatuses.AT_WORK.value,
                     userid=dialog_manager.event.from_user.id,
                 )
             )
         case TasksTitles.CHECKED.value:
-            tasks.extend(TaskService.get_tasks_by_status(TasksStatuses.CHECKED.value))
+            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED.value))
         case TasksTitles.ENTITY.value:
-            data = TaskService.get_tasks_for_entity(
+            data = task_service.get_tasks_for_entity(
                 dialog_manager.start_data.get("entid")
             )
             if data:
                 tasks.extend(data)
                 wintitle = wintitle.format(data[0].get("name", ""))
         case TasksTitles.SEARCH_RESULT.value:
-            tasks.extend(TaskService.get_tasks_with_filters(dialog_manager.start_data))
+            tasks.extend(task_service.get_tasks_with_filters(dialog_manager.start_data))
 
     tasks.sort(key=lambda x: x["created"], reverse=True)
     return {
@@ -78,7 +78,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
 
 
 async def task(dialog_manager: DialogManager, **kwargs):
-    task = TaskService.get_task(dialog_manager.dialog_data.get("taskid"))[0]
+    task = task_service.get_task(dialog_manager.dialog_data.get("taskid"))[0]
     dialog_manager.dialog_data["task"] = task
     return task
 
@@ -94,14 +94,14 @@ async def acts(dialog_manager: DialogManager, **kwargs):
 
 
 async def entitites(dialog_manager: DialogManager, **kwargs):
-    entities = EntityService.get_entities_by_substr(
+    entities = entity_service.get_entities_by_substr(
         dialog_manager.dialog_data.get("subentity")
     )
     return {"entities": entities}
 
 
 async def slaves(dialog_manager: DialogManager, **kwargs):
-    slaves = EmployeeService.get_employees_by_position("worker")
+    slaves = employee_service.get_employees_by_position("worker")
     return {"slaves": slaves}
 
 
@@ -121,7 +121,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
     )
     usernames = list()
     for userid in data.get("slaves", []):
-        usernames.append(EmployeeService.get_employee(userid[0]).get("username"))
+        usernames.append(employee_service.get_employee(userid[0]).get("username"))
     data["usernames"] = usernames
 
     dialog_manager.dialog_data["task"] = data
@@ -130,8 +130,8 @@ async def result(dialog_manager: DialogManager, **kwargs):
 
 
 async def performed(dialog_manager: DialogManager, **kwargs):
-    task = TaskService.get_task(dialog_manager.start_data["taskid"])[0]
-    performed_counter = len(TaskService.get_tasks_by_status("выполнено"))
+    task = task_service.get_task(dialog_manager.start_data["taskid"])[0]
+    performed_counter = len(task_service.get_tasks_by_status("выполнено"))
     task.update({"counter": performed_counter})
     return task
 
@@ -169,7 +169,7 @@ async def statuses_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def journal_getter(dialog_manager: DialogManager, **kwargs):
-    data = JournalService.get_records(
+    data = journal_service.get_records(
         taskid=dialog_manager.dialog_data.get("task", {}).get("taskid")
     )
     dates = list(set([item.get("dttm").split()[0] for item in data]))

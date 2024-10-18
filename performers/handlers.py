@@ -6,7 +6,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from db.service import EmployeeService, JournalService, TaskService
+from db.service import employee_service, journal_service, task_service
 from jobs import close_task, confirmed_task_notification
 from tasks import states as tsk_states
 
@@ -42,10 +42,10 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
     if manager.dialog_data.get("actid"):
         actid = ",".join(manager.dialog_data["actid"])
-        TaskService.add_act({"taskid": taskid, "actid": actid})
+        task_service.add_act({"taskid": taskid, "actid": actid})
     resultid = ",".join(manager.dialog_data.get("resultid", []))
-    TaskService.update_result(resultid, taskid)
-    TaskService.change_status(taskid, "выполнено")
+    task_service.update_result(resultid, taskid)
+    task_service.change_status(taskid, "выполнено")
 
     note = manager.dialog_data.get("note", "")
     record = f'выполнено, {manager.start_data.get("username")}'
@@ -57,16 +57,16 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "employee": manager.start_data.get("userid"),
         "record": record,
     }
-    JournalService.new_record(recdata)
+    journal_service.new_record(recdata)
 
     record = f"{manager.start_data.get('name')} Уехал"
 
-    last_rec = JournalService.get_last(callback.from_user.id)
+    last_rec = journal_service.get_last(callback.from_user.id)
     if last_rec and record == last_rec.get("record"):
-        JournalService.del_record(last_rec.get("recordid"))
+        journal_service.del_record(last_rec.get("recordid"))
 
     recdata["record"] = record
-    JournalService.new_record(recdata)
+    journal_service.new_record(recdata)
 
     if not manager.start_data["act"]:
         scheduler.add_job(
@@ -78,7 +78,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
             replace_existing=True,
         )
 
-    operators = EmployeeService.get_employees_by_position("operator")
+    operators = employee_service.get_employees_by_position("operator")
     for o in operators:
         operatorid = o["userid"]
         slave = manager.start_data["username"]
@@ -91,7 +91,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
 
 async def on_cancel(clb, button, manager: DialogManager):
-    TaskService.change_status(
+    task_service.change_status(
         manager.start_data.get("taskid"), config.TasksStatuses.AT_WORK.value
     )
 

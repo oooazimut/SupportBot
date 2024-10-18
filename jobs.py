@@ -1,8 +1,8 @@
 import asyncio
 import csv
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
-import logging
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
@@ -12,13 +12,14 @@ from pydantic import ValidationError
 
 from config import CHIEF_ID
 from custom.bot import MyBot
-from db.service import EmployeeService, JournalService, TaskService
+from db.service import employee_service, journal_service, task_service
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
 
 logger = logging.getLogger(__name__)
 
+
 async def close_task(taskid: int):
-    TaskService.change_status(taskid, "закрыто")
+    task_service.change_status(taskid, "закрыто")
 
 
 class TaskFactory(CallbackData, prefix="taskfctr"):
@@ -40,7 +41,6 @@ async def new_task_notification(slaveid: int, task_title: str, taskid: int):
         )
     except (TelegramBadRequest, TelegramForbiddenError, ValidationError):
         pass
-    
 
 
 async def confirmed_task_notification(operatorid, slave, title, taskid):
@@ -126,12 +126,12 @@ async def two_reports():
         for entry in sorted(tasks, key=lambda x: x["dttm"]):
             grouped_tasks[entry["username"]].append(entry)
 
-        users = EmployeeService.get_employees()
+        users = employee_service.get_employees()
         users = [
             user
             for user in users
             if user["username"]
-            not in ["Директор", "Надежда Половинкина", "Сергей Попов", "Роберт"]
+            not in ["Директор", "Надежда Половинкина", "Роберт"]
         ]
         for user in users:
             grouped_road.setdefault(user["username"], [])
@@ -168,9 +168,11 @@ async def two_reports():
 
             print(curr_date, file=report)
             print(file=report)
-            writer.writerow([
-                str(curr_date),
-            ])
+            writer.writerow(
+                [
+                    str(curr_date),
+                ]
+            )
             writer.writerow([])
 
             for user, entries in records.items():
@@ -255,7 +257,7 @@ async def two_reports():
 
     curr_date = datetime.now().date() - timedelta(days=1)
     # Получение данных и вызов основных функций
-    data = JournalService.get_records(date=curr_date)
+    data = journal_service.get_records(date=curr_date)
     records, tasks = process_records(data)
 
     generate_report(records, tasks)
@@ -272,13 +274,13 @@ async def two_reports():
 
 async def journal_reminder():
     bot = MyBot.get_instance()
-    users = EmployeeService.get_employees()
+    users = employee_service.get_employees()
     message_text = "Не забываем отмечаться в журнале!"
     ignored_users = [1740579878, CHIEF_ID]
 
     for user in users:
-        if user['userid'] not in ignored_users:
+        if user["userid"] not in ignored_users:
             try:
-                await bot.send_message(user.get('userid'), message_text)
+                await bot.send_message(user.get("userid"), message_text)
             except TelegramForbiddenError:
                 logger.error(f'Пользователь {user.get("username")} заблокировал бота!')

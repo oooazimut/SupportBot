@@ -1,19 +1,19 @@
 from datetime import datetime
-from ..models import SqLiteDataBase as SqDB
+from sqlite3 import Connection
+
+from db.tools import connector
 
 
-def new_record(data: dict):
+@connector
+def new_record(con: Connection, data: dict):
     data.setdefault("dttm", datetime.now().replace(microsecond=0))
-    query = "INSERT INTO journal (dttm, employee, task, record) VALUES (:dttm, :employee, :task, :record) RETURNING *"
-    return SqDB.post_query(query, data)
+    query = "INSERT INTO journal (dttm, employee, task, record) VALUES (:dttm, :employee, :task, :record)"
+    con.execute(query, data)
+    con.commit()
 
 
-def update_rec_dttm(dttm, recordid):
-    query = "UPDATE journal set dttm = ? where recordid = ? RETURNING *"
-    return SqDB.post_query(query, [dttm, recordid])
-
-
-def get_records(**kwargs):
+@connector
+def get_records(con: Connection, **kwargs) -> list:
     data = kwargs
     query = """
     SELECT *
@@ -41,14 +41,14 @@ def get_records(**kwargs):
         query = query + " WHERE " + " AND ".join(adds)
 
     query += " ORDER BY created DESC"
-    return SqDB.select_query(query, data)
+    return con.execute(query, data).fetchall()
 
 
-def get_last(userid) -> dict | None:
+@connector
+def get_last(con: Connection, userid: str | int) -> dict | None:
     curr_date = datetime.today().date()
     query = 'SELECT * FROM journal WHERE employee = ? AND DATE(dttm) = ? AND (record LIKE "%Приехал" OR record LIKE "%Уехал") ORDER BY dttm DESC LIMIT 1'
-    res = SqDB.select_query(query, [userid, curr_date])
-    return res[0] if res else None
+    return con.execute(query, [userid, curr_date]).fetchone()
 
 
 def get_last_record(userid: str | int) -> str:
@@ -61,6 +61,8 @@ def get_last_record_id(userid) -> int:
     return result["recordid"] if result else 0
 
 
-def del_record(recordid):
-    query = "DELETE FROM journal WHERE recordid = ? RETURNING *"
-    SqDB.post_query(query, [recordid])
+@connector
+def del_record(con: Connection, recordid):
+    query = "DELETE FROM journal WHERE recordid = ?"
+    con.execute(query, [recordid])
+    con.commit()
