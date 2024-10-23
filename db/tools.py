@@ -30,4 +30,4 @@ def connector(func: Callable):
 
 @connector
 def create_db(con: sq.Connection, script) -> None:
-    con.execute(script)
+    con.executescript(script)

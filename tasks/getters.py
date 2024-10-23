@@ -78,7 +78,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
 
 
 async def task(dialog_manager: DialogManager, **kwargs):
-    task = task_service.get_task(dialog_manager.dialog_data.get("taskid"))[0]
+    task = task_service.get_task(dialog_manager.dialog_data.get("taskid"))
     dialog_manager.dialog_data["task"] = task
     return task
 
@@ -130,7 +130,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
 
 
 async def performed(dialog_manager: DialogManager, **kwargs):
-    task = task_service.get_task(dialog_manager.start_data["taskid"])[0]
+    task = task_service.get_task(dialog_manager.start_data["taskid"])
     performed_counter = len(task_service.get_tasks_by_status("выполнено"))
     task.update({"counter": performed_counter})
     return task
