@@ -130,8 +130,7 @@ async def two_reports():
         users = [
             user
             for user in users
-            if user["username"]
-            not in ["Директор", "Надежда Половинкина", "Роберт"]
+            if user["username"] not in ["Директор", "Надежда Половинкина", "Роберт"]
         ]
         for user in users:
             grouped_road.setdefault(user["username"], [])
@@ -284,3 +283,18 @@ async def journal_reminder():
                 await bot.send_message(user.get("userid"), message_text)
             except TelegramForbiddenError:
                 logger.error(f'Пользователь {user.get("username")} заблокировал бота!')
+
+
+async def check_work_execution(performer_id: str | int):
+    bot = MyBot.get_instance()
+    users = employee_service.get_employees_by_position("operator")
+    performer = employee_service.get_employee(performer_id)
+    message_text = (
+        f"{performer['username']} уже 30 минут на объекте, необходимо ему позвонить!"
+    )
+
+    for user in users:
+        try:
+            await bot.send_message(user["userid"], message_text)
+        except (TelegramBadRequest, TelegramForbiddenError):
+            pass
