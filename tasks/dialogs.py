@@ -27,7 +27,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja, List
 from custom.babel_calendar import CustomCalendar
-from db.service import EmployeeService
+from db.service import employee_service
 
 from . import getters, handlers, states
 
@@ -289,12 +289,12 @@ new = Dialog(
 
 
 def user_is_operator(data, widget, dialog_manager: DialogManager) -> bool:
-    user: dict = EmployeeService.get_employee(userid=dialog_manager.event.from_user.id)
+    user: dict = employee_service.get_employee(userid=dialog_manager.event.from_user.id)
     return user.get("position") == "operator"
 
 
 def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
-    user = EmployeeService.get_employee(userid=dialog_manager.event.from_user.id)
+    user = employee_service.get_employee(userid=dialog_manager.event.from_user.id)
     return user.get("position") == "worker"
 
 

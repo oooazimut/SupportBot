@@ -16,7 +16,7 @@ from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import config
-from db.service import TaskService
+from db.service import task_service
 from tasks import states as tsk_states
 from journal import states as jrn_states
 
@@ -47,7 +47,7 @@ main = Dialog(
 def acts_are_existing(data, widget, dialog_manager: DialogManager) -> bool:
     userid = dialog_manager.event.from_user.id
     return (
-        bool(TaskService.get_tasks_by_status("проверка")) and userid == config.CHIEF_ID
+        bool(task_service.get_tasks_by_status("проверка")) and userid == config.CHIEF_ID
     )
 
 
