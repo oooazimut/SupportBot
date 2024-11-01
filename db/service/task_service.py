@@ -222,3 +222,12 @@ def change_dttm(con: Connection, taskid, dttm):
     query = "UPDATE tasks SET created = ? WHERE taskid = ?"
     con.execute(query, [dttm, taskid])
     con.commit()
+
+@connector
+def clone_task(taskid):
+    task = get_task((taskid))
+    task['created'] = datetime.now().replace(microsecond=0)
+    task['status'] = 'открыто'
+    for item in ('slave', 'resultid', 'actid'):
+        task[item] = None
+    save_task(task)
