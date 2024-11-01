@@ -7,7 +7,7 @@ from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import START_STATES
-from db.service import EmployeeService
+from db.service import employee_service
 from jobs import TaskFactory
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
     txt = f'Пользователь {message.from_user.full_name} {message.from_user.id} запустил бота'
     await bot.send_message(chat_id=5963726977, text=txt)
 
-    user = EmployeeService.get_employee(userid=message.from_user.id)
+    user = employee_service.get_employee(userid=message.from_user.id)
     if user:
         position = user['position']
     else:

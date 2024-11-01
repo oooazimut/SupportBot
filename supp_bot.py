@@ -2,8 +2,6 @@ import asyncio
 import logging
 
 from aiogram import Dispatcher
-
-# from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
@@ -14,23 +12,23 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from redis.asyncio.client import Redis
 
 import config
-from db.models import SqLiteDataBase
-from db.schema import CREATE_DB_SCRIPT
-from db.service import EmployeeService
 import jobs
 import middlewares
 from custom.bot import MyBot
-from routers import finish_router, start_router
-from operators import dialogs as op_dialogs
-from performers import dialogs as prf_dialogs
-from tasks import dialogs as tsk_dialogs  # noqa: F401
+from db.schema import CREATE_DB_SCRIPT
+from db.service import employee_service
+from db.tools import create_db
 from journal import dialogs as jrn_dialogs
 from observers import dialogs as ob_dialogs
+from operators import dialogs as op_dialogs
+from performers import dialogs as prf_dialogs
+from routers import finish_router, start_router
+from tasks import dialogs as tsk_dialogs  # noqa: F401
 
 
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
     userid = dialog_manager.middleware_data["event_from_user"].id
-    user = EmployeeService.get_employee(userid=userid)
+    user = employee_service.get_employee(userid=userid)
     if user:
         position = user["position"]
     else:
@@ -44,9 +42,8 @@ async def main():
     logging.basicConfig(
         level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s"
     )
-    SqLiteDataBase.create(script=CREATE_DB_SCRIPT)
+    create_db(script=CREATE_DB_SCRIPT)
     bot = MyBot(config.TOKEN, parse_mode=ParseMode.HTML).get_instance()
-    # bot = MyBot(config.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     storage = RedisStorage(
         Redis(), key_builder=DefaultKeyBuilder(with_destiny=True, with_bot_id=True)
     )

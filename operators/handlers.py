@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from db.service import JournalService, TaskService
+from db.service import journal_service, task_service
 from jobs import closed_task_notification
 
 
@@ -62,7 +62,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
         "employee": manager.start_data.get("userid"),
     }
 
-    TaskService.change_dttm(taskid, datetime.datetime.now())
+    task_service.change_dttm(taskid, datetime.datetime.now())
 
     is_checking = (
         manager.start_data["status"] == "проверка" or not manager.start_data["act"]
@@ -70,7 +70,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     new_status = "закрыто" if is_checking else "проверка"
     manager.start_data.update({"status": new_status})
 
-    TaskService.update_task(manager.start_data)
+    task_service.update_task(manager.start_data)
 
     if new_status == "закрыто":
         job = scheduler.get_job(job_id=str(taskid))
@@ -91,12 +91,12 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
 
     action = "закрыл" if new_status == "закрыто" else "отправил на проверку"
     recdata["record"] = f"{action} {operator}\n{manager.dialog_data.get('summary') or ''}"
-    JournalService.new_record(recdata)
+    journal_service.new_record(recdata)
     if manager.dialog_data.get('summary'):
         del manager.dialog_data["summary"]
 
     if manager.dialog_data.get("closing_type") == "частично":
-        TaskService.reopen_task(taskid)
+        task_service.reopen_task(taskid)
 
     await manager.done()
 
@@ -111,9 +111,9 @@ async def delay_handler(
     trigger_data = datetime.date.today() + datetime.timedelta(days=delay)
     year, month, day = trigger_data.year, trigger_data.month, trigger_data.day
 
-    TaskService.change_status(taskid, status="отложено")
+    task_service.change_status(taskid, status="отложено")
     scheduler.add_job(
-        TaskService.change_status,
+        task_service.change_status,
         trigger="date",
         run_date=datetime.datetime(year, month, day, 9, 0, 0),
         args=[taskid, delayed_status],
@@ -126,7 +126,7 @@ async def delay_handler(
 
 
 async def on_remove(callback: CallbackQuery, button, dialog_manager: DialogManager):
-    TaskService.remove_task(dialog_manager.start_data.get("taskid"))
+    task_service.remove_task(dialog_manager.start_data.get("taskid"))
     await callback.answer("Заявка удалена", show_alert=True)
     try:
         await dialog_manager.done()

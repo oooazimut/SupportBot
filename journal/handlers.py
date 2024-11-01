@@ -1,8 +1,14 @@
 from datetime import datetime
+
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
+from db.service import (
+    employee_service,
+    entity_service,
+    journal_service,
+    receipts_service,
+)
 from redis.asyncio.client import Redis
-from db.service import EmployeeService, EntityService, JournalService, ReceiptsService
 
 from . import states
 
@@ -13,10 +19,10 @@ async def on_location(
     if not int(location):
         r = Redis()
         data = await r.get(str(callback.from_user.id))
-        data = data.decode('utf-8')
+        data = data.decode("utf-8")
         await r.aclose()
     else:
-        data = EntityService.get_entity(location)[0]["name"]
+        data = entity_service.get_entity(location)["name"]
 
     dialog_manager.dialog_data["location"] = data
     await dialog_manager.switch_to(states.JrMainMenuSG.action)
@@ -25,8 +31,8 @@ async def on_location(
 async def on_action(
     callback: CallbackQuery, select, dialog_manager: DialogManager, action: str, /
 ):
-    user = EmployeeService.get_employee(callback.from_user.id)
-    last_record = JournalService.get_last_record(callback.from_user.id)
+    user = employee_service.get_employee(callback.from_user.id)
+    last_record = journal_service.get_last_record(callback.from_user.id)
     current_record = f"{dialog_manager.dialog_data.get('location')} {action}"
     if last_record and action in last_record:
         await callback.answer(
@@ -41,7 +47,7 @@ async def on_action(
 
 
 async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
-    JournalService.new_record(manager.dialog_data)
+    journal_service.new_record(manager.dialog_data)
 
     if manager.dialog_data["record"].split()[-1] == "Уехал":
         r = Redis()
@@ -68,14 +74,14 @@ async def pin_receipt(message: Message, message_input, manager: DialogManager):
     receipt = message.photo[-1].file_id
     caption = message.caption
 
-    ReceiptsService.new_receipt(
+    receipts_service.new_receipt(
         {"dttm": dttm, "employee": employee, "receipt": receipt, "caption": caption}
     )
     await manager.done()
 
 
 async def on_search(callback: CallbackQuery, button, manager: DialogManager):
-    user = EmployeeService.get_employee(callback.from_user.id)
+    user = employee_service.get_employee(callback.from_user.id)
     data = {}
 
     if user.get("position") in ("worker",):
@@ -83,6 +89,6 @@ async def on_search(callback: CallbackQuery, button, manager: DialogManager):
 
     await manager.start(states.JrSearchSG.datestamp, data=data)
 
-async def on_checks(callback: CallbackQuery, button, manager: DialogManager): 
-    await manager.find("receipts_scroll").set_page(0)
 
+async def on_checks(callback: CallbackQuery, button, manager: DialogManager):
+    await manager.find("receipts_scroll").set_page(0)
