@@ -514,6 +514,6 @@ async def confirm_arrived(callback: CallbackQuery, button, manager: DialogManage
 
 async def on_clone(callback: CallbackQuery, button, manager: DialogManager):
     taskid = manager.dialog_data.get('task', {}).get('taskid')
-    TaskService.clone_task(taskid)
+    task_service.clone_task(taskid)
     await callback.answer('Заявка клонирована', show_alert=True)
 

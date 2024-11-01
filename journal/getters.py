@@ -29,12 +29,11 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
         curr_location = last_record.rsplit(maxsplit=1)[0]
         checked_location = entity_service.get_entity_by_name(curr_location)
         if checked_location:
-            locations = checked_location
+            locations = [checked_location,]
         else:
             locations = [{"ent_id": "0", "name": curr_location}]
         dialog_manager.dialog_data["curr_location"] = curr_location
         return {"locations": locations}
-
     return {"locations": locations}
 
 
