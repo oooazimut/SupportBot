@@ -295,6 +295,8 @@ async def check_work_execution(performer_id: str | int):
 
     for user in users:
         try:
-            await bot.send_message(user["userid"], message_text)
+            messaga = await bot.send_message(user["userid"], message_text)
+            await asyncio.sleep(300)
+            await messaga.delete()
         except (TelegramBadRequest, TelegramForbiddenError):
             pass
