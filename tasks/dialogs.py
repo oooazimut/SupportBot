@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict
 
 import config
@@ -28,7 +29,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja, List
 from custom.babel_calendar import CustomCalendar
-from db.service import employee_service
+from db.service import employee_service, journal_service
 
 from . import getters, handlers, states
 
@@ -299,6 +300,17 @@ def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
     return user.get("position") == "worker"
 
 
+def isnt_arriving(data, widget, dialog_manager: DialogManager) -> bool:
+    record = journal_service.get_records(
+        date=datetime.today().date(),
+        object=data["name"],
+        taskid=data["taskid"],
+        record="%Приехал%",
+    )
+
+    return bool(not record and data["status"] == "в работе")
+
+
 tasks = Dialog(
     Window(
         Format("{wintitle}"),
@@ -403,7 +415,7 @@ tasks = Dialog(
                 Const("Приехал на объект"),
                 id="arrived_to_object",
                 on_click=handlers.on_arrived,
-                when=F["status"].in_("в работе"),
+                when=isnt_arriving,
             ),
             Button(
                 Const("Выполнено"),

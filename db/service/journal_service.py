@@ -35,7 +35,7 @@ def get_records(con: Connection, **kwargs) -> list:
     if data.get("object"):
         adds.append("ent.name = :object")
     if data.get("record"):
-        adds.append('ent.record LIKE "%:record%"')
+        adds.append('j.record LIKE :record')
 
     if adds:
         query = query + " WHERE " + " AND ".join(adds)

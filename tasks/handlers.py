@@ -510,7 +510,7 @@ async def confirm_arrived(callback: CallbackQuery, button, manager: DialogManage
         run_date=run_time,
         args=[callback.from_user.id],
     )
-    await manager.switch_to(state=states.TasksSG.task)
+    await manager.switch_to(state=states.TasksSG.task, show_mode=ShowMode.DELETE_AND_SEND)
 
 async def on_clone(callback: CallbackQuery, button, manager: DialogManager):
     taskid = manager.dialog_data.get('task', {}).get('taskid')
