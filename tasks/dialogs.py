@@ -23,6 +23,7 @@ from aiogram_dialog.widgets.kbd import (
     Select,
     StubScroll,
     SwitchTo,
+    Url,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja, List
@@ -333,6 +334,7 @@ tasks = Dialog(
         Format("Статус: {status}"),
         Format("\nНужен акт", when="act"),
         Format("<b><i><u>Согласование: {agreement}</u></i></b>", when="agreement"),
+        Url(Const("Геолокация(яндекс)"), Format("{address}"), when=F["address"]),
         Button(
             Const("Мультимедиа от оператора"),
             id="mm_description",
@@ -384,7 +386,9 @@ tasks = Dialog(
                 state=states.TasksSG.add_media,
                 when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
             ),
-            Button(Const('Клонировать заявку'), id='clone_task', on_click=handlers.on_clone),
+            Button(
+                Const("Клонировать заявку"), id="clone_task", on_click=handlers.on_clone
+            ),
             Button(Const("Удалить заявку"), id="rm_task", on_click=handlers.on_remove),
             when=user_is_operator,
         ),
@@ -441,7 +445,11 @@ tasks = Dialog(
         Format(
             "В журнал будет добавлена запись о том, что вы прибыли на объект {dialog_data[task][name]}"
         ),
-        Button(Const("Подтвердить"), id="confirm_arrived", on_click=handlers.confirm_arrived),
+        Button(
+            Const("Подтвердить"),
+            id="confirm_arrived",
+            on_click=handlers.confirm_arrived,
+        ),
         SwitchTo(Const("Назад"), id="back_to_task", state=states.TasksSG.task),
         state=states.TasksSG.confirm_arrived,
     ),
