@@ -50,7 +50,6 @@ CREATE_DB_SCRIPT = """
         );
     CREATE TABLE IF NOT EXISTS cars (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        manufacturer TEXT,
         model TEXT,
         state_number TEXT
         );
@@ -58,6 +57,8 @@ CREATE_DB_SCRIPT = """
         dttm timestamp,
         car INTEGER,
         user INTEGER,
+        FOREIGN KEY (car) REFERENCES cars (id),
+        FOREIGN KEY (user) REFERENCES employees (userid)
         );
     COMMIT; 
     """
