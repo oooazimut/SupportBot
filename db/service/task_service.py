@@ -6,11 +6,19 @@ from db.tools import connector
 
 @connector
 def save_task(con: Connection, task: dict):
-    query = (
-        "INSERT INTO tasks (created, creator, phone, title, description, media_type, media_id, status, "
-        "priority, act, entity, slave, agreement, simple_report, recom_time) VALUES (:created, :creator, :phone, :title, :description, "
-        ":media_type, :media_id, :status, :priority, :act, :entity, :slave, :agreement, :simple_report, :recom_time) RETURNING *"
-    )
+    query = """
+    INSERT INTO tasks (
+        created, creator, phone, title, description, 
+        media_type, media_id, status, priority, act, 
+        entity, slave, agreement, simple_report, recom_time
+        ) 
+         VALUES (
+        :created, :creator, :phone, :title, :description, 
+        :media_type, :media_id, :status, :priority, :act, 
+        :entity, :slave, :agreement, :simple_report, :recom_time
+        ) 
+      RETURNING *
+    """
     result = con.execute(query, task).fetchone()
     con.commit()
     return result
@@ -25,11 +33,19 @@ def remove_task(con: Connection, taskid):
 
 @connector
 def update_task(con: Connection, task: dict):
-    query = (
-        "UPDATE tasks SET (created, phone, title, description, media_type, media_id, status, priority, act, entity, "
-        "slave, agreement, simple_report, recom_time) = (:created, :phone, :title, :description, :media_type, :media_id, :status, :priority, "
-        ":act, :entity, :slave, :agreement, :simple_report, :recom_time) WHERE taskid = :taskid RETURNING *"
-    )
+    query = """
+        UPDATE tasks 
+           SET (
+        created, phone, title, description, media_type, 
+        media_id, status, priority, act, entity, slave, 
+        agreement, simple_report, recom_time
+    ) = (
+        :created, :phone, :title, :description, :media_type, 
+        :media_id, :status, :priority, :act, :entity, :slave, 
+        :agreement, :simple_report, :recom_time) 
+         WHERE taskid = :taskid 
+     RETURNING *
+    """
     result = con.execute(query, task).fetchone()
     con.commit()
     return result
@@ -38,13 +54,13 @@ def update_task(con: Connection, task: dict):
 @connector
 def get_task(con: Connection, taskid) -> list:
     query = """
-    SELECT *
-    FROM tasks as t
+       SELECT *
+         FROM tasks as t
     LEFT JOIN entities as e
-    ON e.ent_id = t.entity
+           ON e.ent_id = t.entity
     LEFT JOIN employees as em
-    ON em.userid = t.slave
-    WHERE t.taskid = ?
+           ON em.userid = t.slave
+        WHERE t.taskid = ?
     """
     return con.execute(query, [taskid]).fetchone()
 
@@ -88,13 +104,13 @@ def get_tasks_with_filters(con: Connection, data: dict = {}):
 def get_tasks_by_status(con: Connection, status, userid=None) -> list:
     finish = "ORDER BY created"
     query = """
-    SELECT *
-    FROM tasks as t
+       SELECT *
+         FROM tasks as t
     LEFT JOIN employees as em
-    ON em.userid = t.slave
+           ON em.userid = t.slave
     LEFT JOIN entities as en
-    ON en.ent_id = t.entity
-    WHERE t.status = ?
+           ON en.ent_id = t.entity
+        WHERE t.status = ?
     """
     if userid:
         query += " AND t.slave = ?"
@@ -109,15 +125,18 @@ def get_tasks_by_status(con: Connection, status, userid=None) -> list:
 def get_archive_tasks(con: Connection, clientid):
     query = """
     SELECT * 
-    FROM entities as e
-    JOIN tasks as t
-    ON t.entity = e.ent_id
-    WHERE t.creator = ?
-    AND t.status = 'закрыто'
-    AND t.entity = (SELECT entity
-                    FROM tasks
-                    WHERE creator = ? AND entity IS NOT NULL
-                    ORDER BY id DESC LIMIT 1)
+      FROM entities as e
+      JOIN tasks as t
+        ON t.entity = e.ent_id
+     WHERE t.creator = ?
+       AND t.status = 'закрыто'
+       AND t.entity = (
+                SELECT entity
+                  FROM tasks
+                 WHERE creator = ? 
+                   AND entity IS NOT NULL
+              ORDER BY id DESC LIMIT 1
+            )
     """
     return con.execute(query, [clientid, clientid]).fetchall()
 
@@ -126,15 +145,18 @@ def get_archive_tasks(con: Connection, clientid):
 def get_active_tasks(con: Connection, userid):
     query = """
     SELECT * 
-    FROM entities 
-    JOIN tasks 
-    ON tasks.entity = entities.ent_id 
-    WHERE tasks.creator = ?
-    AND tasks.status != 'закрыто'
-    AND tasks.entity = (SELECT entity 
-                        FROM tasks 
-                        WHERE creator = ? AND entity IS NOT NULL
-                        ORDER BY id DESC LIMIT 1)
+      FROM entities 
+      JOIN tasks 
+        ON tasks.entity = entities.ent_id 
+     WHERE tasks.creator = ?
+       AND tasks.status != 'закрыто'
+       AND tasks.entity = (
+            SELECT entity 
+              FROM tasks 
+             WHERE creator = ? 
+               AND entity IS NOT NULL
+          ORDER BY id DESC LIMIT 1
+        )
     """
     return con.execute(query, [userid, userid]).fetchall()
 
@@ -173,13 +195,13 @@ def change_worker(con: Connection, task_id, slave):
 @connector
 def get_tasks_for_entity(con: Connection, entid):
     query = """
-    SELECT *
-    FROM tasks as t
-    LEFT JOIN employees as em
-    ON em.userid = t.slave
+       SELECT *
+         FROM tasks AS t
+    LEFT JOIN employees AS em
+           ON em.userid = t.slave
     LEFT JOIN entities as en
-    ON en.ent_id = t.entity
-    WHERE t.entity = ?
+           ON en.ent_id = t.entity
+        WHERE t.entity = ?
     """
     return con.execute(query, [entid]).fetchall()
 
@@ -223,11 +245,12 @@ def change_dttm(con: Connection, taskid, dttm):
     con.execute(query, [dttm, taskid])
     con.commit()
 
+
 @connector
 def clone_task(con, taskid):
     task = get_task((taskid))
-    task['created'] = datetime.now().replace(microsecond=0)
-    task['status'] = 'открыто'
-    for item in ('slave', 'resultid', 'actid'):
+    task["created"] = datetime.now().replace(microsecond=0)
+    task["status"] = "открыто"
+    for item in ("slave", "resultid", "actid"):
         task[item] = None
     save_task(task)
