@@ -8,6 +8,7 @@ class JrMainMenuSG(StatesGroup):
     action = State()
     confirm = State()
     pin_receipt = State()
+    sel_car = State()
 
 class JrSearchSG(StatesGroup):
     datestamp = State()

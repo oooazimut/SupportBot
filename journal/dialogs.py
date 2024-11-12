@@ -97,6 +97,20 @@ main = Dialog(
         Cancel(Const("Отмена")),
         state=states.JrMainMenuSG.pin_receipt,
     ),
+    Window(
+        Const("Выбор автомобиля"),
+        Column(
+            Select(
+                Format("{item[model]}, {item[state_number]}"),
+                id="sel_car",
+                item_id_getter=lambda x: x["id"],
+                items="cars",
+                on_click=handlers.on_car,
+            )
+        ),
+        state=states.JrMainMenuSG.sel_car,
+        getter=getters.cars,
+    ),
 )
 
 search = Dialog(
@@ -119,7 +133,17 @@ search = Dialog(
             items="journal",
             when="journal",
         ),
-        Next(Const("Чеки"), on_click=handlers.on_checks, when=F["dialog_data"]["receipts"]),
+        Const("\nАвтомобили:", when='cars'),
+        List(
+            Format("{item[dttm]}: {item[model]} {item[state_number]}", when=F["item"]["model"]),
+            items="cars",
+            when="cars",
+        ),
+        Next(
+            Const("Чеки"),
+            on_click=handlers.on_checks,
+            when=F["dialog_data"]["receipts"],
+        ),
         StubScroll(id="users_scroll", pages="pages"),
         Group(NumberedPager(scroll="users_scroll", when=F["pages"] > 1), width=8),
         Cancel(Const("Выход")),

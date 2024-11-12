@@ -6,17 +6,21 @@ from db.tools import connector
 @connector
 def save_employee(con: Connection, userid: int, username: str, position: str):
     params = [userid, username, position]
-    con.execute(
-        "INSERT INTO employees(userid, username, position) VALUES (?, ?, ?)",
-        params,
-    )
+    query = """
+    INSERT INTO employees(userid, username, position) 
+         VALUES (?, ?, ?)
+    """
+    con.execute(query, params)
 
 
 @connector
 def get_employee(con: Connection, userid: str | int) -> dict | None:
-    employee = con.execute(
-        "SELECT * FROM employees WHERE userid = ?", [userid]
-    ).fetchone()
+    query = """
+    SELECT * 
+      FROM employees 
+     WHERE userid = ?
+    """
+    employee = con.execute(query, [userid]).fetchone()
     return employee
 
 
