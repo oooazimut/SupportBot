@@ -67,12 +67,35 @@ def pin_car(con: Connection, car_id, user_id):
 
 @connector
 def get_pinned_cars(con: Connection, **kwargs):
-    query = """
+    # inner_query = '''
+    # SELECT ciu.dttm AS dttm, c.model AS model, c.state_number AS state_number,
+    #     ROW_NUMBER() OVER(PARTITION BY c.model, c.state_number ORDER BY ciu.dttm) AS rn
+    #             FROM cars_in_use AS ciu
+    #        LEFT JOIN cars AS c 
+    #               ON ciu.car = c.id
+
+    # '''
+    # adds = list()
+    # if kwargs:
+    #     for key in ("user", "car"):
+    #         if kwargs.get(key):
+    #             adds.append(f"ciu.{key} = :{key}")
+    #     if kwargs.get("dttm"):
+    #         adds.append("DATE(ciu.dttm) = :dttm")
+    #     inner_query += " WHERE " + " AND ".join(adds)
+    # query =f"""
+    #       WITH RankedCars AS ({inner_query})
+    #     SELECT dttm, model, state_number
+    #       FROM RankedCars
+    #      WHERE rn = 1
+    #     """
+
+    query = '''
        SELECT ciu.dttm AS dttm, c.model AS model, c.state_number AS state_number
          FROM cars_in_use AS ciu
     LEFT JOIN cars AS c 
            ON ciu.car = c.id
-    """
+    '''
     adds = list()
     if kwargs:
         for key in ("user", "car"):
