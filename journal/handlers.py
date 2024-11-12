@@ -3,6 +3,7 @@ from datetime import datetime
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from db.service import (
+    car_service,
     employee_service,
     entity_service,
     journal_service,
@@ -43,11 +44,23 @@ async def on_action(
     dialog_manager.dialog_data["employee"] = user.get("userid")
     dialog_manager.dialog_data["task"] = None
     dialog_manager.dialog_data["record"] = current_record
-    await dialog_manager.next()
+
+    if (
+        dialog_manager.dialog_data.get("location", "").lower() in ("дом", "офис")
+        and action == "Уехал"
+        and user["position"] == "worker"
+    ):
+        await dialog_manager.switch_to(states.JrMainMenuSG.sel_car)
+    else:
+        await dialog_manager.next()
 
 
 async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
     journal_service.new_record(manager.dialog_data)
+
+    if manager.dialog_data.get("current_car"):
+        car_service.pin_car(manager.dialog_data["current_car"], callback.from_user.id)
+        del manager.dialog_data["current_car"]
 
     if manager.dialog_data["record"].split()[-1] == "Уехал":
         r = Redis()
@@ -92,3 +105,10 @@ async def on_search(callback: CallbackQuery, button, manager: DialogManager):
 
 async def on_checks(callback: CallbackQuery, button, manager: DialogManager):
     await manager.find("receipts_scroll").set_page(0)
+
+
+async def on_car(
+    callback: CallbackQuery, select, manager: DialogManager, car_id: str, /
+):
+    manager.dialog_data["current_car"] = car_id
+    await manager.switch_to(states.JrMainMenuSG.confirm)

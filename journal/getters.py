@@ -4,6 +4,7 @@ from aiogram.enums import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 from db.service import (
+    car_service,
     employee_service,
     entity_service,
     journal_service,
@@ -29,7 +30,9 @@ async def locations_getter(dialog_manager: DialogManager, **kwargs):
         curr_location = last_record.rsplit(maxsplit=1)[0]
         checked_location = entity_service.get_entity_by_name(curr_location)
         if checked_location:
-            locations = [checked_location,]
+            locations = [
+                checked_location,
+            ]
         else:
             locations = [{"ent_id": "0", "name": curr_location}]
         dialog_manager.dialog_data["curr_location"] = curr_location
@@ -94,7 +97,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
             append_data(search_data, data)
 
     user_index = await dialog_manager.find("users_scroll").get_page()
-    username = journal = None
+    username, journal, cars = None, None, None
 
     if data:
         username = data[user_index][0]["username"]
@@ -107,10 +110,11 @@ async def result(dialog_manager: DialogManager, **kwargs):
         )
         dialog_manager.dialog_data["username"] = username
         journal = data[user_index]
+        cars = car_service.get_pinned_cars(dttm=rec_date, user=userid)
 
     pages = len(data)
 
-    return {"pages": pages, "username": username, "journal": journal}
+    return {"pages": pages, "username": username, "journal": journal, "cars": cars}
 
 
 async def receipts_getter(dialog_manager: DialogManager, **kwargs):
@@ -130,3 +134,8 @@ async def receipts_getter(dialog_manager: DialogManager, **kwargs):
         "username": dialog_manager.dialog_data["username"],
         "caption": caption,
     }
+
+
+async def cars(dialog_manager: DialogManager, **kwargs):
+    cars: dict = car_service.get_cars()
+    return {"cars": cars}

@@ -336,6 +336,7 @@ tasks = Dialog(
     Window(
         Const("Заявка: \n"),
         Format("{created}"),
+        Format("Телефон: {phone}", when="phone"),
         Format("Объект: {name}", when="name"),
         Format("Тема: {title}"),
         Format("Описание: {description}", when="description"),

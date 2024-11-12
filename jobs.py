@@ -2,7 +2,7 @@ import asyncio
 import csv
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
@@ -94,6 +94,9 @@ async def returned_task(slaveid, task, taskid):
 
 
 async def two_reports():
+    # curr_date = datetime.now().date() - timedelta(days=1)
+    curr_date = date(2024, 11, 10)
+
     def process_records(data):
         """Функция обработки записей."""
         keys = ["username", "record", "dttm", "name", "recom_time", "task"]
@@ -145,6 +148,7 @@ async def two_reports():
         """Вывод общей информации по времени."""
         if any(lst for lst in (total_road, total_obj, total_office)):
             print("  Общее время:", file=report)
+            writer.writerow(["", "Общее время:"])
 
         for name, times in (
             ("Офис", total_office),
@@ -154,12 +158,11 @@ async def two_reports():
             total_time = sum(times, timedelta())
             if total_time:
                 print(f"    {name}: {total_time}", file=report)
-                writer.writerow([name, total_time])
+                writer.writerow(["", name, total_time])
 
-    def generate_report(records, tasks):
+    def generate_report(records, tasks, curr_date):
         """Генерация текстового и CSV отчета."""
 
-        curr_date = datetime.now().date() - timedelta(days=1)
         with open(f"{curr_date}.txt", "w") as report, open(
             f"{curr_date}.csv", "w", encoding="cp1251", newline=""
         ) as csv_report:
@@ -222,7 +225,22 @@ async def two_reports():
                         print(
                             f"        {time_spent}ч. на объекте {summary}", file=report
                         )
-
+                        writer.writerows(
+                            [
+                                ["", curr_obj],
+                                [
+                                    "",
+                                    str(prev["dttm"]).split()[1],
+                                    prev["record"].rsplit(" ", 1)[1],
+                                ],
+                                [
+                                    "",
+                                    str(curr["dttm"]).split()[1],
+                                    curr["record"].rsplit(" ", 1)[1],
+                                ],
+                                ["", f"{time_spent}ч. на объекте {summary}"],
+                            ]
+                        )
                     elif (
                         "уехал" in prev["record"].lower()
                         and "приехал" in curr["record"].lower()
@@ -234,6 +252,7 @@ async def two_reports():
                             sep="\n",
                             file=report,
                         )
+                        writer.writerow(["", f"{time_spent} в дороге"])
                         total_road.append(time_spent)
 
                     else:
@@ -246,20 +265,26 @@ async def two_reports():
                             f'        {str(curr["dttm"]).split()[1]}: {curr["record"]}',
                             file=report,
                         )
-
+                        writer.writerows(
+                            [
+                                ["", 'Ошибка, нет пары "приехал-уехал":'],
+                                ["", str(prev["dttm"]).split()[1], prev["record"]],
+                                ["", str(curr["dttm"]).split()[1], curr["record"]],
+                            ]
+                        )
                     print(file=report)
+                    writer.writerow([])
 
                 # Запись итоговой информации
                 write_summary(writer, report, total_road, total_obj, total_office)
                 print(file=report)
                 writer.writerow([])
 
-    curr_date = datetime.now().date() - timedelta(days=1)
     # Получение данных и вызов основных функций
     data = journal_service.get_records(date=curr_date)
     records, tasks = process_records(data)
 
-    generate_report(records, tasks)
+    generate_report(records, tasks, curr_date)
 
     root_folder = "Telegram/Reports"  # Корневая папка на Яндекс.Диске
     for suff in ["csv", "txt"]:
