@@ -7,7 +7,10 @@ from db.tools import connector
 @connector
 def new_record(con: Connection, data: dict):
     data.setdefault("dttm", datetime.now().replace(microsecond=0))
-    query = "INSERT INTO journal (dttm, employee, task, record) VALUES (:dttm, :employee, :task, :record)"
+    query = """
+    INSERT INTO journal (dttm, employee, task, record) 
+         VALUES (:dttm, :employee, :task, :record)
+    """
     con.execute(query, data)
     con.commit()
 
@@ -16,11 +19,14 @@ def new_record(con: Connection, data: dict):
 def get_records(con: Connection, **kwargs) -> list:
     data = kwargs
     query = """
-    SELECT *
-    FROM journal as j
-    LEFT JOIN employees as e ON e.userid = j.employee
-    LEFT JOIN tasks as t ON t.taskid= j.task
-    LEFT JOIN entities as ent ON ent.ent_id =  t.entity 
+       SELECT *
+         FROM journal as j
+    LEFT JOIN employees as e 
+           ON e.userid = j.employee
+    LEFT JOIN tasks as t 
+           ON t.taskid= j.task
+    LEFT JOIN entities as ent 
+           ON ent.ent_id =  t.entity 
     """
     adds = list()
     if data.get("userid"):
@@ -35,7 +41,7 @@ def get_records(con: Connection, **kwargs) -> list:
     if data.get("object"):
         adds.append("ent.name = :object")
     if data.get("record"):
-        adds.append('j.record LIKE :record')
+        adds.append("j.record LIKE :record")
 
     if adds:
         query = query + " WHERE " + " AND ".join(adds)
@@ -47,7 +53,14 @@ def get_records(con: Connection, **kwargs) -> list:
 @connector
 def get_last(con: Connection, userid: str | int) -> dict | None:
     curr_date = datetime.today().date()
-    query = 'SELECT * FROM journal WHERE employee = ? AND DATE(dttm) = ? AND (record LIKE "%Приехал" OR record LIKE "%Уехал") ORDER BY dttm DESC LIMIT 1'
+    query = """
+      SELECT * 
+        FROM journal 
+       WHERE employee = ? 
+         AND DATE(dttm) = ? 
+         AND (record LIKE "%Приехал" OR record LIKE "%Уехал") 
+    ORDER BY dttm DESC LIMIT 1
+    """
     return con.execute(query, [userid, curr_date]).fetchone()
 
 
