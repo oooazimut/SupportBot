@@ -43,14 +43,43 @@ def get_car(con: Connection, car_id):
       FROM cars 
      WHERE id = ?
     """
-    con.execute(query, [car_id]).fetchone()
+    return con.execute(query, [car_id]).fetchone()
+
+
+@connector
+def get_cars(con: Connection):
+    query = """
+    SELECT *
+      FROM cars
+    """
+    return con.execute(query).fetchall()
 
 
 @connector
 def pin_car(con: Connection, car_id, user_id):
     curr_dttm = datetime.now().replace(microsecond=0)
     query = """
-    INSERT INTO cars_in_use 
-         VALUES (curr_dttm, car_id, user_id)
+    INSERT INTO cars_in_use (dttm, car, user) 
+         VALUES (?, ?, ?)
     """
     con.execute(query, [curr_dttm, car_id, user_id])
+
+
+@connector
+def get_pinned_cars(con: Connection, **kwargs):
+    query = """
+       SELECT ciu.dttm AS dttm, c.model AS model, c.state_number AS state_number
+         FROM cars_in_use AS ciu
+    LEFT JOIN cars AS c 
+           ON ciu.car = c.id
+    """
+    adds = list()
+    if kwargs:
+        for key in ("user", "car"):
+            if kwargs.get(key):
+                adds.append(f"ciu.{key} = :{key}")
+        if kwargs.get("dttm"):
+            adds.append("DATE(ciu.dttm) = :dttm")
+        query += " WHERE " + " AND ".join(adds)
+
+    return con.execute(query, kwargs).fetchall()

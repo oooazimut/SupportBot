@@ -57,12 +57,12 @@ def get_tasks(con: Connection):
 @connector
 def get_tasks_with_filters(con: Connection, data: dict = {}):
     query = """
-    SELECT *
-    FROM tasks as t
+       SELECT *
+         FROM tasks as t
     LEFT JOIN employees as em
-    ON em.userid = t.slave
+           ON em.userid = t.slave
     LEFT JOIN entities as en
-    ON en.ent_id = t.entity
+           ON en.ent_id = t.entity
     """
     params = list()
     adds = list()
