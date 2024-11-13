@@ -94,8 +94,8 @@ async def returned_task(slaveid, task, taskid):
 
 
 async def two_reports():
-    # curr_date = datetime.now().date() - timedelta(days=1)
-    curr_date = date(2024, 11, 10)
+    curr_date = datetime.now().date() - timedelta(days=1)
+    # curr_date = date(2024, 11, 10)
 
     def process_records(data):
         """Функция обработки записей."""
