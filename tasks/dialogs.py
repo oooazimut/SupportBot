@@ -483,7 +483,7 @@ media = Dialog(
 
 
 async def on_fltr_start(data, manager: DialogManager):
-    manager.dialog_data["wintitle"] = config.TasksTitles.SEARCH_RESULT.value
+    manager.dialog_data["wintitle"] = config.TasksTitles.SEARCH_RESULT
 
 
 filtration = Dialog(

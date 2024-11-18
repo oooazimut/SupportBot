@@ -71,7 +71,7 @@ def get_tasks(con: Connection):
 
 
 @connector
-def get_tasks_with_filters(con: Connection, data: dict = {}):
+def get_tasks_with_filters(con: Connection, **kwargs):
     query = """
        SELECT *
          FROM tasks as t
@@ -80,24 +80,19 @@ def get_tasks_with_filters(con: Connection, data: dict = {}):
     LEFT JOIN entities as en
            ON en.ent_id = t.entity
     """
-    params = list()
     adds = list()
-    if data.get("entid"):
-        adds.append("t.entity = ?")
-        params.append(data.get("entid"))
-    if data.get("userid"):
-        adds.append("t.slave = ?")
-        params.append(data.get("userid"))
-    if data.get("date"):
-        adds.append("DATE(t.created) = ?")
-        params.append(data.get("date"))
-    if data.get("status"):
-        adds.append("t.status = ?")
-        params.append(data.get("status"))
+    if kwargs.get("entid"):
+        adds.append("t.entity = :endid")
+    if kwargs.get("userid"):
+        adds.append("t.slave = :userid")
+    if kwargs.get("date"):
+        adds.append("DATE(t.created) = :date")
+    if kwargs.get("status"):
+        adds.append("t.status = :status")
     if adds:
         query = query + " WHERE " + " AND ".join(adds)
     query += " ORDER BY created DESC"
-    return con.execute(query, params).fetchall()
+    return con.execute(query, kwargs).fetchall()
 
 
 @connector

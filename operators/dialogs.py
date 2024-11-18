@@ -24,6 +24,7 @@ from . import handlers, states, getters
 
 logger = logging.getLogger(__name__)
 
+
 async def on_start(any, manager: DialogManager):
     scheduler: AsyncIOScheduler = manager.middleware_data.get("scheduler")
     scheduler.print_jobs()
@@ -56,22 +57,28 @@ tasks = Dialog(
         Const("Заявки:"),
         Row(
             Start(
-                Const("Новая заявка"),
+                Const("Создать"),
                 id="new_task",
                 data={},
                 state=tsk_states.NewSG.entity_choice,
             ),
             Start(
-                Const(str(config.TasksTitles.OPENED.value)),
-                id="to_opened_tasks",
+                Const(config.TasksTitles.FROM_CUSTOMER),
+                id="to_from_customers",
                 state=tsk_states.TasksSG.tasks,
-                data={"wintitle": config.TasksTitles.OPENED.value},
+                data={'wintitle': config.TasksStatuses.FROM_CUSTOMER}
             ),
             Start(
-                Const(str(config.TasksTitles.ARCHIVE.value)),
+                Const(config.TasksTitles.OPENED),
+                id="to_opened_tasks",
+                state=tsk_states.TasksSG.tasks,
+                data={"wintitle": config.TasksTitles.OPENED},
+            ),
+            Start(
+                Const(config.TasksTitles.ARCHIVE),
                 id="to_archive",
                 state=tsk_states.TasksSG.tasks,
-                data={"wintitle": config.TasksTitles.ARCHIVE.value},
+                data={"wintitle": config.TasksTitles.ARCHIVE},
             ),
         ),
         Start(
@@ -81,7 +88,7 @@ tasks = Dialog(
             Const("Проверить акты"),
             id="to_acts_checking",
             state=tsk_states.TasksSG.tasks,
-            data={"wintitle": config.TasksTitles.CHECKED.value},
+            data={"wintitle": config.TasksTitles.CHECKED},
             when=acts_are_existing,
         ),
         Cancel(Const("Назад")),
@@ -125,7 +132,6 @@ close_task = Dialog(
         Cancel(Const("Назад")),
         state=states.OpCloseTaskSG.summary,
     ),
-
 )
 
 

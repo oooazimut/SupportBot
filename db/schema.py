@@ -61,5 +61,12 @@ CREATE_DB_SCRIPT = """
         FOREIGN KEY (car) REFERENCES cars (id),
         FOREIGN KEY (user) REFERENCES employees (userid)
         );
+    CREATE TABLE IF NOT EXISTS customers (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        phone TEXT,
+        object INTEGER,
+        FOREIGN KEY (object) REFERENCES entities (ent_id)
+        )
     COMMIT; 
     """

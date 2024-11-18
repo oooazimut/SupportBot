@@ -9,22 +9,22 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
     wintitle = dialog_manager.start_data.get("wintitle")
     tasks = list()
     match wintitle:
-        case TasksTitles.OPENED.value:
-            new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED.value)
-            delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED.value)
+        case TasksTitles.OPENED:
+            new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED)
+            delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED)
             confirmed_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.PERFORMED.value
+                TasksStatuses.PERFORMED
             )
             assigned_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.ASSIGNED.value
+                TasksStatuses.ASSIGNED
             )
 
             progress_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.AT_WORK.value
+                TasksStatuses.AT_WORK
             )
 
             performing_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.PERFORMING.value
+                TasksStatuses.PERFORMING
             )
 
             for item in (
@@ -36,39 +36,39 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 performing_tasks,
             ):
                 tasks.extend(item)
-        case TasksTitles.ARCHIVE.value:
+        case TasksTitles.ARCHIVE:
             tasks.extend(
                 task_service.get_tasks_by_status(
-                    TasksStatuses.ARCHIVE.value,
+                    TasksStatuses.ARCHIVE,
                     userid=dialog_manager.start_data.get("userid"),
                 )
             )
-            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED.value))
-        case TasksTitles.ASSIGNED.value:
+            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
+        case TasksTitles.ASSIGNED:
             tasks.extend(
                 task_service.get_tasks_by_status(
-                    TasksStatuses.ASSIGNED.value,
+                    TasksStatuses.ASSIGNED,
                     userid=dialog_manager.event.from_user.id,
                 )
             )
-        case TasksTitles.IN_PROGRESS.value:
+        case TasksTitles.IN_PROGRESS:
             tasks.extend(
                 task_service.get_tasks_by_status(
-                    TasksStatuses.AT_WORK.value,
+                    TasksStatuses.AT_WORK,
                     userid=dialog_manager.event.from_user.id,
                 )
             )
-        case TasksTitles.CHECKED.value:
-            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED.value))
-        case TasksTitles.ENTITY.value:
+        case TasksTitles.CHECKED:
+            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
+        case TasksTitles.ENTITY:
             data = task_service.get_tasks_for_entity(
                 dialog_manager.start_data.get("entid")
             )
             if data:
                 tasks.extend(data)
                 wintitle = wintitle.format(data[0].get("name", ""))
-        case TasksTitles.SEARCH_RESULT.value:
-            tasks.extend(task_service.get_tasks_with_filters(dialog_manager.start_data))
+        case TasksTitles.SEARCH_RESULT:
+            tasks.extend(task_service.get_tasks_with_filters(**dialog_manager.start_data))
 
     tasks.sort(key=lambda x: x["created"], reverse=True)
     return {

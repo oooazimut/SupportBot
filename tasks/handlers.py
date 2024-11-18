@@ -328,7 +328,7 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
         )
         return
 
-    task_service.change_status(data.get("taskid"), TasksStatuses.PERFORMING.value)
+    task_service.change_status(data.get("taskid"), TasksStatuses.PERFORMING)
     data["performed_time"] = str(datetime.datetime.now().replace(microsecond=0))
     if data.get("simple_report"):
         await manager.start(prf_states.PrfPerformedSG.confirm, data=data)
