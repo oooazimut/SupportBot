@@ -9,3 +9,8 @@ class NewCustomerSG(StatesGroup):
     phone = State()
     object = State()
     preview = State()
+
+class NewTaskSG(StatesGroup):
+    preview = State()
+    description = State()
+    video = State()

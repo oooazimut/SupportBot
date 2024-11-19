@@ -67,6 +67,6 @@ CREATE_DB_SCRIPT = """
         phone TEXT,
         object INTEGER,
         FOREIGN KEY (object) REFERENCES entities (ent_id)
-        )
+        );
     COMMIT; 
     """
