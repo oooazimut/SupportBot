@@ -11,7 +11,7 @@ from aiogram_dialog.widgets.kbd import (
     Start,
     WebApp,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Multi
 from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -55,31 +55,33 @@ def acts_are_existing(data, widget, dialog_manager: DialogManager) -> bool:
 tasks = Dialog(
     Window(
         Const("Заявки:"),
-        Row(
-            Start(
-                Const("Создать"),
-                id="new_task",
-                data={},
-                state=tsk_states.NewSG.entity_choice,
-            ),
-            Start(
+        Start(
+            Const("Создать"),
+            id="new_task",
+            data={},
+            state=tsk_states.NewSG.entity_choice,
+        ),
+        Start(
+            Multi(
+                Const("\U0000203c", when="tasks_exists"),
                 Const(config.TasksTitles.FROM_CUSTOMER),
-                id="to_from_customers",
-                state=tsk_states.TasksSG.tasks,
-                data={'wintitle': config.TasksStatuses.FROM_CUSTOMER}
+                sep=" ",
             ),
-            Start(
-                Const(config.TasksTitles.OPENED),
-                id="to_opened_tasks",
-                state=tsk_states.TasksSG.tasks,
-                data={"wintitle": config.TasksTitles.OPENED},
-            ),
-            Start(
-                Const(config.TasksTitles.ARCHIVE),
-                id="to_archive",
-                state=tsk_states.TasksSG.tasks,
-                data={"wintitle": config.TasksTitles.ARCHIVE},
-            ),
+            id="to_from_customers",
+            state=tsk_states.TasksSG.tasks,
+            data={"wintitle": config.TasksTitles.FROM_CUSTOMER},
+        ),
+        Start(
+            Const(config.TasksTitles.OPENED),
+            id="to_opened_tasks",
+            state=tsk_states.TasksSG.tasks,
+            data={"wintitle": config.TasksTitles.OPENED},
+        ),
+        Start(
+            Const(config.TasksTitles.ARCHIVE),
+            id="to_archive",
+            state=tsk_states.TasksSG.tasks,
+            data={"wintitle": config.TasksTitles.ARCHIVE},
         ),
         Start(
             Const("Поиск"), id="to_filtration", state=tsk_states.FiltrationSG.subentity
@@ -91,8 +93,10 @@ tasks = Dialog(
             data={"wintitle": config.TasksTitles.CHECKED},
             when=acts_are_existing,
         ),
+        Button(Const("Обновить"), id="reload"),
         Cancel(Const("Назад")),
         state=states.OpTasksSG.main,
+        getter=getters.client_tasks_exists_getter,
     ),
 )
 

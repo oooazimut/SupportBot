@@ -1,4 +1,3 @@
-import config
 from aiogram import F
 from aiogram.types import ContentType
 from aiogram_dialog import Dialog, Window
@@ -16,7 +15,6 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Jinja
-from tasks import states as task_states
 
 from . import getters, handlers, states
 
@@ -26,13 +24,16 @@ main_dialog = Dialog(
         Button(
             Const("Создать заявку"), id="start_creating", on_click=handlers.on_new_task
         ),
-        Start(
+        Button(
             Const("Активные заявки"),
             id="customer_tasks",
-            state=task_states.TasksSG.tasks,
-            data={"wintitle": config.TasksTitles.FROM_CUSTOMER},
+            on_click=handlers.on_current_tasks,
         ),
-        # Start(Const("Архив"), id="customer_archive", state=task_states.TasksSG.tasks),
+        Button(
+            Const('Архив'),
+            id='customer_archive',
+            on_click=handlers.on_customer_archive
+            ),
         state=states.CusMainSG.main,
     ),
 )
@@ -94,7 +95,7 @@ new_customer = Dialog(
 new_task = Dialog(
     Window(
         Const("Ваша заявка:\n"),
-        Format("{task[description]}", when=F["task"]["description"]),
+        Format("{description}", when="description"),
         Const(
             "\n<b>Подсказка</b>: можно добавить и текст и видео, или что-то одно. Допускается добавление нескольких видео"
         ),
@@ -110,7 +111,7 @@ new_task = Dialog(
             state=states.NewTaskSG.video,
         ),
         Button(
-            Const("Отправить"),
+            Const("Сохранить и отправить"),
             id="confirm_customer_task_creating",
             on_click=handlers.on_confirm_customer_task_creating,
         ),

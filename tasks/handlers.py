@@ -143,7 +143,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             else:
                 data["simple_report"] = None
 
-            task = dict(task_service.save_task(data))
+            task = dict(task_service.save_task(**data))
             await new_task_notification(task["slave"], task["title"], task["taskid"])
 
             recdata["task"] = task.get("taskid")
@@ -359,11 +359,11 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
 
 
 async def show_operator_media(callback: CallbackQuery, button, manager: DialogManager):
-    mediatype = manager.dialog_data.get("task", {}).get("media_type").split(",")
-    mediaid = manager.dialog_data.get("task", {}).get("media_id").split(",")
+    mediatype = manager.dialog_data.get("task", {}).get("media_type", []).split(",")
+    mediaid = manager.dialog_data.get("task", {}).get("media_id", []).split(",")
     await manager.start(
         state=states.MediaSG.main,
-        data={"type": mediatype, "id": mediaid, "wintitle": "Медиа от оператора"},
+        data={"type": mediatype, "id": mediaid, "wintitle": "Медиа"},
     )
 
 
