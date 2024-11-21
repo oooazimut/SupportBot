@@ -143,7 +143,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             else:
                 data["simple_report"] = None
 
-            task = dict(task_service.save_task(data))
+            task = dict(task_service.save_task(**data))
             await new_task_notification(task["slave"], task["title"], task["taskid"])
 
             recdata["task"] = task.get("taskid")
@@ -328,7 +328,7 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
         )
         return
 
-    task_service.change_status(data.get("taskid"), TasksStatuses.PERFORMING.value)
+    task_service.change_status(data.get("taskid"), TasksStatuses.PERFORMING)
     data["performed_time"] = str(datetime.datetime.now().replace(microsecond=0))
     if data.get("simple_report"):
         await manager.start(prf_states.PrfPerformedSG.confirm, data=data)
@@ -363,7 +363,7 @@ async def show_operator_media(callback: CallbackQuery, button, manager: DialogMa
     mediaid = manager.dialog_data.get("task", {}).get("media_id").split(",")
     await manager.start(
         state=states.MediaSG.main,
-        data={"type": mediatype, "id": mediaid, "wintitle": "Медиа от оператора"},
+        data={"type": mediatype, "id": mediaid, "wintitle": "Медиа"},
     )
 
 

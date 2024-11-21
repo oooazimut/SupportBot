@@ -31,13 +31,13 @@ main = Dialog(
                 Const("Назначенные"),
                 id="worker_assigned",
                 state=tsk_states.TasksSG.tasks,
-                data={"wintitle": config.TasksTitles.ASSIGNED.value},
+                data={"wintitle": config.TasksTitles.ASSIGNED},
             ),
             Start(
                 Const("В работе"),
                 id="worker_in_progress",
                 state=tsk_states.TasksSG.tasks,
-                data={"wintitle": config.TasksTitles.IN_PROGRESS.value},
+                data={"wintitle": config.TasksTitles.IN_PROGRESS},
             ),
             Button(Const("Архив"), id="worker_archive", on_click=handlers.on_archive),
             Start(

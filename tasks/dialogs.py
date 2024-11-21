@@ -292,12 +292,12 @@ new = Dialog(
 
 def user_is_operator(data, widget, dialog_manager: DialogManager) -> bool:
     user: dict = employee_service.get_employee(userid=dialog_manager.event.from_user.id)
-    return user.get("position") == "operator"
+    return user.get("position") == "operator" if user else False
 
 
 def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
     user = employee_service.get_employee(userid=dialog_manager.event.from_user.id)
-    return user.get("position") == "worker"
+    return user.get("position") == "worker" if user else False
 
 
 def isnt_arriving(data, widget, dialog_manager: DialogManager) -> bool:
@@ -342,14 +342,14 @@ tasks = Dialog(
         Format("Описание: {description}", when="description"),
         Format("Расчетное время: {recom_time}ч.", when="recom_time"),
         Format("Исполнитель: {username}", when="username"),
-        Jinja('{{"помощник" if simple_report else "главный"}}'),
+        Jinja('{{"помощник" if simple_report else ""}}'),
         Const("<b>Высокий приоритет!</b>", when="priority"),
         Format("Статус: {status}"),
         Format("\nНужен акт", when="act"),
         Format("<b><i><u>Согласование: {agreement}</u></i></b>", when="agreement"),
         Url(Const("Геолокация(яндекс)"), Format("{address}"), when=F["address"]),
         Button(
-            Const("Мультимедиа от оператора"),
+            Const("Видео, фото..."),
             id="mm_description",
             on_click=handlers.show_operator_media,
             when="media_id",
@@ -483,7 +483,7 @@ media = Dialog(
 
 
 async def on_fltr_start(data, manager: DialogManager):
-    manager.dialog_data["wintitle"] = config.TasksTitles.SEARCH_RESULT.value
+    manager.dialog_data["wintitle"] = config.TasksTitles.SEARCH_RESULT
 
 
 filtration = Dialog(

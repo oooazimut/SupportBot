@@ -15,7 +15,7 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
     await manager.start(
         state=tsk_states.TasksSG.tasks,
         data={
-            "wintitle": config.TasksTitles.ARCHIVE.value,
+            "wintitle": config.TasksTitles.ARCHIVE,
             "userid": callback.from_user.id,
         },
     )
@@ -92,7 +92,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
 async def on_cancel(clb, button, manager: DialogManager):
     task_service.change_status(
-        manager.start_data.get("taskid"), config.TasksStatuses.AT_WORK.value
+        manager.start_data.get("taskid"), config.TasksStatuses.AT_WORK
     )
 
 
