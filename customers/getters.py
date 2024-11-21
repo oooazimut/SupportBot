@@ -20,6 +20,7 @@ async def customer_preview_getter(dialog_manager: DialogManager, **kwargs):
 
 async def task_preview_getter(dialog_manager: DialogManager, **kwargs):
     task = dialog_manager.dialog_data.get("task", {})
+    description = "\n".join(task.get("description")) if task.get('description') else ''
     media_type = task.get("media_type", [])
     media_id = task.get("media_id", [])
     pages = len(task.get("media_id", []))
@@ -33,4 +34,5 @@ async def task_preview_getter(dialog_manager: DialogManager, **kwargs):
         "task": task,
         "pages": pages,
         "media": media,
+        "description": description,
     }

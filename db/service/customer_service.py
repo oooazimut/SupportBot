@@ -15,6 +15,9 @@ def new_customer(con: Connection, **kwargs):
 
 @connector
 def get_customer(con: Connection, cust_id):
+    """
+    возвращает словарь с ключами id, name, phone, object
+    """
     query = """
     SELECT *
       FROM customers

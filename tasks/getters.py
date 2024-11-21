@@ -2,7 +2,13 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
 from config import TasksStatuses, TasksTitles, AGREEMENTERS
-from db.service import employee_service, entity_service, journal_service, task_service
+from db.service import (
+    customer_service,
+    employee_service,
+    entity_service,
+    journal_service,
+    task_service,
+)
 
 
 async def tasks(dialog_manager: DialogManager, **kwargs):
@@ -10,40 +16,50 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
     tasks = list()
     match wintitle:
         case TasksTitles.OPENED:
-            new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED)
-            delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED)
-            confirmed_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.PERFORMED
-            )
-            assigned_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.ASSIGNED
-            )
+            if customer_service.get_customer(dialog_manager.event.from_user.id):
 
-            progress_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.AT_WORK
-            )
-
-            performing_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.PERFORMING
-            )
-
-            for item in (
-                confirmed_tasks,
-                new_tasks,
-                assigned_tasks,
-                progress_tasks,
-                delayed_tasks,
-                performing_tasks,
-            ):
-                tasks.extend(item)
-        case TasksTitles.ARCHIVE:
-            tasks.extend(
-                task_service.get_tasks_by_status(
-                    TasksStatuses.ARCHIVE,
-                    userid=dialog_manager.start_data.get("userid"),
+                tasks.extend(
+                    task_service.get_tasks_with_filters(**dialog_manager.start_data)
                 )
-            )
-            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
+            else:
+                new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED)
+                delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED)
+                confirmed_tasks = task_service.get_tasks_by_status(
+                    TasksStatuses.PERFORMED
+                )
+                assigned_tasks = task_service.get_tasks_by_status(
+                    TasksStatuses.ASSIGNED
+                )
+
+                progress_tasks = task_service.get_tasks_by_status(TasksStatuses.AT_WORK)
+
+                performing_tasks = task_service.get_tasks_by_status(
+                    TasksStatuses.PERFORMING
+                )
+
+                for item in (
+                    confirmed_tasks,
+                    new_tasks,
+                    assigned_tasks,
+                    progress_tasks,
+                    delayed_tasks,
+                    performing_tasks,
+                ):
+                    tasks.extend(item)
+        case TasksTitles.ARCHIVE:
+            if customer_service.get_customer(dialog_manager.event.from_user.id):
+
+                tasks.extend(
+                    task_service.get_tasks_with_filters(**dialog_manager.start_data)
+                )
+            else:
+                tasks.extend(
+                    task_service.get_tasks_by_status(
+                        TasksStatuses.ARCHIVE,
+                        userid=dialog_manager.start_data.get("userid"),
+                    )
+                )
+                tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
         case TasksTitles.ASSIGNED:
             tasks.extend(
                 task_service.get_tasks_by_status(
@@ -68,7 +84,11 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 tasks.extend(data)
                 wintitle = wintitle.format(data[0].get("name", ""))
         case TasksTitles.SEARCH_RESULT:
-            tasks.extend(task_service.get_tasks_with_filters(**dialog_manager.start_data))
+            tasks.extend(
+                task_service.get_tasks_with_filters(**dialog_manager.start_data)
+            )
+        case TasksTitles.FROM_CUSTOMER:
+            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.FROM_CUSTOMER))
 
     tasks.sort(key=lambda x: x["created"], reverse=True)
     return {
