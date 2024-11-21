@@ -352,19 +352,19 @@ tasks = Dialog(
             Const("Видео, фото..."),
             id="mm_description",
             on_click=handlers.show_operator_media,
-            when="media_id",
+            when=("media_id" and "is_employee"),
         ),
         Button(
             Const("Видео от исполнителя"),
             id="to_media",
             on_click=handlers.show_performer_media,
-            when="resultid",
+            when=("resultid" and "is_employee"),
         ),
         Button(
             Const("Акт"),
             id="act",
             on_click=handlers.show_act,
-            when="actid",
+            when=("actid" and "is_employee"),
         ),
         Group(
             Button(
@@ -377,9 +377,12 @@ tasks = Dialog(
                 Const("Отложить"),
                 id="delay_task",
                 on_click=handlers.on_delay,
-                when=F["status"].not_in(
-                    ["отложено", "проверка", "закрыто", "выполнено"]
-                ),
+                when=F["status"].not_in([
+                    "отложено",
+                    "проверка",
+                    "закрыто",
+                    "выполнено",
+                ]),
             ),
             Button(
                 Const("Переместить в архив"),
@@ -422,9 +425,12 @@ tasks = Dialog(
                 Const("Выполнено"),
                 id="perform_task",
                 on_click=handlers.on_perform,
-                when=F["status"].not_in(
-                    ["выполнено", "закрыто", "проверка", "назначено"]
-                ),
+                when=F["status"].not_in([
+                    "выполнено",
+                    "закрыто",
+                    "проверка",
+                    "назначено",
+                ]),
             ),
             Button(
                 Const("Вернуть в работу"),

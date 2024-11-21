@@ -11,17 +11,24 @@ from db.service import (
 )
 
 
+def is_employee(userid):
+    return bool(employee_service.get_employee(userid))
+
+
+def is_customer(userid):
+    return bool(customer_service.get_customer(userid))
+
+
 async def tasks(dialog_manager: DialogManager, **kwargs):
     wintitle = dialog_manager.start_data.get("wintitle")
     tasks = list()
     match wintitle:
         case TasksTitles.OPENED:
-            if customer_service.get_customer(dialog_manager.event.from_user.id):
-
+            if is_customer(dialog_manager.event.from_user.id):
                 tasks.extend(
                     task_service.get_tasks_with_filters(**dialog_manager.start_data)
                 )
-            else:
+            elif is_employee(dialog_manager.event.from_user.id):
                 new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED)
                 delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED)
                 confirmed_tasks = task_service.get_tasks_by_status(
@@ -47,12 +54,11 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 ):
                     tasks.extend(item)
         case TasksTitles.ARCHIVE:
-            if customer_service.get_customer(dialog_manager.event.from_user.id):
-
+            if is_customer(dialog_manager.event.from_user.id):
                 tasks.extend(
                     task_service.get_tasks_with_filters(**dialog_manager.start_data)
                 )
-            else:
+            elif is_employee(dialog_manager.event.from_user.id):
                 tasks.extend(
                     task_service.get_tasks_by_status(
                         TasksStatuses.ARCHIVE,
@@ -99,7 +105,9 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
 
 async def task(dialog_manager: DialogManager, **kwargs):
     task = task_service.get_task(dialog_manager.dialog_data.get("taskid"))
+    task["is_employee"] = is_employee(dialog_manager.event.from_user.id)
     dialog_manager.dialog_data["task"] = task
+
     return task
 
 

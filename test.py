@@ -1,4 +1,6 @@
-from db.service import employee_service
+import sqlite3
 
 
-employee_service.save_employee(5963726977, 'Marat', 'operator')
+with sqlite3.connect('Support.db') as con:
+    con.execute('delete from employees where userid = 6392799889')
+    con.commit()
