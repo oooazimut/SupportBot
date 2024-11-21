@@ -25,7 +25,11 @@ async def on_current_tasks(
 ):
     await dialog_manager.start(
         state=task_states.TasksSG.tasks,
-        data={"wintitle": TasksTitles.FROM_CUSTOMER, "creator": callback.from_user.id},
+        data={
+            "wintitle": TasksTitles.OPENED,
+            "creator": callback.from_user.id,
+            "current": True,
+        },
     )
 
 
@@ -35,7 +39,7 @@ async def on_customer_archive(
     await dialog_manager.start(
         state=task_states.TasksSG.tasks,
         data={
-            "wintitle": TasksTitles.FROM_CUSTOMER,
+            "wintitle": TasksTitles.ARCHIVE,
             "creator": callback.from_user.id,
             "status": TasksStatuses.ARCHIVE,
         },

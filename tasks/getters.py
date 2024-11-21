@@ -16,34 +16,50 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
     tasks = list()
     match wintitle:
         case TasksTitles.OPENED:
-            new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED)
-            delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED)
-            confirmed_tasks = task_service.get_tasks_by_status(TasksStatuses.PERFORMED)
-            assigned_tasks = task_service.get_tasks_by_status(TasksStatuses.ASSIGNED)
+            if customer_service.get_customer(dialog_manager.event.from_user.id):
 
-            progress_tasks = task_service.get_tasks_by_status(TasksStatuses.AT_WORK)
-
-            performing_tasks = task_service.get_tasks_by_status(
-                TasksStatuses.PERFORMING
-            )
-
-            for item in (
-                confirmed_tasks,
-                new_tasks,
-                assigned_tasks,
-                progress_tasks,
-                delayed_tasks,
-                performing_tasks,
-            ):
-                tasks.extend(item)
-        case TasksTitles.ARCHIVE:
-            tasks.extend(
-                task_service.get_tasks_by_status(
-                    TasksStatuses.ARCHIVE,
-                    userid=dialog_manager.start_data.get("userid"),
+                tasks.extend(
+                    task_service.get_tasks_with_filters(**dialog_manager.start_data)
                 )
-            )
-            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
+            else:
+                new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED)
+                delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED)
+                confirmed_tasks = task_service.get_tasks_by_status(
+                    TasksStatuses.PERFORMED
+                )
+                assigned_tasks = task_service.get_tasks_by_status(
+                    TasksStatuses.ASSIGNED
+                )
+
+                progress_tasks = task_service.get_tasks_by_status(TasksStatuses.AT_WORK)
+
+                performing_tasks = task_service.get_tasks_by_status(
+                    TasksStatuses.PERFORMING
+                )
+
+                for item in (
+                    confirmed_tasks,
+                    new_tasks,
+                    assigned_tasks,
+                    progress_tasks,
+                    delayed_tasks,
+                    performing_tasks,
+                ):
+                    tasks.extend(item)
+        case TasksTitles.ARCHIVE:
+            if customer_service.get_customer(dialog_manager.event.from_user.id):
+
+                tasks.extend(
+                    task_service.get_tasks_with_filters(**dialog_manager.start_data)
+                )
+            else:
+                tasks.extend(
+                    task_service.get_tasks_by_status(
+                        TasksStatuses.ARCHIVE,
+                        userid=dialog_manager.start_data.get("userid"),
+                    )
+                )
+                tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
         case TasksTitles.ASSIGNED:
             tasks.extend(
                 task_service.get_tasks_by_status(
@@ -72,16 +88,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                 task_service.get_tasks_with_filters(**dialog_manager.start_data)
             )
         case TasksTitles.FROM_CUSTOMER:
-            if customer_service.get_customer(dialog_manager.event.from_user.id):
-                if not dialog_manager.start_data.get("status"):
-                    dialog_manager.start_data["current"] = True
-                tasks.extend(
-                    task_service.get_tasks_with_filters(**dialog_manager.start_data)
-                )
-            else:
-                tasks.extend(
-                    task_service.get_tasks_by_status(TasksStatuses.FROM_CUSTOMER)
-                )
+            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.FROM_CUSTOMER))
 
     tasks.sort(key=lambda x: x["created"], reverse=True)
     return {
