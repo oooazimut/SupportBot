@@ -467,6 +467,7 @@ tasks = Dialog(
     Window(
         Const("Добавление медиа"),
         MessageInput(func=handlers.add_media),
+        SwitchTo(Const('Назад'), id='to_task', state=states.TasksSG.task),
         state=states.TasksSG.add_media,
     ),
     Window(
