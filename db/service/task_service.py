@@ -83,7 +83,7 @@ def get_tasks_with_filters(con: Connection, **kwargs):
     """
     adds = list()
     if kwargs.get("entid"):
-        adds.append("t.entity = :endid")
+        adds.append("t.entity = :entid")
     if kwargs.get("userid"):
         adds.append("t.slave = :userid")
     if kwargs.get("date"):

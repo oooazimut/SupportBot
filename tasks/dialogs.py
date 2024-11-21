@@ -310,6 +310,15 @@ def isnt_arriving(data, widget, dialog_manager: DialogManager) -> bool:
 
     return bool(not record and data["status"] == "в работе")
 
+def media_exist(data, widget, dialog_manager: DialogManager):
+    return all([data.get('media_id'), data.get('is_employee')])
+
+def act_exist(data, widget, dialog_manager: DialogManager):
+    return all([data.get('actid'), data.get('is_employee')])
+
+def videoreport_exist(data, widget, dialog_manager: DialogManager):
+    return all([data.get('resultid'), data.get('is_employee')])
+
 
 tasks = Dialog(
     Window(
@@ -352,19 +361,19 @@ tasks = Dialog(
             Const("Видео, фото..."),
             id="mm_description",
             on_click=handlers.show_operator_media,
-            when=("media_id" and "is_employee"),
+            when=media_exist,
         ),
         Button(
             Const("Видео от исполнителя"),
             id="to_media",
             on_click=handlers.show_performer_media,
-            when=("resultid" and "is_employee"),
+            when=videoreport_exist,
         ),
         Button(
             Const("Акт"),
             id="act",
             on_click=handlers.show_act,
-            when=("actid" and "is_employee"),
+            when=act_exist,
         ),
         Group(
             Button(

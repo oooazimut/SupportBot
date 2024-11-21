@@ -359,8 +359,8 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
 
 
 async def show_operator_media(callback: CallbackQuery, button, manager: DialogManager):
-    mediatype = manager.dialog_data.get("task", {}).get("media_type").split(",")
-    mediaid = manager.dialog_data.get("task", {}).get("media_id").split(",")
+    mediatype = manager.dialog_data.get("task", {}).get("media_type", []).split(",")
+    mediaid = manager.dialog_data.get("task", {}).get("media_id", []).split(",")
     await manager.start(
         state=states.MediaSG.main,
         data={"type": mediatype, "id": mediaid, "wintitle": "Медиа"},
