@@ -1,11 +1,12 @@
 from datetime import datetime
 from sqlite3 import Connection
 
+from config import TasksStatuses
 from db.tools import connector
 
 
 @connector
-def save_task(con: Connection, task: dict):
+def save_task(con: Connection, **kwargs):
     query = """
     INSERT INTO tasks (
         created, creator, phone, title, description, 
@@ -19,7 +20,7 @@ def save_task(con: Connection, task: dict):
         ) 
       RETURNING *
     """
-    result = con.execute(query, task).fetchone()
+    result = con.execute(query, kwargs).fetchone()
     con.commit()
     return result
 
@@ -89,6 +90,10 @@ def get_tasks_with_filters(con: Connection, **kwargs):
         adds.append("DATE(t.created) = :date")
     if kwargs.get("status"):
         adds.append("t.status = :status")
+    if kwargs.get("creator"):
+        adds.append("t.creator = :creator")
+    if kwargs.get("current"):
+        adds.append(f"t.status != '{TasksStatuses.ARCHIVE}'")
     if adds:
         query = query + " WHERE " + " AND ".join(adds)
     query += " ORDER BY created DESC"
@@ -231,7 +236,7 @@ def reopen_task(con: Connection, taskid):
     task["created"] = datetime.now().replace(microsecond=0)
     task["status"] = "назначено"
     task["slave"] = None
-    save_task(task)
+    save_task(**task)
 
 
 @connector
@@ -248,4 +253,4 @@ def clone_task(con, taskid):
     task["status"] = "открыто"
     for item in ("slave", "resultid", "actid"):
         task[item] = None
-    save_task(task)
+    save_task(**task)

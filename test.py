@@ -1,5 +1,4 @@
-class TaskTitles:
-    OPENED = 'opened'
+from db.service import employee_service
 
 
-print(TaskTitles.OPENED)
+employee_service.save_employee(5963726977, 'Marat', 'operator')
