@@ -8,8 +8,8 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from db.service import journal_service, task_service
-from jobs import closed_task_notification
+from db.service import customer_service, journal_service, task_service
+from jobs import closed_task_notification, cust_task_isclosed_notification
 
 
 async def on_type(
@@ -40,8 +40,10 @@ async def summary_handler(message: Message, message_input, manager: DialogManage
 
     manager.dialog_data.update({"summary": txt or ""})
     manager.start_data.update({
-        "media_id": f'{media_id or ""},{manager.start_data.get("media_id") or ""}'.strip(","),
-        "media_type": f'{media_type or ""},{manager.start_data.get("media_type") or ""}'.strip(
+        "media_id": f"{media_id or ''},{manager.start_data.get('media_id') or ''}".strip(
+            ","
+        ),
+        "media_type": f"{media_type or ''},{manager.start_data.get('media_type') or ''}".strip(
             ","
         ),
     })
@@ -52,6 +54,7 @@ async def summary_handler(message: Message, message_input, manager: DialogManage
 
 async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager):
     taskid = manager.start_data.get("taskid", "")
+    customer = customer_service.get_customer(manager.start_data.get("creator"))
     operator = config.AGREEMENTERS.get(callback.from_user.id, "")
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     current_dttm = datetime.datetime.now().replace(microsecond=0)
@@ -90,14 +93,20 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     await callback.answer(message_text, show_alert=True)
 
     action = "закрыл" if new_status == "закрыто" else "отправил на проверку"
-    recdata["record"] = f"{action} {operator}\n{manager.dialog_data.get('summary') or ''}"
+    recdata["record"] = (
+        f"{action} {operator}\n{manager.dialog_data.get('summary') or ''}"
+    )
     journal_service.new_record(recdata)
-    if manager.dialog_data.get('summary'):
+    if manager.dialog_data.get("summary"):
         del manager.dialog_data["summary"]
 
     if manager.dialog_data.get("closing_type") == "частично":
         task_service.reopen_task(taskid)
-
+    if customer:
+        await cust_task_isclosed_notification(
+            customer.get("id"),
+            manager.start_data.get("title", ""),
+        )
     await manager.done()
 
 
