@@ -105,7 +105,8 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
 
 async def task(dialog_manager: DialogManager, **kwargs):
     task = task_service.get_task(dialog_manager.dialog_data.get("taskid"))
-    task["is_employee"] = is_employee(dialog_manager.event.from_user.id)
+    if task:
+        task["is_employee"] = is_employee(dialog_manager.event.from_user.id)    
     dialog_manager.dialog_data["task"] = task
 
     return task

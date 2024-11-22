@@ -4,6 +4,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from config import TasksStatuses, TasksTitles
 from db.service import customer_service, task_service
+from jobs import new_customer_task_notification
 from tasks import states as task_states
 
 from . import states
@@ -108,6 +109,7 @@ async def on_confirm_customer_task_creating(
         task[key] = None
 
     task_service.save_task(**task)
+    await new_customer_task_notification(customer)
     await dialog_manager.done()
     await callback.answer(
         "Ваша заявка принята в работу. Если потребуется, оператор свяжется с Вами для уточнения деталей. Хорошего дня!",

@@ -170,11 +170,9 @@ async def two_reports():
 
             print(curr_date, file=report)
             print(file=report)
-            writer.writerow(
-                [
-                    str(curr_date),
-                ]
-            )
+            writer.writerow([
+                str(curr_date),
+            ])
             writer.writerow([])
 
             for user, entries in records.items():
@@ -215,32 +213,30 @@ async def two_reports():
 
                         print(f"    {curr_obj}", file=report)
                         print(
-                            f'        {str(prev["dttm"]).split()[1]}: {prev["record"].rsplit(" ", 1)[1]}',
+                            f"        {str(prev['dttm']).split()[1]}: {prev['record'].rsplit(' ', 1)[1]}",
                             file=report,
                         )
                         print(
-                            f'        {str(curr["dttm"]).split()[1]}: {curr["record"].rsplit(" ", 1)[1]}',
+                            f"        {str(curr['dttm']).split()[1]}: {curr['record'].rsplit(' ', 1)[1]}",
                             file=report,
                         )
                         print(
                             f"        {time_spent}ч. на объекте {summary}", file=report
                         )
-                        writer.writerows(
+                        writer.writerows([
+                            ["", curr_obj],
                             [
-                                ["", curr_obj],
-                                [
-                                    "",
-                                    str(prev["dttm"]).split()[1],
-                                    prev["record"].rsplit(" ", 1)[1],
-                                ],
-                                [
-                                    "",
-                                    str(curr["dttm"]).split()[1],
-                                    curr["record"].rsplit(" ", 1)[1],
-                                ],
-                                ["", f"{time_spent}ч. на объекте {summary}"],
-                            ]
-                        )
+                                "",
+                                str(prev["dttm"]).split()[1],
+                                prev["record"].rsplit(" ", 1)[1],
+                            ],
+                            [
+                                "",
+                                str(curr["dttm"]).split()[1],
+                                curr["record"].rsplit(" ", 1)[1],
+                            ],
+                            ["", f"{time_spent}ч. на объекте {summary}"],
+                        ])
                     elif (
                         "уехал" in prev["record"].lower()
                         and "приехал" in curr["record"].lower()
@@ -258,20 +254,18 @@ async def two_reports():
                     else:
                         print('    Ошибка, нет пары "приехал-уехал":', file=report)
                         print(
-                            f'        {str(prev["dttm"]).split()[1]}: {prev["record"]}',
+                            f"        {str(prev['dttm']).split()[1]}: {prev['record']}",
                             file=report,
                         )
                         print(
-                            f'        {str(curr["dttm"]).split()[1]}: {curr["record"]}',
+                            f"        {str(curr['dttm']).split()[1]}: {curr['record']}",
                             file=report,
                         )
-                        writer.writerows(
-                            [
-                                ["", 'Ошибка, нет пары "приехал-уехал":'],
-                                ["", str(prev["dttm"]).split()[1], prev["record"]],
-                                ["", str(curr["dttm"]).split()[1], curr["record"]],
-                            ]
-                        )
+                        writer.writerows([
+                            ["", 'Ошибка, нет пары "приехал-уехал":'],
+                            ["", str(prev["dttm"]).split()[1], prev["record"]],
+                            ["", str(curr["dttm"]).split()[1], curr["record"]],
+                        ])
                     print(file=report)
                     writer.writerow([])
 
@@ -307,7 +301,7 @@ async def journal_reminder():
             try:
                 await bot.send_message(user.get("userid"), message_text)
             except TelegramForbiddenError:
-                logger.error(f'Пользователь {user.get("username")} заблокировал бота!')
+                logger.error(f"Пользователь {user.get('username')} заблокировал бота!")
 
 
 async def check_work_execution(performer_id: str | int):
@@ -325,3 +319,26 @@ async def check_work_execution(performer_id: str | int):
             await messaga.delete()
         except (TelegramBadRequest, TelegramForbiddenError):
             pass
+
+
+async def new_customer_task_notification(customer: dict):
+    bot: Bot = MyBot.get_instance()
+    operators = employee_service.get_employees_by_position('operator')
+
+    for operator in  operators:       
+        try:
+            await bot.send_message(
+                chat_id=operator['userid'],
+                text=f"Новая заявка от клиента: {customer.get('name', '')}, {customer.get('object', '')}",
+            )
+        except (TelegramBadRequest, TelegramForbiddenError, ValidationError):
+            pass
+
+
+
+async def cust_task_isclosed_notification(customer_id: int | str, task_title: str):
+    bot: Bot = MyBot.get_instance()
+    try:
+        await bot.send_message(customer_id, f"Заявка '{task_title}' выполнена.")
+    except (TelegramBadRequest, TelegramForbiddenError, ValidationError) as errr:
+       pass 
