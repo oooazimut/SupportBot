@@ -1,96 +1,12 @@
-import asyncio
 import csv
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
-from aiogram import Bot
-from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
-from aiogram.filters.callback_data import CallbackData
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from pydantic import ValidationError
-
-from config import CHIEF_ID
-from custom.bot import MyBot
-from db.service import employee_service, journal_service, task_service
+from db.service import employee_service, journal_service
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
 
 logger = logging.getLogger(__name__)
-
-
-async def close_task(taskid: int):
-    task_service.change_status(taskid, "закрыто")
-
-
-class TaskFactory(CallbackData, prefix="taskfctr"):
-    action: str
-    task: str
-
-
-async def new_task_notification(slaveid: int, task_title: str, taskid: int):
-    bot: Bot = MyBot.get_instance()
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(
-        text="Хорошо", callback_data=TaskFactory(action="get", task=str(taskid))
-    )
-    try:
-        await bot.send_message(
-            chat_id=slaveid,
-            text=f"Новая заявка: {task_title}",
-            reply_markup=keyboard.as_markup(),
-        )
-    except (TelegramBadRequest, TelegramForbiddenError, ValidationError):
-        pass
-
-
-async def confirmed_task_notification(operatorid, slave, title, taskid):
-    bot: Bot = MyBot.get_instance()
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(
-        text="Хорошо", callback_data=TaskFactory(action="сonfirmed", task=str(taskid))
-    )
-    try:
-        await bot.send_message(
-            chat_id=operatorid,
-            text=f"{slave} выполнил заявку {title}.",
-            reply_markup=keyboard.as_markup(),
-        )
-    except (TelegramBadRequest, TelegramForbiddenError):
-        pass
-
-
-async def closed_task_notification(slaveid, task_title, taskid):
-    bot: Bot = MyBot.get_instance()
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(
-        text="Хорошо", callback_data=TaskFactory(action="closed", task=str(taskid))
-    )
-    try:
-        await bot.send_message(
-            chat_id=slaveid,
-            text=f"Заявка {task_title} закрыта и перемещена в архив.",
-            reply_markup=keyboard.as_markup(),
-        )
-    except (TelegramBadRequest, TelegramForbiddenError):
-        pass
-
-
-async def returned_task(slaveid, task, taskid):
-    bot: Bot = MyBot.get_instance()
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(
-        text="Хорошо", callback_data=TaskFactory(action="returned", task=str(taskid))
-    )
-    try:
-        messaga = await bot.send_message(
-            chat_id=slaveid,
-            text=f"Заявка {task} возвращена вам в работу.",
-            reply_markup=keyboard.as_markup(),
-        )
-        await asyncio.sleep(295)
-        await messaga.delete()
-    except (TelegramBadRequest, TelegramForbiddenError):
-        pass
 
 
 async def two_reports():
@@ -288,57 +204,3 @@ async def two_reports():
         # Загружаем файл на Яндекс.Диск
         ensure_directories_exist(yandex_disk_path)
         upload_to_yandex_disk(file_name, yandex_disk_path)
-
-
-async def journal_reminder():
-    bot = MyBot.get_instance()
-    users = employee_service.get_employees()
-    message_text = "Не забываем отмечаться в журнале!"
-    ignored_users = [1740579878, CHIEF_ID]
-
-    for user in users:
-        if user["userid"] not in ignored_users:
-            try:
-                await bot.send_message(user.get("userid"), message_text)
-            except TelegramForbiddenError:
-                logger.error(f"Пользователь {user.get('username')} заблокировал бота!")
-
-
-async def check_work_execution(performer_id: str | int):
-    bot = MyBot.get_instance()
-    users = employee_service.get_employees_by_position("operator")
-    performer = employee_service.get_employee(performer_id)
-    message_text = (
-        f"{performer['username']} уже 30 минут на объекте, необходимо ему позвонить!"
-    )
-
-    for user in users:
-        try:
-            messaga = await bot.send_message(user["userid"], message_text)
-            await asyncio.sleep(300)
-            await messaga.delete()
-        except (TelegramBadRequest, TelegramForbiddenError):
-            pass
-
-
-async def new_customer_task_notification(customer: dict):
-    bot: Bot = MyBot.get_instance()
-    operators = employee_service.get_employees_by_position('operator')
-
-    for operator in  operators:       
-        try:
-            await bot.send_message(
-                chat_id=operator['userid'],
-                text=f"Новая заявка от клиента: {customer.get('name', '')}, {customer.get('object', '')}",
-            )
-        except (TelegramBadRequest, TelegramForbiddenError, ValidationError):
-            pass
-
-
-
-async def cust_task_isclosed_notification(customer_id: int | str, task_title: str):
-    bot: Bot = MyBot.get_instance()
-    try:
-        await bot.send_message(customer_id, f"Заявка '{task_title}' выполнена.")
-    except (TelegramBadRequest, TelegramForbiddenError, ValidationError) as errr:
-       pass 

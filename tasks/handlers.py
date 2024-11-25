@@ -20,7 +20,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from config import CONTENT_ATTR_MAP, TasksStatuses
 from custom.bot import MyBot
 from db.service import employee_service, entity_service, journal_service, task_service
-from jobs import check_work_execution, new_task_notification
+from notifications import check_work_execution, new_task_notification
 from operators.states import OpCloseTaskSG, OpDelayingSG, OpRemoveTaskSG
 from performers import states as prf_states
 
@@ -101,17 +101,15 @@ async def task_description_handler(
 
     media_type = media_type.value if media_id else None
 
-    manager.dialog_data["task"].update(
-        {
-            "description": txt,
-            "media_id": f'{media_id or ""},{manager.dialog_data["task"].get("media_id") or ""}'.strip(
-                ","
-            ),
-            "media_type": f'{media_type or ""},{manager.dialog_data["task"].get("media_type") or ""}'.strip(
-                ","
-            ),
-        }
-    )
+    manager.dialog_data["task"].update({
+        "description": txt,
+        "media_id": f"{media_id or ''},{manager.dialog_data['task'].get('media_id') or ''}".strip(
+            ","
+        ),
+        "media_type": f"{media_type or ''},{manager.dialog_data['task'].get('media_type') or ''}".strip(
+            ","
+        ),
+    })
 
     if employee_service.get_employee(
         message.from_user.id
@@ -132,9 +130,9 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     def is_exist(someone_task: dict):
         return someone_task.get("taskid")
 
-    async def group_new_tasks(data: dict) -> dict | None:
+    async def group_new_tasks(data: dict) -> dict:
         if not data.get("slaves"):
-            return
+            return {}
 
         for user, role in data.get("slaves", []):
             data["slave"] = user
@@ -144,15 +142,15 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 data["simple_report"] = None
 
             task = dict(task_service.save_task(**data))
-            await new_task_notification(task["slave"], task["title"], task["taskid"])
+            await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
             recdata["task"] = task.get("taskid")
             recdata["record"] = (
-                f'заявку создал {employee_service.get_employee(task.get("creator")).get("username")}'
+                f"заявку создал {employee_service.get_employee(task.get('creator')).get('username')}"
             )
             journal_service.new_record(recdata)
 
-        return task
+        return task or {}
 
     current_dttm = datetime.datetime.now().replace(microsecond=0)
     recdata = {"dttm": current_dttm, "employee": None}
@@ -192,10 +190,10 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 data["simple_report"] = None
 
         task = dict(task_service.update_task(data))
-        await new_task_notification(task["slave"], task["title"], task["taskid"])
+        await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
         recdata["task"] = task["taskid"]
-        recdata["record"] = f'Заявку отредактировал {operator.get("username")}'
+        recdata["record"] = f"Заявку отредактировал {operator.get('username')}"
         journal_service.new_record(recdata)
 
         await group_new_tasks(data)
@@ -208,22 +206,23 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         if data.get("return"):
             del data["return"]
             recdata["task"] = data["taskid"]
-            recdata["record"] = f'Заявку вернул в работу {operator.get("username")}'
+            recdata["record"] = f"Заявку вернул в работу {operator.get('username')}"
             journal_service.new_record(recdata)
 
         await clb.answer("Заявка отредактирована.", show_alert=True)
 
     else:
-        task = await group_new_tasks(data)
+        task: dict = await group_new_tasks(data)
         await clb.answer(
             "Заявка создана.",
             show_alert=True,
         )
-        users = employee_service.get_employees_by_position("operator")
-        userids = [user["userid"] for user in users]
+        userids = [
+            user["userid"]
+            for user in employee_service.get_employees_by_position("operator")
+        ]
 
-        for userid in userids:
-            await new_task_notification(userid, task["title"], task["taskid"])
+        await new_task_notification(userids, task.get("title", ''), task.get("taskid", ''))
 
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -282,7 +281,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
         keyboard.button(text="Хорошо", callback_data="agr_not_is_readed")
         content = Text(
             Bold(
-                f'{agreement} нужно согласование с {manager.dialog_data.get("task", {}).get("username")} по заявке {manager.dialog_data.get("task", {}).get("title")}!'
+                f"{agreement} нужно согласование с {manager.dialog_data.get('task', {}).get('username')} по заявке {manager.dialog_data.get('task', {}).get('title')}!"
             )
         )
         for operator in operators:
@@ -304,12 +303,12 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
         "dttm": datetime.datetime.now().replace(microsecond=0),
         "task": manager.dialog_data.get("task", {}).get("taskid"),
         "employee": manager.dialog_data.get("task", {}).get("userid"),
-        "record": f'принята в работу, {manager.dialog_data.get("task", {}).get("username")}',
+        "record": f"принята в работу, {manager.dialog_data.get('task', {}).get('username')}",
     }
     journal_service.new_record(recdata)
 
     await callback.answer(
-        f'Заявка {manager.dialog_data.get("task", {}).get("title")} принята в работу.'
+        f"Заявка {manager.dialog_data.get('task', {}).get('title')} принята в работу."
     )
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -349,12 +348,12 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
         "dttm": datetime.datetime.now().replace(microsecond=0),
         "task": manager.dialog_data.get("task", {}).get("taskid"),
         "employee": manager.dialog_data.get("task", {}).get("userid"),
-        "record": f'вернул в работу, {user.get("username")}',
+        "record": f"вернул в работу, {user.get('username')}",
     }
     journal_service.new_record(recdata)
 
     await callback.answer(
-        f'Заявка {manager.dialog_data.get("task", {}).get("title")} снова в работе.'
+        f"Заявка {manager.dialog_data.get('task', {}).get('title')} снова в работе."
     )
 
 
@@ -461,16 +460,14 @@ async def add_media(message: Message, message_input, manager: DialogManager):
 
     media_type = media_type.value if media_id else None
 
-    manager.dialog_data["task"].update(
-        {
-            "media_id": f'{media_id or ""},{manager.dialog_data["task"].get("media_id") or ""}'.strip(
-                ","
-            ),
-            "media_type": f'{media_type or ""},{manager.dialog_data["task"].get("media_type") or ""}'.strip(
-                ","
-            ),
-        }
-    )
+    manager.dialog_data["task"].update({
+        "media_id": f"{media_id or ''},{manager.dialog_data['task'].get('media_id') or ''}".strip(
+            ","
+        ),
+        "media_type": f"{media_type or ''},{manager.dialog_data['task'].get('media_type') or ''}".strip(
+            ","
+        ),
+    })
     task_service.update_task(manager.dialog_data["task"])
     messg = await message.answer("Медиа добавлено")
     await manager.switch_to(states.TasksSG.task)
@@ -492,7 +489,7 @@ async def on_arrived(callback: CallbackQuery, button, manager: DialogManager):
 async def confirm_arrived(callback: CallbackQuery, button, manager: DialogManager):
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     run_time = datetime.datetime.now() + datetime.timedelta(minutes=30)
-    record = f'{manager.dialog_data.get("task", {}).get("name")} Приехал'
+    record = f"{manager.dialog_data.get('task', {}).get('name')} Приехал"
     data = dict(
         employee=callback.from_user.id,
         task=manager.dialog_data.get("task", {}).get("taskid"),
@@ -501,7 +498,7 @@ async def confirm_arrived(callback: CallbackQuery, button, manager: DialogManage
 
     journal_service.new_record(data)
     await callback.answer(
-        f'Запись о прибытии на объект {manager.dialog_data.get("task", {}).get("name")} добавлена',
+        f"Запись о прибытии на объект {manager.dialog_data.get('task', {}).get('name')} добавлена",
         show_alert=True,
     )
     scheduler.add_job(
@@ -510,10 +507,12 @@ async def confirm_arrived(callback: CallbackQuery, button, manager: DialogManage
         run_date=run_time,
         args=[callback.from_user.id],
     )
-    await manager.switch_to(state=states.TasksSG.task, show_mode=ShowMode.DELETE_AND_SEND)
+    await manager.switch_to(
+        state=states.TasksSG.task, show_mode=ShowMode.DELETE_AND_SEND
+    )
+
 
 async def on_clone(callback: CallbackQuery, button, manager: DialogManager):
-    taskid = manager.dialog_data.get('task', {}).get('taskid')
+    taskid = manager.dialog_data.get("task", {}).get("taskid")
     task_service.clone_task(taskid)
-    await callback.answer('Заявка клонирована', show_alert=True)
-
+    await callback.answer("Заявка клонирована", show_alert=True)
