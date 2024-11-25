@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from config import TasksStatuses, TasksTitles
 from db.service import customer_service, task_service
-from jobs import new_customer_task_notification
+from notifications import new_customer_task_notification
 from tasks import states as task_states
 
 from . import states

@@ -1,13 +1,14 @@
 import datetime
 
-import config
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+import config
 from db.service import employee_service, journal_service, task_service
-from jobs import close_task, confirmed_task_notification
+from notifications import confirmed_task_notification
 from tasks import states as tsk_states
 
 
@@ -48,7 +49,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     task_service.change_status(taskid, "выполнено")
 
     note = manager.dialog_data.get("note", "")
-    record = f'выполнено, {manager.start_data.get("username")}'
+    record = f"выполнено, {manager.start_data.get('username')}"
     if note:
         record += f"\n{note}"
     recdata = {
@@ -70,21 +71,19 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
     if not manager.start_data["act"]:
         scheduler.add_job(
-            close_task,
+            task_service.change_status,
             trigger="date",
             run_date=run_date,
-            args=[taskid],
+            args=[taskid, "закрыто"],
             id=str(taskid),
             replace_existing=True,
         )
 
-    operators = employee_service.get_employees_by_position("operator")
-    for o in operators:
-        operatorid = o["userid"]
-        slave = manager.start_data["username"]
-        task = manager.start_data["title"]
-        taskid = manager.start_data["taskid"]
-        await confirmed_task_notification(operatorid, slave, task, taskid)
+    operators_ids = [operator['userid'] for operator in employee_service.get_employees_by_position("operator")]
+    slave = manager.start_data["username"]
+    task = manager.start_data["title"]
+    taskid = manager.start_data["taskid"]
+    await confirmed_task_notification(operators_ids, slave, task, taskid)
     # text = f'Заявка {manager.start_data["title"]} выполнена. Ожидается подтверждение закрытия от оператора или клиента.'
     # await callback.answer("", show_alert=True)
     await manager.done()

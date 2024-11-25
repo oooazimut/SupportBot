@@ -14,7 +14,9 @@ from redis.asyncio.client import Redis
 import config
 import jobs
 import middlewares
+import notifications
 from custom.bot import MyBot
+from customers import dialogs as cust_dialogs
 from db.schema import CREATE_DB_SCRIPT
 from db.service import employee_service
 from db.tools import create_db
@@ -23,8 +25,7 @@ from observers import dialogs as ob_dialogs
 from operators import dialogs as op_dialogs
 from performers import dialogs as prf_dialogs
 from routers import finish_router, start_router
-from tasks import dialogs as tsk_dialogs  # noqa: F401
-from customers import dialogs as cust_dialogs
+from tasks import dialogs as tsk_dialogs
 
 
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
@@ -86,7 +87,7 @@ async def main():
         replace_existing=True,
     )
     scheduler.add_job(
-        jobs.journal_reminder,
+        notifications.journal_reminder,
         "cron",
         day_of_week="mon-fri",
         hour=8,
@@ -95,7 +96,7 @@ async def main():
         replace_existing=True,
     )
     scheduler.add_job(
-        jobs.journal_reminder,
+        notifications.journal_reminder,
         "cron",
         day_of_week="mon-fri",
         hour=16,
