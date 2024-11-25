@@ -1,7 +1,6 @@
 import datetime
 from typing import Any
 
-from apscheduler.executors.base import logging
 
 import config
 from aiogram.types import CallbackQuery, Message
@@ -9,7 +8,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from db.service import customer_service, journal_service, task_service
-from jobs import closed_task_notification, cust_task_isclosed_notification
+from notifications import closed_task_notification, cust_task_isclosed_notification
 
 
 async def on_type(
