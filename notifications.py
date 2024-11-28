@@ -35,7 +35,7 @@ async def base_notification(
                 await messaga.delete()
 
         except (TelegramBadRequest, TelegramForbiddenError, ValidationError) as errr:
-            logger.error(f"Ошибка отправки: {str(errr)}")
+            logger.error(f"{notification}:\nОшибка отправки: {str(errr)}")
 
 
 async def new_task_notification(
