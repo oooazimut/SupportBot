@@ -8,7 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import START_STATES
 from db.service import employee_service, task_service
-from jobs import TaskFactory
+from notifications import TaskFactory
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +33,19 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
 async def switch_off_notification(
     callback: CallbackQuery, callback_data: TaskFactory, scheduler: AsyncIOScheduler
 ):
-    jobid = str(callback.from_user.id) + callback_data.task
-    job = scheduler.get_job(jobid)
+    if callback_data.task:
+        jobid = str(callback.from_user.id) + callback_data.task
+        job = scheduler.get_job(jobid)
 
-    if job:
-        job.remove()
+        if job:
+            job.remove()
 
     task = task_service.get_task(callback_data.task)
-    if int(callback.from_user.id) == task["slave"] and task["status"] == "назначено":
+    if (
+        task
+        and int(callback.from_user.id) == task["slave"]
+        and task["status"] == "назначено"
+    ):
         task_service.change_status(callback_data.task, "в работе")
         await callback.answer(text="заявка принята в работу", show_alert=True)
 
@@ -48,7 +53,7 @@ async def switch_off_notification(
         try:
             await callback.message.delete()
         except TelegramBadRequest:
-            logging.error("Сообщение невозможно удалить:", TelegramBadRequest)
+            logging.error("Сообщение невозможно удалить:", str(TelegramBadRequest))
     else:
         logger.warning("Оповещение для удаления отсутствует")
         logger.warning(callback.from_user.full_name, callback.from_user.id)
