@@ -71,10 +71,10 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
     if not manager.start_data["act"]:
         scheduler.add_job(
-            task_service.change_status,
+            task_service.perform_task,
             trigger="date",
             run_date=run_date,
-            args=[taskid, "закрыто"],
+            args=[taskid],
             id=str(taskid),
             replace_existing=True,
         )

@@ -186,6 +186,10 @@ def change_status(con: Connection, task_id, status: str):
     con.commit()
 
 
+def perform_task(taskid):
+    change_status(taskid, "закрыто")
+
+
 @connector
 def change_worker(con: Connection, task_id, slave):
     con.execute("UPDATE tasks SET slave = ? WHERE taskid = ?", [slave, task_id])
