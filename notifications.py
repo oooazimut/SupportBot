@@ -18,54 +18,56 @@ class TaskFactory(CallbackData, prefix="taskfctr"):
 
 
 async def base_notification(
-    users: list | tuple, taskid: str | int, notification: str, msg_deleting=False
+    user: str | int, taskid: str | int, notification: str, msg_deleting=False
 ):
     bot: Bot = MyBot.get_instance()
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text="Хорошо", callback_data=TaskFactory(task=str(taskid)))
-    for user in users:
-        try:
-            messaga = await bot.send_message(
-                chat_id=user,
-                text=notification,
-                reply_markup=keyboard.as_markup(),
-            )
-            if msg_deleting:
-                await asyncio.sleep(300)
-                await messaga.delete()
 
-        except TelegramBadRequest as BadRqst:
-            employee = employee_service.get_employee(user)["username"]
-            logger.info(
-                f"Сообщение {notification} уже было удалено пользователем {employee}:\n",
-                str(BadRqst),
-            )
-        except ValidationError:
-            pass
-        except TelegramForbiddenError as errr:
-            logger.error(f"{notification}:\nОшибка отправки: {str(errr)}")
+    try:
+        messaga = await bot.send_message(
+            chat_id=user,
+            text=notification,
+            reply_markup=keyboard.as_markup(),
+        )
+        if msg_deleting:
+            await asyncio.sleep(300)
+            await messaga.delete()
+
+    except TelegramBadRequest as BadRqst:
+        employee = employee_service.get_employee(user)["username"]
+        logger.info(
+            f"Сообщение {notification} уже было удалено пользователем {employee}:\n",
+            str(BadRqst),
+        )
+    except ValidationError:
+        pass
+    except TelegramForbiddenError as errr:
+        logger.error(f"{notification}:\nОшибка отправки: {str(errr)}")
 
 
 async def new_task_notification(
     users: list | tuple, task_title: str, taskid: int | str
 ):
     notification = f"Новая заявка: {task_title}"
-    await base_notification(users, taskid, notification)
+    for user in users:
+        await base_notification(user, taskid, notification)
 
 
 async def confirmed_task_notification(operators, slave, title, taskid):
     text = f"{slave} выполнил заявку {title}."
-    await base_notification(operators, taskid, text)
+    for operator in operators:
+        await base_notification(operator, taskid, text)
 
 
 async def closed_task_notification(performer, task_title, taskid):
     text = f"Заявка {task_title} закрыта и перемещена в архив."
-    await base_notification([performer], taskid, text)
+    await base_notification(performer, taskid, text)
 
 
 async def returned_task(performer, task, taskid):
     text = f"Заявка {task} возвращена вам в работу."
-    await base_notification([performer], taskid, text)
+    await base_notification(performer, taskid, text)
 
 
 async def check_work_execution(performer_id: str | int):
@@ -76,7 +78,8 @@ async def check_work_execution(performer_id: str | int):
     performer = employee_service.get_employee(performer_id)
     text = f"{performer['username']} уже 30 минут на объекте, необходимо ему позвонить!"
 
-    await base_notification(users, "", text, msg_deleting=True)
+    for user in users:
+        await base_notification(user, "", text, msg_deleting=True)
 
 
 async def new_customer_task_notification(customer: dict):
