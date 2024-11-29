@@ -5,6 +5,7 @@ from aiogram_dialog.widgets.kbd import (
     Button,
     Cancel,
     Column,
+    Group,
     Next,
     Row,
     Select,
@@ -61,6 +62,7 @@ tasks = Dialog(
             data={},
             state=tsk_states.NewSG.entity_choice,
         ),
+        Group(
         Start(
             Multi(
                 Const("\U0000203c", when="tasks_exists"),
@@ -95,6 +97,7 @@ tasks = Dialog(
         ),
         Button(Const("Обновить"), id="reload"),
         Cancel(Const("Назад")),
+        width=2),
         state=states.OpTasksSG.main,
         getter=getters.client_tasks_exists_getter,
     ),

@@ -80,6 +80,12 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                     userid=dialog_manager.event.from_user.id,
                 )
             )
+            tasks.extend(
+                task_service.get_tasks_with_filters(
+                    status=TasksStatuses.PERFORMING,
+                    userid=dialog_manager.event.from_user.id,
+                )
+            )
         case TasksTitles.CHECKED:
             tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
         case TasksTitles.ENTITY:
@@ -106,7 +112,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
 async def task(dialog_manager: DialogManager, **kwargs):
     task = task_service.get_task(dialog_manager.dialog_data.get("taskid"))
     if task:
-        task["is_employee"] = is_employee(dialog_manager.event.from_user.id)    
+        task["is_employee"] = is_employee(dialog_manager.event.from_user.id)
     dialog_manager.dialog_data["task"] = task
 
     return task

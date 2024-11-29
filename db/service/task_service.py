@@ -73,6 +73,9 @@ def get_tasks(con: Connection):
 
 @connector
 def get_tasks_with_filters(con: Connection, **kwargs):
+    """фильтрация по entid(объект), userid(исполнитель),
+    date(дата создания), status, creator, current(не в архиве)
+    """
     query = """
        SELECT *
          FROM tasks as t

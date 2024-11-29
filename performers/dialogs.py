@@ -11,16 +11,21 @@ from aiogram_dialog.widgets.kbd import (
     Next,
     Start,
 )
-from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.text import Const, Multi
 from journal import states as jrn_states
 from tasks import states as tsk_states
 
-from . import handlers, states
+from . import handlers, states, getters
 
 main = Dialog(
     Window(
         Const("Главное меню:"),
-        Next(Const("Заявки")),
+        Next(
+            Multi(
+                Const("Заявки"),
+                Const("-ЕСТЬ НЕДОЗАКРЫТЫЕ!!!", when="unperformed_tasks"),
+            )
+        ),
         Start(Const("Журнал"), id="to_journal", state=jrn_states.JrMainMenuSG.main),
         state=states.PrfMainMenuSG.main,
     ),
@@ -48,6 +53,7 @@ main = Dialog(
             Back(Const("Назад")),
         ),
         state=states.PrfMainMenuSG.tasks,
+        getter=getters.main_getter,
     ),
 )
 
@@ -89,7 +95,7 @@ performed = Dialog(
         Const("Введите текст"),
         MessageInput(func=handlers.pin_text, content_types=ContentType.TEXT),
         Back(Const("Назад")),
-        CANCEL_PERFORMING, 
+        CANCEL_PERFORMING,
         state=states.PrfPerformedSG.note,
     ),
 )
