@@ -32,12 +32,17 @@ async def base_notification(
             )
             if msg_deleting:
                 await asyncio.sleep(300)
-                try:
-                    await messaga.delete()
-                except TelegramBadRequest as errr:
-                    logger.info(f"{user}, {notification}:\nСообщение уже самоудалилось: {str(errr)}")
+                await messaga.delete()
 
-        except (TelegramBadRequest, TelegramForbiddenError, ValidationError) as errr:
+        except TelegramBadRequest as BadRqst:
+            employee = employee_service.get_employee(user)["username"]
+            logger.info(
+                f"Сообщение {notification} уже было удалено пользователем {employee}:\n",
+                str(BadRqst),
+            )
+        except ValidationError:
+            pass
+        except TelegramForbiddenError as errr:
             logger.error(f"{notification}:\nОшибка отправки: {str(errr)}")
 
 

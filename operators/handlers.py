@@ -1,6 +1,8 @@
 import datetime
 from typing import Any
 
+from apscheduler.executors.base import logging
+
 
 import config
 from aiogram.types import CallbackQuery, Message
@@ -9,6 +11,8 @@ from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from db.service import customer_service, journal_service, task_service
 from notifications import closed_task_notification, cust_task_isclosed_notification
+
+logger = logging.getLogger(__name__)
 
 
 async def on_type(
@@ -38,14 +42,16 @@ async def summary_handler(message: Message, message_input, manager: DialogManage
     media_type = media_type.value if media_id else None
 
     manager.dialog_data.update({"summary": txt or ""})
-    manager.start_data.update({
-        "media_id": f"{media_id or ''},{manager.start_data.get('media_id') or ''}".strip(
-            ","
-        ),
-        "media_type": f"{media_type or ''},{manager.start_data.get('media_type') or ''}".strip(
-            ","
-        ),
-    })
+    manager.start_data.update(
+        {
+            "media_id": f"{media_id or ''},{manager.start_data.get('media_id') or ''}".strip(
+                ","
+            ),
+            "media_type": f"{media_type or ''},{manager.start_data.get('media_type') or ''}".strip(
+                ","
+            ),
+        }
+    )
     await message.answer("Добавлено")
     await asyncio.sleep(1)
     await manager.back()
@@ -134,9 +140,11 @@ async def delay_handler(
 
 
 async def on_remove(callback: CallbackQuery, button, dialog_manager: DialogManager):
+    title = dialog_manager.start_data.get("title")
     task_service.remove_task(dialog_manager.start_data.get("taskid"))
     await callback.answer("Заявка удалена", show_alert=True)
     try:
         await dialog_manager.done()
-    except IndexError:
+    except (IndexError, TypeError) as Errr:
+        logger.info(f"Заявка {title} была удалена:\n", Errr)
         await dialog_manager.done()
