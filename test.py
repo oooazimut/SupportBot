@@ -1,19 +1,11 @@
-import asyncio
+from db.service import customer_service
 
 
-async def func1():
-    for i in range(15):
-        print(i)
-        await asyncio.sleep(1)
+users = customer_service.get_customers()
 
+print(users)
 
-async def func2():
-    for _ in range(15):
-        print("func2")
-        await asyncio.sleep(1)
+customer_service.update(6392799889, name='Дракон', object=80)
 
-async def main():
-    await func1()
-    await func2()
-
-asyncio.run(main())
+users = customer_service.get_customers()
+print(users)

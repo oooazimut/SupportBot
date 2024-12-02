@@ -24,27 +24,31 @@ async def on_new_task(callback: CallbackQuery, button, dialog_manager: DialogMan
 async def on_current_tasks(
     callback: CallbackQuery, button, dialog_manager: DialogManager
 ):
-    await dialog_manager.start(
-        state=task_states.TasksSG.tasks,
-        data={
-            "wintitle": TasksTitles.OPENED,
-            "creator": callback.from_user.id,
-            "current": True,
-        },
-    )
+    data = {
+        "wintitle": TasksTitles.OPENED,
+        "current": True,
+    }
+    customer = customer_service.get_customer(callback.from_user.id)
+    if customer.get("object"):
+        dict_update = {"entid": customer.get("object")}
+    else:
+        dict_update = {"creator": customer.get("id")}
+    data.update(dict_update)
+
+    await dialog_manager.start(state=task_states.TasksSG.tasks, data=data)
 
 
 async def on_customer_archive(
     callback: CallbackQuery, button, dialog_manager: DialogManager
 ):
-    await dialog_manager.start(
-        state=task_states.TasksSG.tasks,
-        data={
-            "wintitle": TasksTitles.ARCHIVE,
-            "creator": callback.from_user.id,
-            "status": TasksStatuses.ARCHIVE,
-        },
-    )
+    data = {"wintitle": TasksTitles.ARCHIVE, "status": TasksStatuses.ARCHIVE}
+    customer = customer_service.get_customer(callback.from_user.id)
+    if customer.get("object"):
+        dict_update = {"entid": customer.get("object")}
+    else:
+        dict_update = {"creator": customer.get("id")}
+    data.update(dict_update)
+    await dialog_manager.start(state=task_states.TasksSG.tasks, data=data)
 
 
 async def next_or_end(event, widget, dialog_manager: DialogManager, *_):
