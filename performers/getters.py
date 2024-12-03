@@ -6,7 +6,7 @@ from db.service import task_service
 
 async def main_getter(dialog_manager: DialogManager, **kwargs):
     userid = dialog_manager.event.from_user.id
-    tasks = task_service.get_tasks_with_filters(status=TasksStatuses.PERFORMING, userid=userid)
+    tasks = task_service.get_by_filters(status=TasksStatuses.PERFORMING, userid=userid)
     
     return {'unperformed_tasks': bool(tasks)}
 

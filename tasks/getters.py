@@ -16,7 +16,7 @@ def is_employee(userid):
 
 
 def is_customer(userid):
-    return bool(customer_service.get_customer(userid))
+    return bool(customer_service.get_one(userid))
 
 
 async def tasks(dialog_manager: DialogManager, **kwargs):
@@ -25,23 +25,25 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
     match wintitle:
         case TasksTitles.OPENED:
             if is_customer(dialog_manager.event.from_user.id):
-                tasks.extend(
-                    task_service.get_tasks_with_filters(**dialog_manager.start_data)
-                )
+                tasks.extend(task_service.get_by_filters(**dialog_manager.start_data))
             elif is_employee(dialog_manager.event.from_user.id):
-                new_tasks = task_service.get_tasks_by_status(TasksStatuses.OPENED)
-                delayed_tasks = task_service.get_tasks_by_status(TasksStatuses.DELAYED)
-                confirmed_tasks = task_service.get_tasks_by_status(
-                    TasksStatuses.PERFORMED
+                new_tasks = task_service.get_by_filters(status=TasksStatuses.OPENED)
+                delayed_tasks = task_service.get_by_filters(
+                    status=TasksStatuses.DELAYED
                 )
-                assigned_tasks = task_service.get_tasks_by_status(
-                    TasksStatuses.ASSIGNED
+                confirmed_tasks = task_service.get_by_filters(
+                    status=TasksStatuses.PERFORMED
+                )
+                assigned_tasks = task_service.get_by_filters(
+                    status=TasksStatuses.ASSIGNED
                 )
 
-                progress_tasks = task_service.get_tasks_by_status(TasksStatuses.AT_WORK)
+                progress_tasks = task_service.get_by_filters(
+                    status=TasksStatuses.AT_WORK
+                )
 
-                performing_tasks = task_service.get_tasks_by_status(
-                    TasksStatuses.PERFORMING
+                performing_tasks = task_service.get_by_filters(
+                    status=TasksStatuses.PERFORMING
                 )
 
                 for item in (
@@ -55,52 +57,43 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
                     tasks.extend(item)
         case TasksTitles.ARCHIVE:
             if is_customer(dialog_manager.event.from_user.id):
-                tasks.extend(
-                    task_service.get_tasks_with_filters(**dialog_manager.start_data)
-                )
+                tasks.extend(task_service.get_by_filters(**dialog_manager.start_data))
             elif is_employee(dialog_manager.event.from_user.id):
                 tasks.extend(
-                    task_service.get_tasks_by_status(
-                        TasksStatuses.ARCHIVE,
+                    task_service.get_by_filters(
+                        status=TasksStatuses.ARCHIVE,
                         userid=dialog_manager.start_data.get("userid"),
                     )
                 )
-                tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
+                tasks.extend(task_service.get_by_filters(status=TasksStatuses.CHECKED))
         case TasksTitles.ASSIGNED:
             tasks.extend(
-                task_service.get_tasks_by_status(
-                    TasksStatuses.ASSIGNED,
+                task_service.get_by_filters(
+                    status=TasksStatuses.ASSIGNED,
                     userid=dialog_manager.event.from_user.id,
                 )
             )
         case TasksTitles.IN_PROGRESS:
             tasks.extend(
-                task_service.get_tasks_by_status(
-                    TasksStatuses.AT_WORK,
+                task_service.get_by_filters(
+                    status=TasksStatuses.AT_WORK,
                     userid=dialog_manager.event.from_user.id,
                 )
             )
             tasks.extend(
-                task_service.get_tasks_with_filters(
+                task_service.get_by_filters(
                     status=TasksStatuses.PERFORMING,
                     userid=dialog_manager.event.from_user.id,
                 )
             )
         case TasksTitles.CHECKED:
-            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.CHECKED))
-        case TasksTitles.ENTITY:
-            data = task_service.get_tasks_for_entity(
-                dialog_manager.start_data.get("entid")
-            )
-            if data:
-                tasks.extend(data)
-                wintitle = wintitle.format(data[0].get("name", ""))
+            tasks.extend(task_service.get_by_filters(status=TasksStatuses.CHECKED))
         case TasksTitles.SEARCH_RESULT:
-            tasks.extend(
-                task_service.get_tasks_with_filters(**dialog_manager.start_data)
-            )
+            tasks.extend(task_service.get_by_filters(**dialog_manager.start_data))
         case TasksTitles.FROM_CUSTOMER:
-            tasks.extend(task_service.get_tasks_by_status(TasksStatuses.FROM_CUSTOMER))
+            tasks.extend(
+                task_service.get_by_filters(status=TasksStatuses.FROM_CUSTOMER)
+            )
 
     tasks.sort(key=lambda x: x["created"], reverse=True)
     return {
@@ -110,7 +103,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
 
 
 async def task(dialog_manager: DialogManager, **kwargs):
-    task = task_service.get_task(dialog_manager.dialog_data.get("taskid"))
+    task = task_service.get_one(dialog_manager.dialog_data.get("taskid"))
     if task:
         task["is_employee"] = is_employee(dialog_manager.event.from_user.id)
     dialog_manager.dialog_data["task"] = task
@@ -165,8 +158,8 @@ async def result(dialog_manager: DialogManager, **kwargs):
 
 
 async def performed(dialog_manager: DialogManager, **kwargs):
-    task = task_service.get_task(dialog_manager.start_data["taskid"])
-    performed_counter = len(task_service.get_tasks_by_status("выполнено"))
+    task = task_service.get_one(dialog_manager.start_data["taskid"])
+    performed_counter = len(task_service.get_by_filters(status=TasksStatuses.PERFORMED))
     task.update({"counter": performed_counter})
     return task
 

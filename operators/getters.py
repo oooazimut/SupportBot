@@ -10,5 +10,5 @@ async def closing_types_geter(dialog_manager: DialogManager, **kwargs):
 
 
 async def client_tasks_exists_getter(dialog_manager: DialogManager, **kwargs):
-    tasks_exists = bool(task_service.get_tasks_by_status(TasksStatuses.FROM_CUSTOMER))
+    tasks_exists = bool(task_service.get_by_filters(status=TasksStatuses.FROM_CUSTOMER))
     return {"tasks_exists": tasks_exists}

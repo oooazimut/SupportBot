@@ -40,13 +40,21 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     taskid = manager.start_data["taskid"]
     run_date = datetime.datetime.now() + datetime.timedelta(days=3)
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
+    task = task_service.get_one(taskid)
+
+    resultid = ",".join(manager.dialog_data.get("resultid", []))
+    if task.get("resultid"):
+        resultid += f", {task.get('resultid')}"
+
+    data = dict(taskid=taskid, resultid=resultid, status=config.TasksStatuses.PERFORMED)
 
     if manager.dialog_data.get("actid"):
         actid = ",".join(manager.dialog_data["actid"])
-        task_service.add_act({"taskid": taskid, "actid": actid})
-    resultid = ",".join(manager.dialog_data.get("resultid", []))
-    task_service.update_result(resultid, taskid)
-    task_service.change_status(taskid, "выполнено")
+        if task.get("taskid"):
+            actid += f", {task.get('actid')}"
+        data.update(actid=actid)
+
+    task_service.update(**data)
 
     note = manager.dialog_data.get("note", "")
     record = f"выполнено, {manager.start_data.get('username')}"
@@ -71,15 +79,18 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
     if not manager.start_data["act"]:
         scheduler.add_job(
-            task_service.perform_task,
+            task_service.update,
             trigger="date",
             run_date=run_date,
-            args=[taskid],
+            kwargs={"taskid": taskid, "status": config.TasksStatuses.ARCHIVE},
             id=str(taskid),
             replace_existing=True,
         )
 
-    operators_ids = [operator['userid'] for operator in employee_service.get_employees_by_position("operator")]
+    operators_ids = [
+        operator["userid"]
+        for operator in employee_service.get_employees_by_position("operator")
+    ]
     slave = manager.start_data["username"]
     task = manager.start_data["title"]
     taskid = manager.start_data["taskid"]
@@ -90,8 +101,8 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
 
 async def on_cancel(clb, button, manager: DialogManager):
-    task_service.change_status(
-        manager.start_data.get("taskid"), config.TasksStatuses.AT_WORK
+    task_service.update(
+        taskid=manager.start_data.get("taskid"), status=config.TasksStatuses.AT_WORK
     )
 
 

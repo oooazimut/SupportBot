@@ -42,16 +42,14 @@ async def summary_handler(message: Message, message_input, manager: DialogManage
     media_type = media_type.value if media_id else None
 
     manager.dialog_data.update({"summary": txt or ""})
-    manager.start_data.update(
-        {
-            "media_id": f"{media_id or ''},{manager.start_data.get('media_id') or ''}".strip(
-                ","
-            ),
-            "media_type": f"{media_type or ''},{manager.start_data.get('media_type') or ''}".strip(
-                ","
-            ),
-        }
-    )
+    manager.start_data.update({
+        "media_id": f"{media_id or ''},{manager.start_data.get('media_id') or ''}".strip(
+            ","
+        ),
+        "media_type": f"{media_type or ''},{manager.start_data.get('media_type') or ''}".strip(
+            ","
+        ),
+    })
     await message.answer("Добавлено")
     await asyncio.sleep(1)
     await manager.back()
@@ -59,7 +57,7 @@ async def summary_handler(message: Message, message_input, manager: DialogManage
 
 async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager):
     taskid = manager.start_data.get("taskid", "")
-    customer = customer_service.get_customer(manager.start_data.get("creator"))
+    customer = customer_service.get_one(manager.start_data.get("creator"))
     operator = config.AGREEMENTERS.get(callback.from_user.id, "")
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     current_dttm = datetime.datetime.now().replace(microsecond=0)
@@ -70,15 +68,16 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
         "employee": manager.start_data.get("userid"),
     }
 
-    task_service.change_dttm(taskid, datetime.datetime.now())
-
     is_checking = (
         manager.start_data["status"] == "проверка" or not manager.start_data["act"]
     )
-    new_status = "закрыто" if is_checking else "проверка"
-    manager.start_data.update({"status": new_status})
+    new_status = config.TasksStatuses.ARCHIVE if is_checking else config.TasksStatuses.CHECKED
+    manager.start_data.update({
+        "status": new_status,
+        "created": datetime.datetime.now(),
+    })
 
-    task_service.update_task(manager.start_data)
+    task_service.update(**manager.start_data)
 
     if new_status == "закрыто":
         job = scheduler.get_job(job_id=str(taskid))
@@ -107,6 +106,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
 
     if manager.dialog_data.get("closing_type") == "частично":
         task_service.reopen_task(taskid)
+
     if customer:
         await cust_task_isclosed_notification(
             customer.get("id"),
@@ -125,12 +125,12 @@ async def delay_handler(
     trigger_data = datetime.date.today() + datetime.timedelta(days=delay)
     year, month, day = trigger_data.year, trigger_data.month, trigger_data.day
 
-    task_service.change_status(taskid, status="отложено")
+    task_service.update(taskid=taskid, status=config.TasksStatuses.DELAYED)
     scheduler.add_job(
-        task_service.change_status,
+        task_service.update,
         trigger="date",
         run_date=datetime.datetime(year, month, day, 9, 0, 0),
-        args=[taskid, delayed_status],
+        kwargs={"taskid": taskid, "status": delayed_status},
         id="delay" + str(taskid),
     )
     await manager.done()
@@ -141,7 +141,7 @@ async def delay_handler(
 
 async def on_remove(callback: CallbackQuery, button, dialog_manager: DialogManager):
     title = dialog_manager.start_data.get("title")
-    task_service.remove_task(dialog_manager.start_data.get("taskid"))
+    task_service.delete(dialog_manager.start_data.get("taskid"))
     await callback.answer("Заявка удалена", show_alert=True)
     try:
         await dialog_manager.done()

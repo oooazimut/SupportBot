@@ -141,7 +141,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             else:
                 data["simple_report"] = None
 
-            task = dict(task_service.save_task(**data))
+            task = dict(task_service.new(**data))
             await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
             recdata["task"] = task.get("taskid")
@@ -189,7 +189,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             else:
                 data["simple_report"] = None
 
-        task = dict(task_service.update_task(data))
+        task = task_service.update(**data)
         await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
         recdata["task"] = task["taskid"]
@@ -222,7 +222,9 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             for user in employee_service.get_employees_by_position("operator")
         ]
 
-        await new_task_notification(userids, task.get("title", ''), task.get("taskid", ''))
+        await new_task_notification(
+            userids, task.get("title", ""), task.get("taskid", "")
+        )
 
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -295,8 +297,9 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
                 pass
         return
 
-    task_service.change_status(
-        manager.dialog_data.get("task", {}).get("taskid"), "в работе"
+    task_service.update(
+        taskid=manager.dialog_data.get("task", {}).get("taskid"),
+        status=TasksStatuses.AT_WORK,
     )
 
     recdata = {
@@ -327,7 +330,7 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
         )
         return
 
-    task_service.change_status(data.get("taskid"), TasksStatuses.PERFORMING)
+    task_service.update(taskid=data.get("taskid"), status=TasksStatuses.PERFORMING)
     data["performed_time"] = str(datetime.datetime.now().replace(microsecond=0))
     if data.get("simple_report"):
         await manager.start(prf_states.PrfPerformedSG.confirm, data=data)
@@ -339,8 +342,9 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.change_status(
-        manager.dialog_data.get("task", {}).get("taskid"), "в работе"
+    task_service.update(
+        taskid=manager.dialog_data.get("task", {}).get("taskid"),
+        status=TasksStatuses.AT_WORK,
     )
 
     user = employee_service.get_employee(callback.from_user.id)
@@ -468,7 +472,7 @@ async def add_media(message: Message, message_input, manager: DialogManager):
             ","
         ),
     })
-    task_service.update_task(manager.dialog_data["task"])
+    task_service.update(**manager.dialog_data["task"])
     messg = await message.answer("Медиа добавлено")
     await manager.switch_to(states.TasksSG.task)
     await asyncio.sleep(1)

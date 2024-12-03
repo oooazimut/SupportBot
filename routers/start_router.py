@@ -6,7 +6,7 @@ from aiogram_dialog import DialogManager, StartMode
 from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from config import START_STATES
+from config import START_STATES, TasksStatuses
 from db.service import employee_service, task_service
 from notifications import TaskFactory
 
@@ -40,13 +40,13 @@ async def switch_off_notification(
         if job:
             job.remove()
 
-    task = task_service.get_task(callback_data.task)
+    task = task_service.get_one(callback_data.task)
     if (
         task
         and int(callback.from_user.id) == task["slave"]
-        and task["status"] == "назначено"
+        and task["status"] == TasksStatuses.ASSIGNED
     ):
-        task_service.change_status(callback_data.task, "в работе")
+        task_service.update(taskid=task.get("taskid"), status=TasksStatuses.AT_WORK)
         await callback.answer(text="заявка принята в работу", show_alert=True)
 
     if callback.message and isinstance(callback.message, Message):

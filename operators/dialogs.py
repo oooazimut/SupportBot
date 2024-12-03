@@ -49,7 +49,8 @@ main = Dialog(
 def acts_are_existing(data, widget, dialog_manager: DialogManager) -> bool:
     userid = dialog_manager.event.from_user.id
     return (
-        bool(task_service.get_tasks_by_status("проверка")) and userid == config.CHIEF_ID
+        bool(task_service.get_by_filters(status=config.TasksStatuses.CHECKED))
+        and userid == config.CHIEF_ID
     )
 
 
@@ -63,41 +64,44 @@ tasks = Dialog(
             state=tsk_states.NewSG.entity_choice,
         ),
         Group(
-        Start(
-            Multi(
-                Const("\U0000203c", when="tasks_exists"),
-                Const(config.TasksTitles.FROM_CUSTOMER),
-                sep=" ",
+            Start(
+                Multi(
+                    Const("\U0000203c", when="tasks_exists"),
+                    Const(config.TasksTitles.FROM_CUSTOMER),
+                    sep=" ",
+                ),
+                id="to_from_customers",
+                state=tsk_states.TasksSG.tasks,
+                data={"wintitle": config.TasksTitles.FROM_CUSTOMER},
             ),
-            id="to_from_customers",
-            state=tsk_states.TasksSG.tasks,
-            data={"wintitle": config.TasksTitles.FROM_CUSTOMER},
+            Start(
+                Const(config.TasksTitles.OPENED),
+                id="to_opened_tasks",
+                state=tsk_states.TasksSG.tasks,
+                data={"wintitle": config.TasksTitles.OPENED},
+            ),
+            Start(
+                Const(config.TasksTitles.ARCHIVE),
+                id="to_archive",
+                state=tsk_states.TasksSG.tasks,
+                data={"wintitle": config.TasksTitles.ARCHIVE},
+            ),
+            Start(
+                Const("Поиск"),
+                id="to_filtration",
+                state=tsk_states.FiltrationSG.subentity,
+            ),
+            Start(
+                Const("Проверить акты"),
+                id="to_acts_checking",
+                state=tsk_states.TasksSG.tasks,
+                data={"wintitle": config.TasksTitles.CHECKED},
+                when=acts_are_existing,
+            ),
+            Button(Const("Обновить"), id="reload"),
+            Cancel(Const("Назад")),
+            width=2,
         ),
-        Start(
-            Const(config.TasksTitles.OPENED),
-            id="to_opened_tasks",
-            state=tsk_states.TasksSG.tasks,
-            data={"wintitle": config.TasksTitles.OPENED},
-        ),
-        Start(
-            Const(config.TasksTitles.ARCHIVE),
-            id="to_archive",
-            state=tsk_states.TasksSG.tasks,
-            data={"wintitle": config.TasksTitles.ARCHIVE},
-        ),
-        Start(
-            Const("Поиск"), id="to_filtration", state=tsk_states.FiltrationSG.subentity
-        ),
-        Start(
-            Const("Проверить акты"),
-            id="to_acts_checking",
-            state=tsk_states.TasksSG.tasks,
-            data={"wintitle": config.TasksTitles.CHECKED},
-            when=acts_are_existing,
-        ),
-        Button(Const("Обновить"), id="reload"),
-        Cancel(Const("Назад")),
-        width=2),
         state=states.OpTasksSG.main,
         getter=getters.client_tasks_exists_getter,
     ),

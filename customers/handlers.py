@@ -11,7 +11,7 @@ from . import states
 
 
 async def on_new_task(callback: CallbackQuery, button, dialog_manager: DialogManager):
-    if customer_service.get_customer(callback.from_user.id):
+    if customer_service.get_one(callback.from_user.id):
         await dialog_manager.start(state=states.NewTaskSG.preview)
     else:
         await dialog_manager.start(states.NewCustomerSG.name)
@@ -28,7 +28,7 @@ async def on_current_tasks(
         "wintitle": TasksTitles.OPENED,
         "current": True,
     }
-    customer = customer_service.get_customer(callback.from_user.id)
+    customer = customer_service.get_one(callback.from_user.id)
     if customer.get("object"):
         dict_update = {"entid": customer.get("object")}
     else:
@@ -42,7 +42,7 @@ async def on_customer_archive(
     callback: CallbackQuery, button, dialog_manager: DialogManager
 ):
     data = {"wintitle": TasksTitles.ARCHIVE, "status": TasksStatuses.ARCHIVE}
-    customer = customer_service.get_customer(callback.from_user.id)
+    customer = customer_service.get_one(callback.from_user.id)
     if customer.get("object"):
         dict_update = {"entid": customer.get("object")}
     else:
@@ -64,7 +64,7 @@ async def on_confirm_customer_creating(
     dialog_manager.dialog_data["customer"]["name"] += (
         f": {dialog_manager.dialog_data['customer']['object']}"
     )
-    customer_service.new_customer(**dialog_manager.dialog_data["customer"])
+    customer_service.new(**dialog_manager.dialog_data["customer"])
     await dialog_manager.done()
     await callback.answer(
         "Отлично, теперь вы можете создавать заявки!", show_alert=True
@@ -91,7 +91,7 @@ async def video_handler(message: Message, message_input, manager: DialogManager)
 async def on_confirm_customer_task_creating(
     callback: CallbackQuery, button, dialog_manager: DialogManager
 ):
-    customer = customer_service.get_customer(callback.from_user.id)
+    customer = customer_service.get_one(callback.from_user.id)
     task = {
         "created": datetime.now().replace(microsecond=0),
         "creator": customer.get("id"),
@@ -112,7 +112,7 @@ async def on_confirm_customer_task_creating(
     for key in ("priority", "act", "slave", "agreement", "simple_report", "recom_time"):
         task[key] = None
 
-    task_service.save_task(**task)
+    task_service.new(**task)
     await new_customer_task_notification(customer)
     await dialog_manager.done()
     await callback.answer(
