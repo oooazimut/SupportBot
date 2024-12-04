@@ -35,7 +35,7 @@ async def base_notification(
             await messaga.delete()
 
     except TelegramBadRequest as BadRqst:
-        employee = employee_service.get_employee(user)["username"]
+        employee = employee_service.get_one(user)["username"]
         logger.info(
             f"Сообщение {notification} уже было удалено пользователем {employee}:\n",
             str(BadRqst),
@@ -72,10 +72,9 @@ async def returned_task(performer, task, taskid):
 
 async def check_work_execution(performer_id: str | int):
     users = [
-        user["userid"]
-        for user in employee_service.get_employees_by_position("operator")
+        user["userid"] for user in employee_service.get_by_filters(position="operator")
     ]
-    performer = employee_service.get_employee(performer_id)
+    performer = employee_service.get_one(performer_id)
     text = f"{performer['username']} уже 30 минут на объекте, необходимо ему позвонить!"
 
     for user in users:
@@ -86,21 +85,21 @@ async def new_customer_task_notification(customer: dict):
     text = f"Новая заявка от клиента: {customer.get('name', '')}, {customer.get('object', '')}"
     operators = [
         operator["userid"]
-        for operator in employee_service.get_employees_by_position("operator")
+        for operator in employee_service.get_by_filters(position="operator")
     ]
-
-    await base_notification(operators, "", text)
+    for operator in operators:
+        await base_notification(operator, "", text)
 
 
 async def cust_task_isclosed_notification(customer_id: int | str, task_title: str):
     text = f"Заявка '{task_title}' выполнена."
-    await base_notification([customer_id], "", text)
+    await base_notification(customer_id, "", text)
 
 
 async def journal_reminder():
     message_text = "Не забываем отмечаться в журнале!"
-    users = [user["userid"] for user in employee_service.get_employees()]
+    users = [user["userid"] for user in employee_service.get_all()]
     ignored_users = {1740579878, CHIEF_ID}
     users = [user for user in users if user not in ignored_users]
-
-    await base_notification(users, "", message_text)
+    for user in users:
+        await base_notification(user, "", message_text)

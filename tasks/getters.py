@@ -12,7 +12,7 @@ from db.service import (
 
 
 def is_employee(userid):
-    return bool(employee_service.get_employee(userid))
+    return bool(employee_service.get_one(userid))
 
 
 def is_customer(userid):
@@ -129,7 +129,7 @@ async def entitites(dialog_manager: DialogManager, **kwargs):
 
 
 async def slaves(dialog_manager: DialogManager, **kwargs):
-    slaves = employee_service.get_employees_by_position("worker")
+    slaves = employee_service.get_by_filters(position="worker")
     return {"slaves": slaves}
 
 
@@ -149,7 +149,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
     )
     usernames = list()
     for userid in data.get("slaves", []):
-        usernames.append(employee_service.get_employee(userid[0]).get("username"))
+        usernames.append(employee_service.get_one(userid[0]).get("username"))
     data["usernames"] = usernames
 
     dialog_manager.dialog_data["task"] = data
@@ -197,7 +197,7 @@ async def statuses_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def journal_getter(dialog_manager: DialogManager, **kwargs):
-    data = journal_service.get_records(
+    data = journal_service.get_by_filters(
         taskid=dialog_manager.dialog_data.get("task", {}).get("taskid")
     )
     dates = list(set([item.get("dttm").split()[0] for item in data]))

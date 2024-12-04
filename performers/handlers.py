@@ -66,16 +66,16 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "employee": manager.start_data.get("userid"),
         "record": record,
     }
-    journal_service.new_record(recdata)
+    journal_service.new(**recdata)
 
     record = f"{manager.start_data.get('name')} Уехал"
 
     last_rec = journal_service.get_last(callback.from_user.id)
     if last_rec and record == last_rec.get("record"):
-        journal_service.del_record(last_rec.get("recordid"))
+        journal_service.delete(last_rec.get("recordid"))
 
     recdata["record"] = record
-    journal_service.new_record(recdata)
+    journal_service.new(**recdata)
 
     if not manager.start_data["act"]:
         scheduler.add_job(
@@ -89,7 +89,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
     operators_ids = [
         operator["userid"]
-        for operator in employee_service.get_employees_by_position("operator")
+        for operator in employee_service.get_by_filters(position="operator")
     ]
     slave = manager.start_data["username"]
     task = manager.start_data["title"]

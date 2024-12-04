@@ -4,7 +4,7 @@ from db.tools import connector
 
 
 @connector
-def new_receipt(con: Connection, data: dict):
+def new(con: Connection, data: dict):
     query = """
     INSERT INTO receipts (dttm, employee, receipt, caption) 
          VALUES (:dttm, :employee, :receipt, :caption)
@@ -14,15 +14,19 @@ def new_receipt(con: Connection, data: dict):
 
 
 @connector
-def get_receipts(con: Connection, params={}) -> list:
-    query = "SELECT * FROM receipts"
+def get_by_filters(con: Connection, **kwargs) -> list:
+    """фильтры: dttm, employee"""
+
     adds = list()
-    if params.get("dttm"):
+    if kwargs.get("dttm"):
         adds.append("DATE(dttm) = :dttm")
-    if params.get("employee"):
+    if kwargs.get("employee"):
         adds.append("employee = :employee")
 
-    if adds:
-        query += " WHERE " + " AND ".join(adds)
+    sub_query = " WHERE " + " AND ".join(adds)
+    query = f"SELECT * FROM receipts WHERE {sub_query}"
+    return con.execute(query, kwargs).fetchall()
 
-    return con.execute(query, params).fetchall()
+@connector
+def get_all(con: Connection):
+    return con.execute('SELECT * FROM receipts')

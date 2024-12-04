@@ -5,18 +5,23 @@ from db.tools import connector
 
 
 @connector
-def new_record(con: Connection, data: dict):
-    data.setdefault("dttm", datetime.now().replace(microsecond=0))
+def new(con: Connection, **kwargs):
+    kwargs.setdefault("dttm", datetime.now().replace(microsecond=0))
     query = """
     INSERT INTO journal (dttm, employee, task, record) 
          VALUES (:dttm, :employee, :task, :record)
     """
-    con.execute(query, data)
+    con.execute(query, kwargs)
     con.commit()
 
 
 @connector
-def get_records(con: Connection, **kwargs) -> list:
+def get_all(con: Connection):
+    return con.execute("SELECT * from journal").fetchall()
+
+
+@connector
+def get_by_filters(con: Connection, **kwargs) -> list:
     data = kwargs
     query = """
        SELECT *
@@ -75,7 +80,7 @@ def get_last_record_id(userid) -> int:
 
 
 @connector
-def del_record(con: Connection, recordid):
+def delete(con: Connection, recordid):
     query = "DELETE FROM journal WHERE recordid = ?"
     con.execute(query, [recordid])
     con.commit()

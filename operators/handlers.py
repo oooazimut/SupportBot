@@ -100,7 +100,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     recdata["record"] = (
         f"{action} {operator}\n{manager.dialog_data.get('summary') or ''}"
     )
-    journal_service.new_record(recdata)
+    journal_service.new(**recdata)
     if manager.dialog_data.get("summary"):
         del manager.dialog_data["summary"]
 

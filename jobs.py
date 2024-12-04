@@ -45,7 +45,7 @@ async def two_reports():
         for entry in sorted(tasks, key=lambda x: x["dttm"]):
             grouped_tasks[entry["username"]].append(entry)
 
-        users = employee_service.get_employees()
+        users = employee_service.get_all()
         users = [
             user
             for user in users
@@ -191,7 +191,7 @@ async def two_reports():
                 writer.writerow([])
 
     # Получение данных и вызов основных функций
-    data = journal_service.get_records(date=curr_date)
+    data = journal_service.get_by_filters(date=curr_date)
     records, tasks = process_records(data)
 
     generate_report(records, tasks, curr_date)

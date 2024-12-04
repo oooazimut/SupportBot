@@ -21,7 +21,7 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
     txt = f"Пользователь {message.from_user.full_name} {message.from_user.id} запустил бота"
     await bot.send_message(chat_id=5963726977, text=txt)
 
-    user = employee_service.get_employee(userid=message.from_user.id)
+    user = employee_service.get_one(userid=message.from_user.id)
     if user:
         position = user["position"]
     else:

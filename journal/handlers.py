@@ -23,7 +23,7 @@ async def on_location(
         data = data.decode("utf-8")
         await r.aclose()
     else:
-        data = entity_service.get_entity(location)["name"]
+        data = entity_service.get_one(location)["name"]
 
     dialog_manager.dialog_data["location"] = data
     await dialog_manager.switch_to(states.JrMainMenuSG.action)
@@ -32,7 +32,7 @@ async def on_location(
 async def on_action(
     callback: CallbackQuery, select, dialog_manager: DialogManager, action: str, /
 ):
-    user = employee_service.get_employee(callback.from_user.id)
+    user = employee_service.get_one(callback.from_user.id)
     last_record = journal_service.get_last_record(callback.from_user.id)
     current_record = f"{dialog_manager.dialog_data.get('location')} {action}"
     if last_record and action in last_record:
@@ -56,7 +56,7 @@ async def on_action(
 
 
 async def on_confirm(callback: CallbackQuery, button, manager: DialogManager):
-    journal_service.new_record(manager.dialog_data)
+    journal_service.new(**manager.dialog_data)
 
     if manager.dialog_data.get("current_car"):
         car_service.pin_car(manager.dialog_data["current_car"], callback.from_user.id)
@@ -87,14 +87,14 @@ async def pin_receipt(message: Message, message_input, manager: DialogManager):
     receipt = message.photo[-1].file_id
     caption = message.caption
 
-    receipts_service.new_receipt(
+    receipts_service.new(
         {"dttm": dttm, "employee": employee, "receipt": receipt, "caption": caption}
     )
     await manager.done()
 
 
 async def on_search(callback: CallbackQuery, button, manager: DialogManager):
-    user = employee_service.get_employee(callback.from_user.id)
+    user = employee_service.get_one(callback.from_user.id)
     data = {}
 
     if user.get("position") in ("worker",):

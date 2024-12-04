@@ -4,7 +4,7 @@ from db.tools import connector
 
 
 @connector
-def save_employee(con: Connection, userid: int, username: str, position: str):
+def new(con: Connection, userid: int, username: str, position: str):
     params = [userid, username, position]
     query = """
     INSERT INTO employees(userid, username, position) 
@@ -14,25 +14,26 @@ def save_employee(con: Connection, userid: int, username: str, position: str):
 
 
 @connector
-def get_employee(con: Connection, userid: str | int) -> dict | None:
+def get_one(con: Connection, userid: str | int) -> dict | None:
     query = """
     SELECT * 
       FROM employees 
      WHERE userid = ?
     """
-    employee = con.execute(query, [userid]).fetchone()
-    return employee
+    return con.execute(query, [userid]).fetchone()
 
 
 @connector
-def get_employees(con: Connection) -> list:
+def get_all(con: Connection) -> list:
     data = con.execute("SELECT * FROM employees").fetchall()
     return data
 
 
 @connector
-def get_employees_by_position(con: Connection, position: str) -> list:
-    data = con.execute(
-        "SELECT * FROM employees WHERE position = ?", [position]
-    ).fetchall()
-    return data
+def get_by_filters(con: Connection, **kwargs):
+    """фильтры: position, username"""
+    userid = kwargs.pop("userid")
+    sub_query = " AND ".join(f"{item} = :{item}" for item in kwargs)
+    kwargs.update(userid=userid)
+    query = f"SELECT * FROM employees WHERE {sub_query}"
+    return con.execute(query, kwargs)

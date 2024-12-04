@@ -5,7 +5,7 @@ from db.tools import connector
 
 
 @connector
-def new_car(con: Connection, **kwargs):
+def new(con: Connection, **kwargs):
     query = """
     INSERT INTO cars (model, state_number) 
          VALUES (:model, :state_number)
@@ -15,19 +15,17 @@ def new_car(con: Connection, **kwargs):
 
 
 @connector
-def edit_car(con: Connection, **kwargs):
-    query = """
-    UPDATE cars 
-       SET model = :model, 
-           state_number = state_number 
-     WHERE id = :car_id
-    """
+def update(con: Connection, **kwargs):
+    car_id = kwargs.pop("id")
+    sub_query = ", ".join(f"{item} = :{item}" for item in kwargs)
+    kwargs.update(id=car_id)
+    query = f"UPDATE cars SET {sub_query} WHERE id = :id"
     con.execute(query, kwargs)
     con.commit()
 
 
 @connector
-def del_car(con: Connection, car_id):
+def delete(con: Connection, car_id):
     query = """
     DELETE FROM cars 
           WHERE id = ?
@@ -37,7 +35,7 @@ def del_car(con: Connection, car_id):
 
 
 @connector
-def get_car(con: Connection, car_id):
+def get_one(con: Connection, car_id):
     query = """
     SELECT * 
       FROM cars 
@@ -47,7 +45,7 @@ def get_car(con: Connection, car_id):
 
 
 @connector
-def get_cars(con: Connection):
+def get_all(con: Connection):
     query = """
     SELECT *
       FROM cars
@@ -71,7 +69,7 @@ def get_pinned_cars(con: Connection, **kwargs):
     # SELECT ciu.dttm AS dttm, c.model AS model, c.state_number AS state_number,
     #     ROW_NUMBER() OVER(PARTITION BY c.model, c.state_number ORDER BY ciu.dttm) AS rn
     #             FROM cars_in_use AS ciu
-    #        LEFT JOIN cars AS c 
+    #        LEFT JOIN cars AS c
     #               ON ciu.car = c.id
 
     # '''
@@ -90,12 +88,12 @@ def get_pinned_cars(con: Connection, **kwargs):
     #      WHERE rn = 1
     #     """
 
-    query = '''
+    query = """
        SELECT ciu.dttm AS dttm, c.model AS model, c.state_number AS state_number
          FROM cars_in_use AS ciu
     LEFT JOIN cars AS c 
            ON ciu.car = c.id
-    '''
+    """
     adds = list()
     if kwargs:
         for key in ("user", "car"):

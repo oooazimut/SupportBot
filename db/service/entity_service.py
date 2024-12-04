@@ -2,7 +2,7 @@ from sqlite3 import Connection
 from db.tools import connector
 
 @connector
-def get_entities(con: Connection):
+def get_all(con: Connection):
     query = 'SELECT * FROM entities'
     return con.execute(query).fetchall()
 
@@ -14,7 +14,7 @@ def get_entities_by_substr(con: Connection, substr: str) -> list:
 
 
 @connector
-def get_entity(con: Connection, entid: str | int) -> dict | None:
+def get_one(con: Connection, entid: str | int) -> dict | None:
     query = "SELECT * FROM entities WHERE ent_id = ?"
     return con.execute(query, [entid]).fetchone()
 

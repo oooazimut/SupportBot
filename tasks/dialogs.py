@@ -291,17 +291,17 @@ new = Dialog(
 
 
 def user_is_operator(data, widget, dialog_manager: DialogManager) -> bool:
-    user: dict = employee_service.get_employee(userid=dialog_manager.event.from_user.id)
+    user: dict = employee_service.get_one(userid=dialog_manager.event.from_user.id)
     return user.get("position") == "operator" if user else False
 
 
 def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
-    user = employee_service.get_employee(userid=dialog_manager.event.from_user.id)
+    user = employee_service.get_one(userid=dialog_manager.event.from_user.id)
     return user.get("position") == "worker" if user else False
 
 
 def isnt_arriving(data, widget, dialog_manager: DialogManager) -> bool:
-    record = journal_service.get_records(
+    record = journal_service.get_by_filters(
         date=datetime.today().date(),
         object=data["name"],
         taskid=data["taskid"],

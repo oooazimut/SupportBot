@@ -30,7 +30,7 @@ from tasks import dialogs as tsk_dialogs
 
 async def ui_error_handler(event: ErrorEvent, dialog_manager: DialogManager):
     userid = dialog_manager.middleware_data["event_from_user"].id
-    user = employee_service.get_employee(userid=userid)
+    user = employee_service.get_one(userid=userid)
     if user:
         position = user["position"]
     else:

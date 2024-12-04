@@ -13,7 +13,7 @@ from db.service import (
 
 
 async def main_getter(dialog_manager: DialogManager, **kwargs):
-    journal = journal_service.get_records(
+    journal = journal_service.get_by_filters(
         userid=dialog_manager.event.from_user.id, date=datetime.today().date()
     )
     if journal:
@@ -70,13 +70,13 @@ async def actions(dialog_manager: DialogManager, **kwargs):
 
 
 async def users(dialog_manager: DialogManager, **kwargs):
-    users = employee_service.get_employees()
+    users = employee_service.get_all()
     return {"users": users}
 
 
 async def result(dialog_manager: DialogManager, **kwargs):
     def append_data(data: dict, journal: list):
-        temp = journal_service.get_records(**data)
+        temp = journal_service.get_by_filters(**data)
         if temp:
             journal.append(sorted(temp, key=lambda x: x["dttm"]))
 
@@ -90,7 +90,7 @@ async def result(dialog_manager: DialogManager, **kwargs):
         search_data["userid"] = dialog_manager.start_data.get("userid", "")
         append_data(search_data, data)
     else:
-        users = employee_service.get_employees()
+        users = employee_service.get_all()
         users.sort(key=lambda x: x["username"].split()[-1])
         for user in users:
             search_data["userid"] = user.get("userid")
@@ -102,13 +102,10 @@ async def result(dialog_manager: DialogManager, **kwargs):
     if data:
         username = data[user_index][0]["username"]
         userid = data[user_index][0]["userid"]
-        dialog_manager.dialog_data["receipts"] = receipts_service.get_receipts(
-            {
-                "dttm": rec_date,
-                "employee": userid,
-            }
+        dialog_manager.dialog_data.update(
+            receipts=receipts_service.get_by_filters(dttm=rec_date, employee=userid),
+            username=username,
         )
-        dialog_manager.dialog_data["username"] = username
         journal = data[user_index]
         cars = car_service.get_pinned_cars(dttm=rec_date, user=userid)
 
