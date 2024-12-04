@@ -92,13 +92,13 @@ async def new_customer_task_notification(customer: dict):
         operator["userid"]
         for operator in employee_service.get_employees_by_position("operator")
     ]
-
-    await base_notification(operators, "", text)
+    for operator in operators:
+        await base_notification(operator, "", text)
 
 
 async def cust_task_isclosed_notification(customer_id: int | str, task_title: str):
     text = f"Заявка '{task_title}' выполнена."
-    await base_notification([customer_id], "", text)
+    await base_notification(customer_id, "", text)
 
 
 async def journal_reminder():
@@ -106,5 +106,5 @@ async def journal_reminder():
     users = [user["userid"] for user in employee_service.get_employees()]
     ignored_users = {1740579878, CHIEF_ID}
     users = [user for user in users if user not in ignored_users]
-
-    await base_notification(users, "", message_text)
+    for user in users:
+        await base_notification(user, "", message_text)
