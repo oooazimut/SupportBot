@@ -52,8 +52,8 @@ async def switch_off_notification(
     if callback.message and isinstance(callback.message, Message):
         try:
             await callback.message.delete()
-        except TelegramBadRequest:
-            logging.error("Сообщение невозможно удалить:", str(TelegramBadRequest))
+        except TelegramBadRequest as errr:
+            logging.error("Сообщение невозможно удалить:", str(errr))
     else:
         logger.warning("Оповещение для удаления отсутствует")
         logger.warning(callback.from_user.full_name, callback.from_user.id)

@@ -76,9 +76,13 @@ async def check_work_execution(performer_id: str | int):
     ]
     performer = employee_service.get_one(performer_id)
     text = f"{performer['username']} уже 30 минут на объекте, необходимо ему позвонить!"
-
+    
+    nots = []
     for user in users:
-        await base_notification(user, "", text, msg_deleting=True)
+        asyncio.create_task(base_notification(user, "", text, msg_deleting=True))
+    
+    for note in nots:
+        await note
 
 
 async def new_customer_task_notification(customer: dict):

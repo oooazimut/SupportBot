@@ -30,10 +30,8 @@ main_dialog = Dialog(
             on_click=handlers.on_current_tasks,
         ),
         Button(
-            Const('Архив'),
-            id='customer_archive',
-            on_click=handlers.on_customer_archive
-            ),
+            Const("Архив"), id="customer_archive", on_click=handlers.on_customer_archive
+        ),
         state=states.CusMainSG.main,
     ),
 )
@@ -95,20 +93,25 @@ new_customer = Dialog(
 new_task = Dialog(
     Window(
         Const("Ваша заявка:\n"),
-        Format("{description}", when="description"),
+        Format("{task[description]}", when=F["task"]["description"]),
         Const(
-            "\n<b>Подсказка</b>: можно добавить и текст и видео, или что-то одно. Допускается добавление нескольких видео"
+            "\n<b>Подсказка</b>: <i>Добавляйте текст, видео, картинки - что угодно,"
+            "КРОМЕ КРУЖОЧКОВ И ГОЛОСОВЫХ! Добавлять можно неограниченное количество раз.</i>"
         ),
         DynamicMedia("media", when=F["task"]["media_id"]),
         StubScroll(id="customer_video_scroll", pages="pages"),
         Group(
             NumberedPager(scroll="customer_video_scroll", when=F["pages"] > 1), width=8
         ),
-        Next(Const("Добавить текст")),
-        SwitchTo(
-            Const("Добавить видео"),
-            id="to_customer_video",
-            state=states.NewTaskSG.video,
+        MessageInput(
+            func=handlers.description_handler,
+            content_types=[
+                ContentType.TEXT,
+                ContentType.VIDEO,
+                ContentType.AUDIO,
+                ContentType.DOCUMENT,
+                ContentType.PHOTO,
+            ],
         ),
         Button(
             Const("Сохранить и отправить"),
@@ -118,20 +121,5 @@ new_task = Dialog(
         Cancel(Const("Отмена")),
         state=states.NewTaskSG.preview,
         getter=getters.task_preview_getter,
-    ),
-    Window(
-        Const("Здесь вы можете добавить текстовое описание вашей проблемы."),
-        MessageInput(func=handlers.description_handler, content_types=ContentType.TEXT),
-        Back(Const("Назад")),
-        Cancel(Const("Отмена")),
-        state=states.NewTaskSG.description,
-    ),
-    Window(
-        Const(
-            "Нажмите на скрепочку внизу справа, а затем прикрепите видео. КРУЖОЧКИ НЕ ПОДДЕРЖИВАЮТСЯ!"
-        ),
-        MessageInput(func=handlers.video_handler, content_types=ContentType.VIDEO),
-        SwitchTo(Const("Назад"), id="back_to_preview", state=states.NewTaskSG.preview),
-        state=states.NewTaskSG.video,
     ),
 )

@@ -137,7 +137,11 @@ close_task = Dialog(
         MessageInput(
             func=handlers.summary_handler,
             content_types=[
-                ContentType.ANY,
+                ContentType.TEXT,
+                ContentType.AUDIO,
+                ContentType.VIDEO,
+                ContentType.DOCUMENT,
+                ContentType.PHOTO,
             ],
         ),
         Cancel(Const("Назад")),
