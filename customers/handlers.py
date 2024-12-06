@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from aiogram.types import CallbackQuery, Message
+from aiogram.enums import content_type
+from aiogram.types import CallbackQuery, ContentType, Message
 from aiogram_dialog import DialogManager
-from config import TasksStatuses, TasksTitles
+from config import CONTENT_ATTR_MAP, TasksStatuses, TasksTitles
 from db.service import customer_service, task_service
 from notifications import new_customer_task_notification
 from tasks import states as task_states
@@ -28,7 +29,7 @@ async def on_current_tasks(
         "wintitle": TasksTitles.OPENED,
         "current": True,
     }
-    customer = customer_service.get_customer(callback.from_user.id)
+    customer = customer_service.get_customer(callback.from_user.id) or {}
     if customer.get("object"):
         dict_update = {"entid": customer.get("object")}
     else:
@@ -41,8 +42,8 @@ async def on_current_tasks(
 async def on_customer_archive(
     callback: CallbackQuery, button, dialog_manager: DialogManager
 ):
-    data = {"wintitle": TasksTitles.ARCHIVE, "status": TasksStatuses.ARCHIVE}
-    customer = customer_service.get_customer(callback.from_user.id)
+    data: dict = {"wintitle": TasksTitles.ARCHIVE, "status": TasksStatuses.ARCHIVE}
+    customer = customer_service.get_customer(callback.from_user.id) or {}
     if customer.get("object"):
         dict_update = {"entid": customer.get("object")}
     else:
@@ -72,46 +73,44 @@ async def on_confirm_customer_creating(
 
 
 async def description_handler(message: Message, message_input, manager: DialogManager):
-    manager.dialog_data.setdefault("task", {}).setdefault("description", []).append(
-        message.text
-    )
-    await manager.back()
+    media_type = message.content_type
+    media_id, description = CONTENT_ATTR_MAP[media_type](message)
+    media_type = "" if media_type == ContentType.TEXT else media_type.value
+    task = manager.dialog_data.setdefault("task", {})
 
-
-async def video_handler(message: Message, message_input, manager: DialogManager):
-    manager.dialog_data.setdefault("task", {}).setdefault("media_type", []).append(
-        message.content_type
-    )
-    manager.dialog_data.setdefault("task", {}).setdefault("media_id", []).append(
-        message.video.file_id
-    )
-    await manager.switch_to(state=states.NewTaskSG.preview)
+    for key, value in zip(
+        ("description", "media_id", "media_type"),
+        (description, media_id, media_type),
+    ):
+        delimiter = "\n" if key == "description" else ","
+        task[key] = f"{task.get(key, '')}{delimiter}{value}".strip(delimiter)
 
 
 async def on_confirm_customer_task_creating(
     callback: CallbackQuery, button, dialog_manager: DialogManager
 ):
     customer = customer_service.get_customer(callback.from_user.id)
-    task = {
-        "created": datetime.now().replace(microsecond=0),
-        "creator": customer.get("id"),
-        "phone": customer.get("phone"),
-        "title": customer.get("name"),
-        "description": "\n".join(
-            dialog_manager.dialog_data.get("task", {}).get("description", [])
-        ),
-        "media_type": ",".join(
-            dialog_manager.dialog_data.get("task", {}).get("media_type", [])
-        ),
-        "media_id": ",".join(
-            dialog_manager.dialog_data.get("task", {}).get("media_id", [])
-        ),
-        "status": TasksStatuses.FROM_CUSTOMER,
-        "entity": customer.get("object"),
-    }
-    for key in ("priority", "act", "slave", "agreement", "simple_report", "recom_time"):
-        task[key] = None
+    task: dict = dialog_manager.dialog_data.get("task", {})
 
+    task.update(
+        created=datetime.now().replace(microsecond=0),
+        creator=customer.get("id"),
+        phone=customer.get("phone"),
+        entity=customer.get("object"),
+        title=customer.get("name"),
+        status=TasksStatuses.FROM_CUSTOMER,
+    )
+    task.update({
+        key: None
+        for key in (
+            "priority",
+            "act",
+            "slave",
+            "agreement",
+            "simple_report",
+            "recom_time",
+        )
+    })
     task_service.save_task(**task)
     await new_customer_task_notification(customer)
     await dialog_manager.done()

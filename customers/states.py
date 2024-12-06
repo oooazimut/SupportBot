@@ -12,5 +12,3 @@ class NewCustomerSG(StatesGroup):
 
 class NewTaskSG(StatesGroup):
     preview = State()
-    description = State()
-    video = State()

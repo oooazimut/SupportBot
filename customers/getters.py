@@ -20,19 +20,19 @@ async def customer_preview_getter(dialog_manager: DialogManager, **kwargs):
 
 async def task_preview_getter(dialog_manager: DialogManager, **kwargs):
     task = dialog_manager.dialog_data.get("task", {})
-    description = "\n".join(task.get("description")) if task.get('description') else ''
-    media_type = task.get("media_type", [])
-    media_id = task.get("media_id", [])
-    pages = len(task.get("media_id", []))
+
+    media_type = task.get("media_type", "").split(",")
+    media_id = task.get("media_id", "").split(",")
     index = await dialog_manager.find("customer_video_scroll").get_page()
-    if media_id:
-        media = MediaAttachment(media_type[index], file_id=MediaId(media_id[index]))
-    else:
-        media = None
+    media = (
+        MediaAttachment(media_type[index], file_id=MediaId(media_id[index]))
+        if media_id
+        else None
+    )
+    pages = len(media_id)
 
     return {
         "task": task,
         "pages": pages,
         "media": media,
-        "description": description,
     }
