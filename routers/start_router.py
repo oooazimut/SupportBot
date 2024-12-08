@@ -36,7 +36,6 @@ async def switch_off_notification(
     if callback_data.task:
         jobid = str(callback.from_user.id) + callback_data.task
         job = scheduler.get_job(jobid)
-
         if job:
             job.remove()
 
@@ -53,11 +52,10 @@ async def switch_off_notification(
         try:
             await callback.message.delete()
         except TelegramBadRequest as errr:
-            logging.error("Сообщение невозможно удалить:", str(errr))
+            logging.error("Сообщение невозможно удалить:")
     else:
         logger.warning("Оповещение для удаления отсутствует")
         logger.warning(callback.from_user.full_name, callback.from_user.id)
-        logger.warning(callback.message.text)
 
 
 @router.callback_query(F.data == "agr_not_is_readed")

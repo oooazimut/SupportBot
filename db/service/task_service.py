@@ -37,7 +37,7 @@ def update(con: Connection, **kwargs):
     taskid = kwargs.pop("taskid")
     sub_query = ", ".join(f"{item} = :{item}" for item in kwargs)
     kwargs.update(taskid=taskid)
-    query = f""""
+    query = f"""
         UPDATE tasks 
            SET {sub_query} 
          WHERE taskid = :taskid

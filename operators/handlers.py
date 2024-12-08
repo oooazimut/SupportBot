@@ -10,6 +10,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from db.service import customer_service, journal_service, task_service
+from jobs import handle_description
 from notifications import closed_task_notification, cust_task_isclosed_notification
 
 logger = logging.getLogger(__name__)
@@ -32,27 +33,8 @@ async def on_closing_type(
 
 
 async def summary_handler(message: Message, message_input, manager: DialogManager):
-    media_type = message.content_type
-
-    if media_type in config.CONTENT_ATTR_MAP:
-        media_id, txt = config.CONTENT_ATTR_MAP[media_type](message)
-    else:
-        media_id, txt = None, ""
-
-    media_type = media_type.value if media_id else None
-
-    manager.dialog_data.update({"summary": txt or ""})
-    manager.start_data.update({
-        "media_id": f"{media_id or ''},{manager.start_data.get('media_id') or ''}".strip(
-            ","
-        ),
-        "media_type": f"{media_type or ''},{manager.start_data.get('media_type') or ''}".strip(
-            ","
-        ),
-    })
-    await message.answer("Добавлено")
-    await asyncio.sleep(1)
-    await manager.back()
+    task: dict = manager.start_data
+    handle_description(message, task)
 
 
 async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager):
@@ -61,17 +43,14 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     operator = config.AGREEMENTERS.get(callback.from_user.id, "")
     scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     current_dttm = datetime.datetime.now().replace(microsecond=0)
-
-    recdata = {
-        "dttm": current_dttm,
-        "task": manager.start_data.get("taskid"),
-        "employee": manager.start_data.get("userid"),
-    }
-
-    is_checking = (
-        manager.start_data["status"] == "проверка" or not manager.start_data["act"]
+    
+    to_archive = (
+        manager.start_data["status"] == config.TasksStatuses.CHECKED
+        or not manager.start_data["act"]
     )
-    new_status = config.TasksStatuses.ARCHIVE if is_checking else config.TasksStatuses.CHECKED
+    new_status = (
+        config.TasksStatuses.ARCHIVE if to_archive else config.TasksStatuses.CHECKED
+    )
     manager.start_data.update({
         "status": new_status,
         "created": datetime.datetime.now(),
@@ -79,7 +58,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
 
     task_service.update(**manager.start_data)
 
-    if new_status == "закрыто":
+    if new_status == config.TasksStatuses.ARCHIVE:
         job = scheduler.get_job(job_id=str(taskid))
         if job:
             job.remove()
@@ -89,20 +68,18 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
             task_title = manager.start_data["title"]
             await closed_task_notification(slave, task_title, taskid)
 
-    message_text = (
-        "Заявка перемещена в архив."
-        if new_status == "закрыто"
-        else "Заявка ушла на проверку правильного заполнения акта."
+    recdata = {
+            "dttm": current_dttm,
+            "task": manager.start_data.get("taskid"),
+            "employee": manager.start_data.get("userid"),
+        }
+    action = (
+        "закрыл"
+        if new_status == config.TasksStatuses.ARCHIVE
+        else "отправил на проверку"
     )
-    await callback.answer(message_text, show_alert=True)
-
-    action = "закрыл" if new_status == "закрыто" else "отправил на проверку"
-    recdata["record"] = (
-        f"{action} {operator}\n{manager.dialog_data.get('summary') or ''}"
-    )
+    recdata["record"] = f"{action} {operator}"
     journal_service.new(**recdata)
-    if manager.dialog_data.get("summary"):
-        del manager.dialog_data["summary"]
 
     if manager.dialog_data.get("closing_type") == "частично":
         task_service.reopen_task(taskid)
@@ -112,6 +89,13 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
             customer.get("id"),
             manager.start_data.get("title", ""),
         )
+
+    message_text = (
+        "Заявка перемещена в архив."
+        if new_status == "закрыто"
+        else "Заявка ушла на проверку правильного заполнения акта."
+    )
+    await callback.answer(message_text, show_alert=True)
     await manager.done()
 
 
@@ -146,5 +130,5 @@ async def on_remove(callback: CallbackQuery, button, dialog_manager: DialogManag
     try:
         await dialog_manager.done()
     except (IndexError, TypeError) as Errr:
-        logger.info(f"Заявка {title} была удалена:\n", Errr)
+        logger.info(f"Заявка {title} была удалена:\n", str(Errr))
         await dialog_manager.done()

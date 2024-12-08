@@ -15,7 +15,6 @@ from aiogram_dialog.widgets.kbd import (
     Group,
     ListGroup,
     ManagedCheckbox,
-    Multiselect,
     Next,
     NumberedPager,
     Radio,
@@ -38,8 +37,14 @@ CANCEL_EDIT = Cancel(
     when=F["dialog_data"]["finished"],
 )
 
-PASS = Button(
-    Const("Пропустить"),
+CANCEL_CREATING = Cancel(
+    Const("Отменить редактирование"),
+    when=~F["dialog_data"]["finished"],
+)
+
+
+NEXT = Button(
+    Const("Далее"),
     id="next_or_end",
     on_click=handlers.next_or_end,
     when=~F["dialog_data"]["finished"],
@@ -79,10 +84,10 @@ new = Dialog(
             "Выбор объекта. Для получение объекта/объектов введите его название или хотя бы часть."
         ),
         MessageInput(handlers.ent_name_handler),
-        PASS,
+        NEXT,
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         state=states.NewSG.entity_choice,
     ),
     Window(
@@ -96,51 +101,70 @@ new = Dialog(
                 on_click=handlers.on_entity,
             ),
         ),
-        PASS,
+        NEXT,
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание")),
+        CANCEL_CREATING,
         state=states.NewSG.entities,
         getter=getters.entitites,
     ),
     Window(
         Const("Ваш номер телефона:"),
         TextInput(id="phone_input", on_success=handlers.next_or_end),
-        PASS,
+        NEXT,
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         state=states.NewSG.phone,
     ),
     Window(
         Const("Тема обращения?"),
         TextInput(id="title_input", on_success=handlers.next_or_end),
-        PASS,
+        NEXT,
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         state=states.NewSG.title,
     ),
     Window(
         Const(
-            "Опишите вашу проблему. Это может быть текстовое, голосовое, видеосообщение или картинка."
+            "<i>Добавление описания(текст, фото, видео, документы -"
+            "всё, КРОМЕ ГОЛОСОВЫХ И КРУЖОЧКОВ)</i>\n\n"
+        ),
+        Format(
+            "<b>Описание</b>:\n{task[description]}",
+            when=F["task"]["description"],
+        ),
+        DynamicMedia("media", when=F["task"]["media_id"]),
+        StubScroll(id="description_media_scroll", pages="pages"),
+        Group(
+            NumberedPager(scroll="description_media_scroll", when=F["pages"] > 1),
+            width=8,
         ),
         MessageInput(
-            handlers.task_description_handler, content_types=[ContentType.ANY]
+            handlers.task_description_handler,
+            content_types=[
+                ContentType.TEXT,
+                ContentType.PHOTO,
+                ContentType.VIDEO,
+                ContentType.AUDIO,
+                ContentType.DOCUMENT,
+            ],
         ),
-        PASS,
+        NEXT,
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         state=states.NewSG.description,
+        getter=getters.description_getter,
     ),
     Window(
         Const("Рекомендованное время выполнения заявки (в часах):"),
         TextInput(id="recom_time_input", on_success=handlers.next_or_end),
-        PASS,
+        NEXT,
         BACK,
+        CANCEL_CREATING,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
         state=states.NewSG.recom_time,
     ),
     Window(
@@ -154,7 +178,7 @@ new = Dialog(
         ),
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         getter=getters.priority,
         state=states.NewSG.priority,
     ),
@@ -169,7 +193,7 @@ new = Dialog(
         ),
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         getter=getters.acts,
         state=states.NewSG.act,
     ),
@@ -208,7 +232,7 @@ new = Dialog(
         ),
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         state=states.NewSG.performer,
         getter=getters.slaves,
     ),
@@ -230,7 +254,7 @@ new = Dialog(
         ),
         BACK,
         CANCEL_EDIT,
-        Cancel(Const("Отменить создание"), when=~F["dialog_data"]["finished"]),
+        CANCEL_CREATING,
         state=states.NewSG.agreement,
         getter=getters.agreementers,
     ),
@@ -253,28 +277,50 @@ new = Dialog(
             on_click=handlers.show_operator_media,
             when="media_id",
         ),
-        Button(Const("Сохранить"), id="confirm_creating", on_click=handlers.on_confirm),
-        SwitchTo(
-            Const("Изменить объект"), id="to_entity", state=states.NewSG.entity_choice
+        Button(
+            Const("Сохранить"),
+            id="confirm_creating",
+            on_click=handlers.on_confirm,
         ),
-        SwitchTo(Const("Изменить телефон"), id="to_phone", state=states.NewSG.phone),
-        SwitchTo(Const("Изменить Тему"), id="to_title", state=states.NewSG.title),
+        SwitchTo(
+            Const("Изменить объект"),
+            id="to_entity",
+            state=states.NewSG.entity_choice,
+        ),
+        SwitchTo(
+            Const("Изменить телефон"),
+            id="to_phone",
+            state=states.NewSG.phone,
+        ),
+        SwitchTo(
+            Const("Изменить Тему"),
+            id="to_title",
+            state=states.NewSG.title,
+        ),
         SwitchTo(
             Const("Изменить расчетное время"),
             id="to_recom_time",
             state=states.NewSG.recom_time,
         ),
         SwitchTo(
-            Const("Изменить приоритет"), id="to_priority", state=states.NewSG.priority
+            Const("Изменить приоритет"),
+            id="to_priority",
+            state=states.NewSG.priority,
         ),
-        SwitchTo(Const("Необходимость акта"), id="to_act", state=states.NewSG.act),
+        SwitchTo(
+            Const("Необходимость акта"),
+            id="to_act",
+            state=states.NewSG.act,
+        ),
         SwitchTo(
             Const("Изменить описание"),
             id="to_description",
             state=states.NewSG.description,
         ),
         SwitchTo(
-            Const("Изменить исполнителя"), id="to_slave", state=states.NewSG.performer
+            Const("Изменить исполнителя"),
+            id="to_slave",
+            state=states.NewSG.performer,
         ),
         SwitchTo(
             Const("Необходимость согласования"),
@@ -307,17 +353,19 @@ def isnt_arriving(data, widget, dialog_manager: DialogManager) -> bool:
         taskid=data["taskid"],
         record="%Приехал%",
     )
-
     return bool(not record and data["status"] == "в работе")
 
+
 def media_exist(data, widget, dialog_manager: DialogManager):
-    return all([data.get('media_id'), data.get('is_employee')])
+    return all([data.get("media_id"), data.get("is_employee")])
+
 
 def act_exist(data, widget, dialog_manager: DialogManager):
-    return all([data.get('actid'), data.get('is_employee')])
+    return all([data.get("actid"), data.get("is_employee")])
+
 
 def videoreport_exist(data, widget, dialog_manager: DialogManager):
-    return all([data.get('resultid'), data.get('is_employee')])
+    return all([data.get("resultid"), data.get("is_employee")])
 
 
 tasks = Dialog(
@@ -406,7 +454,7 @@ tasks = Dialog(
                 when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
             ),
             SwitchTo(
-                Const("Добавить медиа"),
+                Const("Дополнить описание/медиа"),
                 id="add_media",
                 state=states.TasksSG.add_media,
                 when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
@@ -465,9 +513,9 @@ tasks = Dialog(
         getter=getters.journal_getter,
     ),
     Window(
-        Const("Добавление медиа"),
-        MessageInput(func=handlers.add_media),
-        SwitchTo(Const('Назад'), id='to_task', state=states.TasksSG.task),
+        Const("Дополнить описание/медиа"),
+        MessageInput(func=handlers.add_description),
+        SwitchTo(Const("Назад"), id="to_task", state=states.TasksSG.task),
         state=states.TasksSG.add_media,
     ),
     Window(

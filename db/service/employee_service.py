@@ -32,8 +32,6 @@ def get_all(con: Connection) -> list:
 @connector
 def get_by_filters(con: Connection, **kwargs):
     """фильтры: position, username"""
-    userid = kwargs.pop("userid")
     sub_query = " AND ".join(f"{item} = :{item}" for item in kwargs)
-    kwargs.update(userid=userid)
     query = f"SELECT * FROM employees WHERE {sub_query}"
     return con.execute(query, kwargs)

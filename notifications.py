@@ -61,6 +61,7 @@ async def confirmed_task_notification(operators, slave, title, taskid):
 
 
 async def closed_task_notification(performer, task_title, taskid):
+    """Заявка закрыта и перемещена в архив"""
     text = f"Заявка {task_title} закрыта и перемещена в архив."
     await base_notification(performer, taskid, text)
 

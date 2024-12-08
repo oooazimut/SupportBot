@@ -139,20 +139,16 @@ async def agreementers(dialog_manager: DialogManager, **k):
 
 async def result(dialog_manager: DialogManager, **kwargs):
     data: dict = dialog_manager.dialog_data["task"]
-    phone = dialog_manager.find("phone_input").get_value()
-    data["phone"] = phone if phone != "None" else data.get("phone", None)
-    title = dialog_manager.find("title_input").get_value()
-    data["title"] = title if title != "None" else data.get("title", None)
-    recom_time = dialog_manager.find("recom_time_input").get_value()
-    data["recom_time"] = (
-        recom_time if recom_time != "None" else data.get("recom_time", 1)
-    )
+    for key in ("phone", "title", "recom_time"):
+        value = dialog_manager.find(f"{key}_input").get_value()
+        default_value = 1 if key == "recom_time" else None
+        data[key] = value if value != "None" else data.get(key, default_value)
+
     usernames = list()
     for userid in data.get("slaves", []):
         usernames.append(employee_service.get_one(userid[0]).get("username"))
-    data["usernames"] = usernames
+    data.update(usernames=usernames)
 
-    dialog_manager.dialog_data["task"] = data
     dialog_manager.dialog_data["finished"] = True
     return data
 
@@ -165,18 +161,14 @@ async def performed(dialog_manager: DialogManager, **kwargs):
 
 
 async def media(dialog_manager: DialogManager, **kwargs):
-    m_type = dialog_manager.start_data.get("type", "")
-    m_ids = dialog_manager.start_data.get("id", [])
-    pages = len(m_ids)
+    data = dialog_manager.start_data
+    m_type, m_id = (data.get(key, "").split(",") for key in ("type", "id"))
+    m_type = m_type * len(m_id) if len(m_type) == 1 else m_type
     index = await dialog_manager.find("media_scroll").get_page()
-
-    if isinstance(m_type, list):
-        media = MediaAttachment(m_type[index], file_id=MediaId(m_ids[index]))
-    else:
-        media = MediaAttachment(m_type, file_id=MediaId(m_ids[index]))
+    media = MediaAttachment(m_type[index], file_id=MediaId(m_id[index]))
 
     return {
-        "pages": pages,
+        "pages": len(m_id),
         "media": media,
         "wintitle": dialog_manager.start_data.get("wintitle"),
     }
@@ -208,3 +200,23 @@ async def journal_getter(dialog_manager: DialogManager, **kwargs):
     journal = [item for item in data if dates[curr_page] in item.get("dttm")]
 
     return {"journal": journal, "pages": pages}
+
+
+async def description_getter(dialog_manager: DialogManager, **kwargs):
+    task = dialog_manager.dialog_data.get("task", {})
+
+    media_type = task.get("media_type", "").split(",")
+    media_id = task.get("media_id", "").split(",")
+    index = await dialog_manager.find("description_media_scroll").get_page()
+    media = (
+        MediaAttachment(media_type[index], file_id=MediaId(media_id[index]))
+        if media_id
+        else None
+    )
+    pages = len(media_id)
+
+    return {
+        "task": task,
+        "pages": pages,
+        "media": media,
+    }

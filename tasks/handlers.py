@@ -17,9 +17,10 @@ from aiogram_dialog.widgets.kbd import (
     ManagedRadio,
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
-from config import CONTENT_ATTR_MAP, TasksStatuses
+from config import TasksStatuses
 from custom.bot import MyBot
 from db.service import employee_service, entity_service, journal_service, task_service
+from jobs import handle_description
 from notifications import check_work_execution, new_task_notification
 from operators.states import OpCloseTaskSG, OpDelayingSG, OpRemoveTaskSG
 from performers import states as prf_states
@@ -92,33 +93,10 @@ async def on_agreementer(event, select, dialog_manager: DialogManager, data: str
 
 
 async def task_description_handler(
-    message: Message, message_input: MessageInput, manager: DialogManager
+    message: Message, message_input, manager: DialogManager
 ):
-    media_type = message.content_type
-
-    if media_type in CONTENT_ATTR_MAP:
-        media_id, txt = CONTENT_ATTR_MAP[media_type](message)
-    else:
-        media_id, txt = "", ""
-
-    media_type = media_type if media_id else None
-
-    manager.dialog_data["task"].update(
-        description=txt,
-        media_id=f"{media_id or ''},{manager.dialog_data['task'].get('media_id') or ''}".strip(
-            ","
-        ),
-        media_type=f"{media_type or ''},{manager.dialog_data['task'].get('media_type') or ''}".strip(
-            ","
-        ),
-    )
-
-    if employee_service.get_one(message.from_user.id) and not manager.dialog_data.get(
-        "finished"
-    ):
-        await manager.next()
-    else:
-        await manager.switch_to(states.NewSG.preview)
+    task: dict = manager.dialog_data.get("task", {})
+    handle_description(message, task)
 
 
 async def ent_name_handler(
@@ -190,7 +168,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 data["simple_report"] = 1
             else:
                 data["simple_report"] = None
-
+        [print(key, value) for key, value in data.items()]
         task = task_service.update(**data)
         await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
@@ -366,32 +344,34 @@ async def get_back(callback: CallbackQuery, button: Button, manager: DialogManag
 
 
 async def show_operator_media(callback: CallbackQuery, button, manager: DialogManager):
-    mediatype = manager.dialog_data.get("task", {}).get("media_type", []).split(",")
-    mediaid = manager.dialog_data.get("task", {}).get("media_id", []).split(",")
+    task: dict = manager.dialog_data.get("task", {})
+    data = dict(
+        type=task.get("media_type", ""),
+        id=task.get("media_id", ""),
+        wintitle="Медиаданные",
+    )
     await manager.start(
         state=states.MediaSG.main,
-        data={"type": mediatype, "id": mediaid, "wintitle": "Медиа"},
+        data=data,
     )
 
 
 async def show_performer_media(callback: CallbackQuery, button, manager: DialogManager):
-    mediaid = manager.dialog_data.get("task", {}).get("resultid").split(",")
-    await manager.start(
-        state=states.MediaSG.main,
-        data={
-            "type": ContentType.VIDEO,
-            "id": mediaid,
-            "wintitle": "Медиа от исполнителя",
-        },
+    data = dict(
+        type=ContentType.VIDEO,
+        id=manager.dialog_data.get("task", {}).get("resultid", ""),
+        wintitle="Видеотчеты исполнителя",
     )
+    await manager.start(state=states.MediaSG.main, data=data)
 
 
 async def show_act(callback: CallbackQuery, button, manager: DialogManager):
-    mediaid = manager.dialog_data.get("task", {}).get("actid").split(",")
-    await manager.start(
-        state=states.MediaSG.main,
-        data={"type": ContentType.PHOTO, "id": mediaid, "wintitle": "Акт"},
+    data = dict(
+        type=ContentType.PHOTO,
+        id=manager.dialog_data.get("task", {}).get("actid", ""),
+        wintitle="Акт",
     )
+    await manager.start(state=states.MediaSG.main, data=data)
 
 
 async def on_close(callback: CallbackQuery, button, manager: DialogManager):
@@ -458,27 +438,10 @@ async def reset_journal_page(callback: CallbackQuery, button, manager: DialogMan
     await manager.find("scroll_taskjournal").set_page(0)
 
 
-async def add_media(message: Message, message_input, manager: DialogManager):
-    media_type = message.content_type
-
-    if media_type in CONTENT_ATTR_MAP:
-        media_id = CONTENT_ATTR_MAP[media_type](message)[0]
-    else:
-        media_id = ""
-
-    media_type = media_type.value if media_id else None
-
-    manager.dialog_data["task"].update(
-        {
-            "media_id": f"{media_id or ''},{manager.dialog_data['task'].get('media_id') or ''}".strip(
-                ","
-            ),
-            "media_type": f"{media_type or ''},{manager.dialog_data['task'].get('media_type') or ''}".strip(
-                ","
-            ),
-        }
-    )
-    task_service.update(**manager.dialog_data["task"])
+async def add_description(message: Message, message_input, manager: DialogManager):
+    task = manager.dialog_data.get("task", {})
+    handle_description(message, task)
+    task_service.update(**task)
     messg = await message.answer("Медиа добавлено")
     await manager.switch_to(states.TasksSG.task)
     await asyncio.sleep(1)

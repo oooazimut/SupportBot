@@ -1,7 +1,2 @@
-def func(**kwargs):
-    print(kwargs)
+from config import TasksStatuses
 
-sip = 'sdfasdf'
-
-
-func(sip='ffffff')

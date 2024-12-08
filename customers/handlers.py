@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from aiogram.enums import content_type
-from aiogram.types import CallbackQuery, ContentType, Message
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
-from config import CONTENT_ATTR_MAP, TasksStatuses, TasksTitles
+from config import TasksStatuses, TasksTitles
 from db.service import customer_service, task_service
+from jobs import handle_description
 from notifications import new_customer_task_notification
 from tasks import states as task_states
 
@@ -29,7 +29,7 @@ async def on_current_tasks(
         "wintitle": TasksTitles.OPENED,
         "current": True,
     }
-    customer = customer_service.get_customer(callback.from_user.id) or {}
+    customer = customer_service.get_one(callback.from_user.id) or {}
     if customer.get("object"):
         dict_update = {"entid": customer.get("object")}
     else:
@@ -73,24 +73,17 @@ async def on_confirm_customer_creating(
 
 
 async def description_handler(message: Message, message_input, manager: DialogManager):
-    media_type = message.content_type
-    media_id, description = CONTENT_ATTR_MAP[media_type](message)
-    media_type = media_type.value if media_id else ""
     task = manager.dialog_data.setdefault("task", {})
-
-    for key, value in zip(
-        ("description", "media_id", "media_type"),
-        (description, media_id, media_type),
-    ):
-        delimiter = "\n" if key == "description" else ","
-        task[key] = f"{task.get(key, '')}{delimiter}{value}".strip(delimiter)
+    handle_description(message, task)
 
 
 async def on_confirm_customer_task_creating(
     callback: CallbackQuery, button, dialog_manager: DialogManager
 ):
-    customer = customer_service.get_customer(callback.from_user.id)
+    customer = customer_service.get_one(callback.from_user.id)
     task: dict = dialog_manager.dialog_data.get("task", {})
+
+    [task.setdefault(key, "") for key in ("description", "media_id", "media_type")]
 
     task.update(
         created=datetime.now().replace(microsecond=0),
@@ -111,7 +104,7 @@ async def on_confirm_customer_task_creating(
             "recom_time",
         )
     })
-    task_service.save_task(**task)
+    task_service.new(**task)
     await new_customer_task_notification(customer)
     await dialog_manager.done()
     await callback.answer(

@@ -3,6 +3,9 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from aiogram.types import Message
+
+from config import CONTENT_ATTR_MAP
 from db.service import employee_service, journal_service
 from yandex import ensure_directories_exist, get_yandex_disk_path, upload_to_yandex_disk
 
@@ -79,9 +82,10 @@ async def two_reports():
     def generate_report(records, tasks, curr_date):
         """Генерация текстового и CSV отчета."""
 
-        with open(f"{curr_date}.txt", "w") as report, open(
-            f"{curr_date}.csv", "w", encoding="cp1251", newline=""
-        ) as csv_report:
+        with (
+            open(f"{curr_date}.txt", "w") as report,
+            open(f"{curr_date}.csv", "w", encoding="cp1251", newline="") as csv_report,
+        ):
             writer = csv.writer(csv_report, delimiter=";")
 
             print(curr_date, file=report)
@@ -204,3 +208,15 @@ async def two_reports():
         # Загружаем файл на Яндекс.Диск
         ensure_directories_exist(yandex_disk_path)
         upload_to_yandex_disk(file_name, yandex_disk_path)
+
+
+def handle_description(message: Message, data: dict):
+    media_type = message.content_type
+    media_id, description = CONTENT_ATTR_MAP[media_type](message)
+    media_type = media_type.value if media_id else ""
+    for key, value in zip(
+        ("media_type", "media_id", "description"),
+        (media_type, media_id, description),
+    ):
+        delimiter = "\n" if key == "description" else ","
+        data[key] = f"{data.get(key, '')}{delimiter}{value}".strip(delimiter)

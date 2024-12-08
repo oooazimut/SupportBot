@@ -2,6 +2,7 @@ from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
+    Back,
     Button,
     Cancel,
     Column,
@@ -134,6 +135,7 @@ close_task = Dialog(
     ),
     Window(
         Const("Здесь можно добавить информацию по закрытию заявки в любом формате:"),
+        Format('[desription]'),
         MessageInput(
             func=handlers.summary_handler,
             content_types=[
@@ -144,8 +146,10 @@ close_task = Dialog(
                 ContentType.PHOTO,
             ],
         ),
-        Cancel(Const("Назад")),
+        Back(Const('Назад к закрытию')),
+        Cancel(Const("Отмена закрытия")),
         state=states.OpCloseTaskSG.summary,
+        getter=getters.description_getter
     ),
 )
 
