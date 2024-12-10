@@ -1,2 +1,6 @@
-from config import TasksStatuses
+a = {'1': 111, '2': 222, '3': 333}
 
+b =  {**a, '4': 444}
+
+print(a)
+print(b)

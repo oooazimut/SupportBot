@@ -44,6 +44,12 @@ main = Dialog(
                 state=tsk_states.TasksSG.tasks,
                 data={"wintitle": config.TasksTitles.IN_PROGRESS},
             ),
+            Start(
+                Const("ВСЕ ОТКРЫТЫЕ"),
+                id="to_opened_tasks",
+                state=tsk_states.TasksSG.tasks,
+                data={"wintitle": config.TasksTitles.OPENED},
+            ),
             Button(Const("Архив"), id="worker_archive", on_click=handlers.on_archive),
             Start(
                 Const("Поиск"),
@@ -62,7 +68,10 @@ CANCEL_PERFORMING = Cancel(Const("Отмена"), on_click=handlers.on_cancel)
 performed = Dialog(
     Window(
         Const("Добавление акта."),
-        MessageInput(func=handlers.act_handler, content_types=[ContentType.PHOTO]),
+        MessageInput(
+            func=handlers.act_handler,
+            content_types=[ContentType.PHOTO, ContentType.DOCUMENT],
+        ),
         CANCEL_PERFORMING,
         state=states.PrfPerformedSG.pin_act,
     ),

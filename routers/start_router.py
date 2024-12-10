@@ -33,12 +33,6 @@ async def start_handler(message: Message, dialog_manager: DialogManager):
 async def switch_off_notification(
     callback: CallbackQuery, callback_data: TaskFactory, scheduler: AsyncIOScheduler
 ):
-    if callback_data.task:
-        jobid = str(callback.from_user.id) + callback_data.task
-        job = scheduler.get_job(jobid)
-        if job:
-            job.remove()
-
     task = task_service.get_one(callback_data.task)
     if (
         task
@@ -51,7 +45,7 @@ async def switch_off_notification(
     if callback.message and isinstance(callback.message, Message):
         try:
             await callback.message.delete()
-        except TelegramBadRequest as errr:
+        except TelegramBadRequest:
             logging.error("Сообщение невозможно удалить:")
     else:
         logger.warning("Оповещение для удаления отсутствует")

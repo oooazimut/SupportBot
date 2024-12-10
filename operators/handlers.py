@@ -41,9 +41,8 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     taskid = manager.start_data.get("taskid", "")
     customer = customer_service.get_one(manager.start_data.get("creator"))
     operator = config.AGREEMENTERS.get(callback.from_user.id, "")
-    scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
     current_dttm = datetime.datetime.now().replace(microsecond=0)
-    
+
     to_archive = (
         manager.start_data["status"] == config.TasksStatuses.CHECKED
         or not manager.start_data["act"]
@@ -51,28 +50,21 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     new_status = (
         config.TasksStatuses.ARCHIVE if to_archive else config.TasksStatuses.CHECKED
     )
-    manager.start_data.update({
-        "status": new_status,
-        "created": datetime.datetime.now(),
-    })
-
+    manager.start_data.update(status=new_status, created=current_dttm)
     task_service.update(**manager.start_data)
 
-    if new_status == config.TasksStatuses.ARCHIVE:
-        job = scheduler.get_job(job_id=str(taskid))
-        if job:
-            job.remove()
-
-        slave = manager.start_data.get("slave")
-        if slave:
-            task_title = manager.start_data["title"]
-            await closed_task_notification(slave, task_title, taskid)
+    if new_status == config.TasksStatuses.ARCHIVE and manager.start_data.get("slave"):
+        await closed_task_notification(
+            manager.start_data["slave"],
+            manager.start_data["title"],
+            taskid,
+        )
 
     recdata = {
-            "dttm": current_dttm,
-            "task": manager.start_data.get("taskid"),
-            "employee": manager.start_data.get("userid"),
-        }
+        "dttm": current_dttm,
+        "task": manager.start_data.get("taskid"),
+        "employee": manager.start_data.get("userid"),
+    }
     action = (
         "закрыл"
         if new_status == config.TasksStatuses.ARCHIVE

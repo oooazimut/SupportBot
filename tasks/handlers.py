@@ -121,7 +121,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             else:
                 data["simple_report"] = None
 
-            task = dict(task_service.new(**data))
+            task = task_service.new(**data)
             await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
             recdata["task"] = task.get("taskid")
@@ -168,7 +168,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 data["simple_report"] = 1
             else:
                 data["simple_report"] = None
-        [print(key, value) for key, value in data.items()]
         task = task_service.update(**data)
         await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
@@ -179,11 +178,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         journal_service.new(**recdata)
 
         await group_new_tasks(data)
-
-        scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-        job = scheduler.get_job(job_id="delay" + str(data["taskid"]))
-        if job:
-            job.remove()
 
         if data.get("return"):
             del data["return"]
@@ -256,7 +250,8 @@ async def on_del_performer(clb: CallbackQuery, button, manager: DialogManager):
 
 
 async def accept_task(callback: CallbackQuery, button: Button, manager: DialogManager):
-    agreement = manager.dialog_data.get("task", {}).get("agreement")
+    task = manager.dialog_data.get("task", {})
+    agreement = task.get("agreement")
     if agreement:
         await callback.answer(f"Требуется согласование c {agreement}!", show_alert=True)
         bot: Bot = MyBot.get_instance()
@@ -265,7 +260,7 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
         keyboard.button(text="Хорошо", callback_data="agr_not_is_readed")
         content = Text(
             Bold(
-                f"{agreement} нужно согласование с {manager.dialog_data.get('task', {}).get('username')} по заявке {manager.dialog_data.get('task', {}).get('title')}!"
+                f"{agreement} нужно согласование с {task.get('username')} по заявке {task.get('title')}!"
             )
         )
         for operator in operators:
