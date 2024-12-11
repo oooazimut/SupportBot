@@ -34,4 +34,4 @@ def get_by_filters(con: Connection, **kwargs):
     """фильтры: position, username"""
     sub_query = " AND ".join(f"{item} = :{item}" for item in kwargs)
     query = f"SELECT * FROM employees WHERE {sub_query}"
-    return con.execute(query, kwargs)
+    return con.execute(query, kwargs).fetchall()

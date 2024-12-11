@@ -259,17 +259,17 @@ new = Dialog(
         getter=getters.agreementers,
     ),
     Window(
-        Jinja("""Ваша заявка:
-
-        <b>Объект</b>: {{name or ''}}
-        <b>Телефон</b>: {{phone or ''}}
-        <b>Тема</b>: {{title or ''}}
-        <b>Описание</b>: {{description or ''}}
-        <b>Расчетное время</b>: {{recom_time or '?'}}ч.
-        <b>Приоритет</b>: {{priority or ''}}
-        <b>Работник[и]</b>: {{usernames or username  or ''}}
-        <b>Акт</b>: {{'Да' if act else 'Нет'}}
-        <b>Согласование</b>: {{agreement or ''}}
+        Jinja("""
+<b>Ваша заявка:</b>
+<b>Объект</b>: {{name or ''}}
+<b>Телефон</b>: {{phone or ''}}
+<b>Тема</b>: {{title or ''}}
+<b>Описание</b>: {{description or ''}}
+<b>Расчетное время</b>: {{recom_time or '?'}}ч.
+<b>Приоритет</b>: {{priority or ''}}
+<b>Работник[и]</b>: {{usernames or username  or ''}}
+<b>Акт</b>: {{'Да' if act else 'Нет'}}
+<b>Согласование</b>: {{agreement or ''}}
         """),
         Button(
             Const("Мультимедиа"),

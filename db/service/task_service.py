@@ -117,3 +117,10 @@ def clone_task(taskid):
     )
     task.update({key: None for key in ("slave", "resultid", "actid")})
     new(**task)
+
+
+@connector
+def get_keys(con: Connection):
+    query = "SELECT * FROM tasks ORDER BY taskid DESC LIMIT 1"
+    result = con.execute(query).fetchone()
+    return set(result.keys())

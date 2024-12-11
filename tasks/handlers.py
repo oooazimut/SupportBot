@@ -114,7 +114,11 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         if not data.get("slaves"):
             return {}
 
-        for user, role in data.get("slaves", []):
+        performers = data.get('slaves', [])
+        task_keys = task_service.get_keys()
+        data = {key: value for key, value in data.items() if key in task_keys}
+        
+        for user, role in performers:
             data.update(slave=user)
             if role == "пом":
                 data["simple_report"] = 1
@@ -129,7 +133,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 f"заявку создал {employee_service.get_one(task.get('creator')).get('username')}"
             )
             journal_service.new(**recdata)
-
         return task or {}
 
     current_dttm = datetime.datetime.now().replace(microsecond=0)
@@ -168,6 +171,8 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
                 data["simple_report"] = 1
             else:
                 data["simple_report"] = None
+        task_keys = task_service.get_keys()
+        data = {key: value for key, value in data.items() if key in task_keys}
         task = task_service.update(**data)
         await new_task_notification([task["slave"]], task["title"], task["taskid"])
 

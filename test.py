@@ -1,6 +1,5 @@
-a = {'1': 111, '2': 222, '3': 333}
+a = 10
+b = 40
 
-b =  {**a, '4': 444}
-
-print(a)
-print(b)
+breakpoint()
+print(a+b)
