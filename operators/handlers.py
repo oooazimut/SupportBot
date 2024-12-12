@@ -52,7 +52,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     )
     manager.start_data.update(status=new_status, created=current_dttm)
     task_keys = task_service.get_keys()
-    data = {key: value for key, value in manager.start_data if key in task_keys}
+    data = {key: value for key, value in manager.start_data.items() if key in task_keys}
     task_service.update(**data)
 
     if new_status == config.TasksStatuses.ARCHIVE and manager.start_data.get("slave"):
