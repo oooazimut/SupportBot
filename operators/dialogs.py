@@ -1,3 +1,4 @@
+from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
@@ -8,11 +9,14 @@ from aiogram_dialog.widgets.kbd import (
     Column,
     Group,
     Next,
+    NumberedPager,
     Row,
     Select,
     Start,
+    StubScroll,
     WebApp,
 )
+from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Multi
 from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -132,7 +136,13 @@ close_task = Dialog(
     ),
     Window(
         Const("Здесь можно добавить информацию по закрытию заявки в любом формате:"),
-        Format('[desription]'),
+        Format("{task[description]}"),
+        DynamicMedia("media", when=F["task"]["media_id"]),
+        StubScroll(id="summary_media_scroll", pages="pages"),
+        Group(
+            NumberedPager(scroll="summary_media_scroll", when=F["pages"] > 1),
+            width=8,
+        ),
         MessageInput(
             func=handlers.summary_handler,
             content_types=[
@@ -143,10 +153,10 @@ close_task = Dialog(
                 ContentType.PHOTO,
             ],
         ),
-        Back(Const('Назад к закрытию')),
+        Back(Const("Назад к закрытию")),
         Cancel(Const("Отмена закрытия")),
         state=states.OpCloseTaskSG.summary,
-        getter=getters.description_getter
+        getter=getters.description_getter,
     ),
 )
 
