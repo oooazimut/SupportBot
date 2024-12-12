@@ -49,15 +49,17 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "dttm": manager.start_data.get("performed_time"),
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
+        'record': perf_record
     }
     left_record = f"{manager.start_data.get('name')} Уехал"
-    for rec in (perf_record, left_record):
-        recdata.update(record=rec)
-        journal_service.new(**recdata)
+    journal_service.new(**recdata)
 
     last_rec = journal_service.get_last(callback.from_user.id)
     if last_rec and left_record == last_rec.get("record"):
         journal_service.delete(last_rec.get("recordid"))
+
+    recdata['record'] = left_record
+    journal_service.new(**recdata)
 
     operators_ids = [
         operator["userid"]
