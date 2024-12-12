@@ -337,13 +337,12 @@ new = Dialog(
 
 
 def user_is_operator(data, widget, dialog_manager: DialogManager) -> bool:
-    user: dict = employee_service.get_one(userid=dialog_manager.event.from_user.id)
-    return user.get("position") == "operator" if user else False
+    user = employee_service.get_one(userid=dialog_manager.event.from_user.id)
+    return user and user.get("position") == "operator"
 
 
 def user_is_performer(data, widget, dialog_manager: DialogManager) -> bool:
-    user = employee_service.get_one(userid=dialog_manager.event.from_user.id)
-    return user.get("position") == "worker" if user else False
+    return dialog_manager.event.from_user.id == data.get("slave")
 
 
 def isnt_arriving(data, widget, dialog_manager: DialogManager) -> bool:
@@ -434,12 +433,14 @@ tasks = Dialog(
                 Const("Отложить"),
                 id="delay_task",
                 on_click=handlers.on_delay,
-                when=F["status"].not_in([
-                    "отложено",
-                    "проверка",
-                    "закрыто",
-                    "выполнено",
-                ]),
+                when=F["status"].not_in(
+                    [
+                        "отложено",
+                        "проверка",
+                        "закрыто",
+                        "выполнено",
+                    ]
+                ),
             ),
             Button(
                 Const("Переместить в архив"),
@@ -482,15 +483,17 @@ tasks = Dialog(
                 Const("Выполнено"),
                 id="perform_task",
                 on_click=handlers.on_perform,
-                when=F["status"].not_in([
-                    "выполнено",
-                    "закрыто",
-                    "проверка",
-                    "назначено",
-                ]),
+                when=F["status"].not_in(
+                    [
+                        "выполнено",
+                        "закрыто",
+                        "проверка",
+                        "назначено",
+                    ]
+                ),
             ),
             Button(
-                Const("Вернуть в работу"),
+                Const("Переделать"),
                 id="back_to_work",
                 on_click=handlers.get_back,
                 when=F["status"] == "выполнено",
