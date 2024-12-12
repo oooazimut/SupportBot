@@ -134,5 +134,5 @@ async def receipts_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def cars(dialog_manager: DialogManager, **kwargs):
-    cars: dict = car_service.get_cars()
+    cars: dict = car_service.get_all()
     return {"cars": cars}
