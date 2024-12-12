@@ -440,7 +440,9 @@ async def reset_journal_page(callback: CallbackQuery, button, manager: DialogMan
 async def add_description(message: Message, message_input, manager: DialogManager):
     task = manager.dialog_data.get("task", {})
     handle_description(message, task)
-    task_service.update(**task)
+    task_keys = task_service.get_keys()
+    data = {key: value for key, value in task if key in task_keys}
+    task_service.update(**data)
     messg = await message.answer("Медиа добавлено")
     await manager.switch_to(states.TasksSG.task)
     await asyncio.sleep(1)
