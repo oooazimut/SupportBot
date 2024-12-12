@@ -5,6 +5,7 @@ from db.tools import connector
 
 @connector
 def new(con: Connection, **kwargs):
+    """kwargs: id, name, phone"""
     query = """
     INSERT INTO customers (id, name, phone)
          VALUES (:id, :name, :phone)
@@ -33,10 +34,17 @@ def get_all(con: Connection):
 
 @connector
 def update(con: Connection, **kwargs):
+    """kwargs: id, name, phone, object"""
     userid = kwargs.pop("id")
     """update name, phone, object"""
     sub_query = ", ".join(f"{item} = :{item}" for item in kwargs)
     kwargs.update(userid=userid)
     query = f"UPDATE customers SET {sub_query} WHERE id = :userid"
     con.execute(query, kwargs)
+    con.commit()
+
+
+@connector
+def delete(con: Connection, userid: str|int):
+    con.execute('DELETE FROM customers WHERE id = ?', [userid])
     con.commit()

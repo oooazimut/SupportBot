@@ -23,8 +23,8 @@ def get_by_filters(con: Connection, **kwargs) -> list:
     if kwargs.get("employee"):
         adds.append("employee = :employee")
 
-    sub_query = " WHERE " + " AND ".join(adds)
-    query = f"SELECT * FROM receipts WHERE {sub_query}"
+    sub_query = "WHERE " + " AND ".join(adds)
+    query = f"SELECT * FROM receipts {sub_query}"
     return con.execute(query, kwargs).fetchall()
 
 @connector

@@ -24,14 +24,14 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
 
 async def act_handler(msg: Message, widget, manager: DialogManager):
     new_actid = msg.photo[-1].file_id or ""
-    old_actid = manager.start_data.get("actid", "")
+    old_actid = manager.start_data.get("actid") or ""
     manager.start_data.update(actid=f"{old_actid},{new_actid}".strip(","))
     await manager.next()
 
 
 async def pin_videoreport(message: Message, message_input, manager: DialogManager):
     new_resultid = message.video.file_id
-    old_resultid = manager.start_data.setdefault("resultid", "")
+    old_resultid = manager.start_data.setdefault("resultid") or ""
     manager.start_data.update(resultid=f"{old_resultid},{new_resultid}".strip(","))
     await manager.next()
 
@@ -49,15 +49,17 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "dttm": manager.start_data.get("performed_time"),
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
+        'record': perf_record
     }
     left_record = f"{manager.start_data.get('name')} Уехал"
-    for rec in (perf_record, left_record):
-        recdata.update(record=rec)
-        journal_service.new(**recdata)
+    journal_service.new(**recdata)
 
     last_rec = journal_service.get_last(callback.from_user.id)
     if last_rec and left_record == last_rec.get("record"):
         journal_service.delete(last_rec.get("recordid"))
+
+    recdata['record'] = left_record
+    journal_service.new(**recdata)
 
     operators_ids = [
         operator["userid"]
