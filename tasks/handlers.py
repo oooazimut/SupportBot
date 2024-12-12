@@ -114,10 +114,10 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         if not data.get("slaves"):
             return {}
 
-        performers = data.get('slaves', [])
+        performers = data.get("slaves", [])
         task_keys = task_service.get_keys()
         data = {key: value for key, value in data.items() if key in task_keys}
-        
+
         for user, role in performers:
             data.update(slave=user)
             if role == "пом":
@@ -143,11 +143,11 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
     operator = employee_service.get_one(clb.from_user.id)
 
     if data.get("slaves") or data.get("slave"):
-        data["status"] = "назначено"
+        data["status"] = TasksStatuses.ASSIGNED
     else:
-        data["status"] = "открыто"
+        data["status"] = TasksStatuses.OPENED
         data.setdefault("slaves", []).append((None, None))
-    data.setdefault("status", "открыто")
+    data.setdefault("status", TasksStatuses.OPENED)
 
     for i in (
         "entity",
@@ -172,8 +172,8 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             else:
                 data["simple_report"] = None
         task_keys = task_service.get_keys()
-        data = {key: value for key, value in data.items() if key in task_keys}
-        task = task_service.update(**data)
+        temp = {key: value for key, value in data.items() if key in task_keys}
+        task = task_service.update(**temp)
         await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
         recdata.update(
@@ -181,7 +181,6 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
             record=f"Заявку отредактировал {operator.get('username')}",
         )
         journal_service.new(**recdata)
-
         await group_new_tasks(data)
 
         scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
@@ -227,7 +226,7 @@ async def on_start(data, manager: DialogManager):
 
 async def on_return(clb: CallbackQuery, button, manager: DialogManager):
     task = manager.dialog_data.get("task", {})
-    task["status"] = "в работе" if task["slave"] else "открыто"
+    task["status"] = TasksStatuses.AT_WORK if task["slave"] else TasksStatuses.OPENED
     task["return"] = True
     await manager.start(state=states.NewSG.preview, data=task)
 

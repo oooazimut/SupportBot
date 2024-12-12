@@ -26,7 +26,7 @@ from aiogram_dialog.widgets.kbd import (
     Url,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Format, Jinja, List
+from aiogram_dialog.widgets.text import Const, Format, Jinja, List, Multi
 from custom.babel_calendar import CustomCalendar
 from db.service import employee_service, journal_service
 
@@ -53,20 +53,20 @@ NEXT = Button(
 BACK = Button(Const("Назад"), id="back_or_back", on_click=handlers.on_back)
 
 JINJA_TEMPLATE = Jinja(
-    "{% set dttm_list = item.created.split() %}"
-    '{% set dt_list = dttm_list[0].split("-") %}'
-    '{% set dt = dt_list[2]+"."+dt_list[1] %}'
-    '{% set d = "\U0000231b" if item.status == "отложено" else "" %}'
-    '{% set st = "\U00002705" if item.status == "выполнено" else "\U0001f7e9" if item.status == '
-    '"в работе" else "" %}'
-    '{% set sl = item.username or "\U00002753" %}'
-    '{% set pr = item.priority or "" %}'
-    '{% set ob = item.name or "" %}'
-    '{% set tt = item.title or "" %}'
-    '{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
-    '{% set vid = "\U0001f39e" if item.resultid else "" %}'
-    '{% set load = "\U0001f504" if item.status == "закрывается" else "" %}'
-    "{{load}}{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
+"{% set dttm_list = item.created.split() %}"
+'{% set dt_list = dttm_list[0].split("-") %}'
+'{% set dt = dt_list[2]+"."+dt_list[1] %}'
+'{% set d = "\U0000231b" if item.status == data.statuses.DELAYED else "" %}'
+'{% set st = "\U00002705" if item.status == data.statuses.PERFORMED else "\U0001f7e9" if item.status == '
+'data.statuses.AT_WORK else "" %}'
+'{% set sl = item.username or "\U00002753" %}'
+'{% set pr = item.priority or "" %}'
+'{% set ob = item.name or "" %}'
+'{% set tt = item.title or "" %}'
+'{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
+'{% set vid = "\U0001f39e" if item.resultid else "" %}'
+'{% set load = "\U0001f504" if item.status == data.statuses.PERFORMING else "" %}'
+"{{load}}{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
 )
 
 
@@ -352,7 +352,7 @@ def isnt_arriving(data, widget, dialog_manager: DialogManager) -> bool:
         taskid=data["taskid"],
         record="%Приехал%",
     )
-    return bool(not record and data["status"] == "в работе")
+    return bool(not record and data["status"] == config.TasksStatuses.AT_WORK)
 
 
 def media_exist(data, widget, dialog_manager: DialogManager):
@@ -471,7 +471,7 @@ tasks = Dialog(
                 Const("Принять"),
                 id="accept_task",
                 on_click=handlers.accept_task,
-                when=F["status"] == "назначено",
+                when=F["status"] == config.TasksStatuses.ASSIGNED,
             ),
             Button(
                 Const("Приехал на объект"),
@@ -485,10 +485,10 @@ tasks = Dialog(
                 on_click=handlers.on_perform,
                 when=F["status"].not_in(
                     [
-                        "выполнено",
-                        "закрыто",
-                        "проверка",
-                        "назначено",
+                        config.TasksStatuses.PERFORMED,
+                        config.TasksStatuses.ARCHIVE,
+                        config.TasksStatuses.CHECKED,
+                        config.TasksStatuses.ASSIGNED,
                     ]
                 ),
             ),

@@ -96,10 +96,7 @@ async def tasks(dialog_manager: DialogManager, **kwargs):
             )
 
     tasks.sort(key=lambda x: x["created"], reverse=True)
-    return {
-        "wintitle": wintitle,
-        "tasks": tasks,
-    }
+    return {"wintitle": wintitle, "tasks": tasks, "statuses": TasksStatuses}
 
 
 async def task(dialog_manager: DialogManager, **kwargs):
@@ -177,13 +174,13 @@ async def media(dialog_manager: DialogManager, **kwargs):
 async def statuses_getter(dialog_manager: DialogManager, **kwargs):
     return {
         "statuses": (
-            "открыто",
-            "назначено",
-            "в работе",
-            "выполнено",
-            "проверка",
-            "закрыто",
-            "отложено",
+            TasksStatuses.OPENED,
+            TasksStatuses.ASSIGNED,
+            TasksStatuses.AT_WORK,
+            TasksStatuses.PERFORMED,
+            TasksStatuses.CHECKED,
+            TasksStatuses.ARCHIVE,
+            TasksStatuses.DELAYED,
         )
     }
 
@@ -210,7 +207,7 @@ async def description_getter(dialog_manager: DialogManager, **kwargs):
     index = await dialog_manager.find("description_media_scroll").get_page()
     media = (
         MediaAttachment(media_type[index], file_id=MediaId(media_id[index]))
-        if task.get('media_id')
+        if task.get("media_id")
         else None
     )
     pages = len(media_id)
