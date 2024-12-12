@@ -16,18 +16,17 @@ async def client_tasks_exists_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def description_getter(dialog_manager: DialogManager, **kwargs):
-    task = dialog_manager.start_data.get("task", {})
+    task = dialog_manager.start_data
 
     media_type = task.get("media_type", "").split(",")
     media_id = task.get("media_id", "").split(",")
-    index = await dialog_manager.find("description_media_scroll").get_page()
+    index = await dialog_manager.find("summary_media_scroll").get_page()
     media = (
         MediaAttachment(media_type[index], file_id=MediaId(media_id[index]))
-        if media_id
+        if task.get('media_id')
         else None
     )
     pages = len(media_id)
-
     return {
         "task": task,
         "pages": pages,
