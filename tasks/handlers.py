@@ -184,6 +184,11 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
 
         await group_new_tasks(data)
 
+        scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
+        job = scheduler.get_job(job_id="delay" + str(data["taskid"]))
+        if job:
+            job.remove()
+
         if data.get("return"):
             del data["return"]
             recdata["task"] = data["taskid"]
@@ -224,12 +229,6 @@ async def on_return(clb: CallbackQuery, button, manager: DialogManager):
     task = manager.dialog_data.get("task", {})
     task["status"] = "в работе" if task["slave"] else "открыто"
     task["return"] = True
-
-    scheduler: AsyncIOScheduler = manager.middleware_data["scheduler"]
-    job = scheduler.get_job(str(task["taskid"]))
-    if job:
-        job.remove()
-
     await manager.start(state=states.NewSG.preview, data=task)
 
     # if task["slave"]:

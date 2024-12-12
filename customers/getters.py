@@ -26,11 +26,10 @@ async def task_preview_getter(dialog_manager: DialogManager, **kwargs):
     index = await dialog_manager.find("customer_video_scroll").get_page()
     media = (
         MediaAttachment(media_type[index], file_id=MediaId(media_id[index]))
-        if media_id
+        if task.get('media_id') 
         else None
     )
     pages = len(media_id)
-
     return {
         "task": task,
         "pages": pages,

@@ -93,21 +93,23 @@ async def on_confirm_customer_task_creating(
         title=customer.get("name"),
         status=TasksStatuses.FROM_CUSTOMER,
     )
-    task.update({
-        key: None
-        for key in (
-            "priority",
-            "act",
-            "slave",
-            "agreement",
-            "simple_report",
-            "recom_time",
-        )
-    })
+    task.update(
+        {
+            key: None
+            for key in (
+                "priority",
+                "act",
+                "slave",
+                "agreement",
+                "simple_report",
+                "recom_time",
+            )
+        }
+    )
     task_service.new(**task)
     await new_customer_task_notification(customer)
     await dialog_manager.done()
     await callback.answer(
-        "Ваша заявка принята в работу. Если потребуется, оператор свяжется с Вами для уточнения деталей. Хорошего дня!",
+        'Ваша заявка принята в работу. Статус заявки можно отслеживать в меню "Заявки"->"Открытые".',
         show_alert=True,
     )
