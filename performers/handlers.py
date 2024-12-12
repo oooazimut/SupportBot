@@ -24,14 +24,14 @@ async def on_archive(callback: CallbackQuery, button: Button, manager: DialogMan
 
 async def act_handler(msg: Message, widget, manager: DialogManager):
     new_actid = msg.photo[-1].file_id or ""
-    old_actid = manager.start_data.get("actid", "")
+    old_actid = manager.start_data.get("actid") or ""
     manager.start_data.update(actid=f"{old_actid},{new_actid}".strip(","))
     await manager.next()
 
 
 async def pin_videoreport(message: Message, message_input, manager: DialogManager):
     new_resultid = message.video.file_id
-    old_resultid = manager.start_data.setdefault("resultid", "")
+    old_resultid = manager.start_data.setdefault("resultid") or ""
     manager.start_data.update(resultid=f"{old_resultid},{new_resultid}".strip(","))
     await manager.next()
 

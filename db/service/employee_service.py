@@ -35,3 +35,8 @@ def get_by_filters(con: Connection, **kwargs):
     sub_query = " AND ".join(f"{item} = :{item}" for item in kwargs)
     query = f"SELECT * FROM employees WHERE {sub_query}"
     return con.execute(query, kwargs).fetchall()
+
+@connector
+def delete(con: Connection, userid):
+    con.execute('DELETE FROM employees WHERE userid = ?', [userid])
+    con.commit()
