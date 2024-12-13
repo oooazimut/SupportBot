@@ -53,20 +53,20 @@ NEXT = Button(
 BACK = Button(Const("Назад"), id="back_or_back", on_click=handlers.on_back)
 
 JINJA_TEMPLATE = Jinja(
-"{% set dttm_list = item.created.split() %}"
-'{% set dt_list = dttm_list[0].split("-") %}'
-'{% set dt = dt_list[2]+"."+dt_list[1] %}'
-'{% set d = "\U0000231b" if item.status == data.statuses.DELAYED else "" %}'
-'{% set st = "\U00002705" if item.status == data.statuses.PERFORMED else "\U0001f7e9" if item.status == '
-'data.statuses.AT_WORK else "" %}'
-'{% set sl = item.username or "\U00002753" %}'
-'{% set pr = item.priority or "" %}'
-'{% set ob = item.name or "" %}'
-'{% set tt = item.title or "" %}'
-'{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
-'{% set vid = "\U0001f39e" if item.resultid else "" %}'
-'{% set load = "\U0001f504" if item.status == data.statuses.PERFORMING else "" %}'
-"{{load}}{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
+    "{% set dttm_list = item.created.split() %}"
+    '{% set dt_list = dttm_list[0].split("-") %}'
+    '{% set dt = dt_list[2]+"."+dt_list[1] %}'
+    '{% set d = "\U0000231b" if item.status == data.statuses.DELAYED else "" %}'
+    '{% set st = "\U00002705" if item.status == data.statuses.PERFORMED else "\U0001f7e9" if item.status == '
+    'data.statuses.AT_WORK else "" %}'
+    '{% set sl = item.username or "\U00002753" %}'
+    '{% set pr = item.priority or "" %}'
+    '{% set ob = item.name or "" %}'
+    '{% set tt = item.title or "" %}'
+    '{% set ag = "\U00002757\U0001f4de\U00002757" if item.agreement else "" %}'
+    '{% set vid = "\U0001f39e" if item.resultid else "" %}'
+    '{% set load = "\U0001f504" if item.status == data.statuses.PERFORMING else "" %}'
+    "{{load}}{{vid}}{{ag}}{{d}}{{st}} {{dt}} {{pr}} {{sl}} {{ob}} {{tt}}"
 )
 
 
@@ -427,7 +427,13 @@ tasks = Dialog(
                 Const("Редактировать"),
                 id="edit_task",
                 on_click=handlers.edit_task,
-                when=F["status"].not_in(["закрыто", "проверка", "выполнено"]),
+                when=F["status"].not_in(
+                    [
+                        config.TasksStatuses.ARCHIVE,
+                        config.TasksStatuses.CHECKED,
+                        config.TasksStatuses.PERFORMED,
+                    ]
+                ),
             ),
             Button(
                 Const("Отложить"),
@@ -435,10 +441,10 @@ tasks = Dialog(
                 on_click=handlers.on_delay,
                 when=F["status"].not_in(
                     [
-                        "отложено",
-                        "проверка",
-                        "закрыто",
-                        "выполнено",
+                        config.TasksStatuses.DELAYED,
+                        config.TasksStatuses.CHECKED,
+                        config.TasksStatuses.ARCHIVE,
+                        config.TasksStatuses.PERFORMED,
                     ]
                 ),
             ),
@@ -446,19 +452,31 @@ tasks = Dialog(
                 Const("Переместить в архив"),
                 id="close_task",
                 on_click=handlers.on_close,
-                when=F["status"] != "закрыто",
+                when=F["status"] != config.TasksStatuses.ARCHIVE,
             ),
             Button(
                 Const("Вернуть в работу"),
                 id="return_to_work",
                 on_click=handlers.on_return,
-                when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
+                when=F["status"].in_(
+                    [
+                        config.TasksStatuses.PERFORMED,
+                        config.TasksStatuses.ARCHIVE,
+                        config.TasksStatuses.CHECKED,
+                    ]
+                ),
             ),
             SwitchTo(
                 Const("Дополнить описание/медиа"),
                 id="add_media",
                 state=states.TasksSG.add_media,
-                when=F["status"].in_(["выполнено", "закрыто", "проверка"]),
+                when=F["status"].in_(
+                    [
+                        config.TasksStatuses.PERFORMED,
+                        config.TasksStatuses.ARCHIVE,
+                        config.TasksStatuses.CHECKED,
+                    ]
+                ),
             ),
             Button(
                 Const("Клонировать заявку"), id="clone_task", on_click=handlers.on_clone
@@ -496,7 +514,7 @@ tasks = Dialog(
                 Const("Переделать"),
                 id="back_to_work",
                 on_click=handlers.get_back,
-                when=F["status"] == "выполнено",
+                when=F["status"] == config.TasksStatuses.PERFORMED,
             ),
             when=user_is_performer,
         ),

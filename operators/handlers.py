@@ -86,7 +86,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
 
     message_text = (
         "Заявка перемещена в архив."
-        if new_status == "закрыто"
+        if new_status == config.TasksStatuses.ARCHIVE
         else "Заявка ушла на проверку правильного заполнения акта."
     )
     await callback.answer(message_text, show_alert=True)
