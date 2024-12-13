@@ -1,17 +1,19 @@
 import datetime
 from typing import Any
 
-from apscheduler.executors.base import logging
-
-
-import config
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import MessageInput
+from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
+
+import config
 from db.service import customer_service, journal_service, task_service
 from jobs import handle_description
-from notifications import closed_task_notification, cust_task_isclosed_notification
+from notifications import (
+    closed_task_notification,
+    task_status_notification,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     task_keys = task_service.get_keys()
     data = {key: value for key, value in manager.start_data.items() if key in task_keys}
     task_service.update(**data)
+    await task_status_notification(**data)
 
     if new_status == config.TasksStatuses.ARCHIVE and manager.start_data.get("slave"):
         await closed_task_notification(
@@ -77,12 +80,6 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
 
     if manager.dialog_data.get("closing_type") == "частично":
         task_service.reopen_task(taskid)
-
-    if customer:
-        await cust_task_isclosed_notification(
-            customer.get("id"),
-            manager.start_data.get("title", ""),
-        )
 
     message_text = (
         "Заявка перемещена в архив."

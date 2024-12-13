@@ -2,6 +2,7 @@ from datetime import datetime
 
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
+
 from config import TasksStatuses, TasksTitles
 from db.service import customer_service, task_service
 from jobs import handle_description
@@ -93,19 +94,17 @@ async def on_confirm_customer_task_creating(
         title=customer.get("name"),
         status=TasksStatuses.FROM_CUSTOMER,
     )
-    task.update(
-        {
-            key: None
-            for key in (
-                "priority",
-                "act",
-                "slave",
-                "agreement",
-                "simple_report",
-                "recom_time",
-            )
-        }
-    )
+    task.update({
+        key: None
+        for key in (
+            "priority",
+            "act",
+            "slave",
+            "agreement",
+            "simple_report",
+            "recom_time",
+        )
+    })
     task_service.new(**task)
     await new_customer_task_notification(customer)
     await dialog_manager.done()

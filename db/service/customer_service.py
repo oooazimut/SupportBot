@@ -33,6 +33,14 @@ def get_all(con: Connection):
 
 
 @connector
+def get_by_filters(con: Connection, **kwargs):
+    """kwargs: name, phone, object"""
+    sub_query = " AND ".join(f"{item} = :{item}" for item in kwargs)
+    query = f"SELECT * FROM customers WHERE {sub_query}"
+    return con.execute(query, kwargs).fetchall()
+
+
+@connector
 def update(con: Connection, **kwargs):
     """kwargs: id, name, phone, object"""
     userid = kwargs.pop("id")
@@ -45,6 +53,6 @@ def update(con: Connection, **kwargs):
 
 
 @connector
-def delete(con: Connection, userid: str|int):
-    con.execute('DELETE FROM customers WHERE id = ?', [userid])
+def delete(con: Connection, userid: str | int):
+    con.execute("DELETE FROM customers WHERE id = ?", [userid])
     con.commit()

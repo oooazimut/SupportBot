@@ -2,6 +2,8 @@ from datetime import datetime
 
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
+from redis.asyncio.client import Redis
+
 from db.service import (
     car_service,
     employee_service,
@@ -9,7 +11,6 @@ from db.service import (
     journal_service,
     receipts_service,
 )
-from redis.asyncio.client import Redis
 
 from . import states
 
@@ -87,9 +88,12 @@ async def pin_receipt(message: Message, message_input, manager: DialogManager):
     receipt = message.photo[-1].file_id
     caption = message.caption
 
-    receipts_service.new(
-        {"dttm": dttm, "employee": employee, "receipt": receipt, "caption": caption}
-    )
+    receipts_service.new({
+        "dttm": dttm,
+        "employee": employee,
+        "receipt": receipt,
+        "caption": caption,
+    })
     await manager.done()
 
 

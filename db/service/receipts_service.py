@@ -27,6 +27,7 @@ def get_by_filters(con: Connection, **kwargs) -> list:
     query = f"SELECT * FROM receipts {sub_query}"
     return con.execute(query, kwargs).fetchall()
 
+
 @connector
 def get_all(con: Connection):
-    return con.execute('SELECT * FROM receipts')
+    return con.execute("SELECT * FROM receipts")
