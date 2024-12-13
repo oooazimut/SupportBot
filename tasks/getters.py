@@ -172,17 +172,15 @@ async def media(dialog_manager: DialogManager, **kwargs):
 
 
 async def statuses_getter(dialog_manager: DialogManager, **kwargs):
-    return {
-        "statuses": (
-            TasksStatuses.OPENED,
-            TasksStatuses.ASSIGNED,
-            TasksStatuses.AT_WORK,
-            TasksStatuses.PERFORMED,
-            TasksStatuses.CHECKED,
-            TasksStatuses.ARCHIVE,
-            TasksStatuses.DELAYED,
-        )
-    }
+    statuses = list(
+        [
+            value[:10]
+            for key, value in TasksStatuses.__dict__.items()
+            if not key.startswith("__")
+        ]
+    )
+
+    return {"statuses": statuses}
 
 
 async def journal_getter(dialog_manager: DialogManager, **kwargs):
