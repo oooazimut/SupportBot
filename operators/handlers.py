@@ -11,7 +11,11 @@ from aiogram_dialog.widgets.input import MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 from db.service import customer_service, journal_service, task_service
 from jobs import handle_description
-from notifications import closed_task_notification, cust_task_isclosed_notification
+from notifications import (
+    closed_task_notification,
+    cust_task_isclosed_notification,
+    task_status_notification,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +47,12 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     operator = config.AGREEMENTERS.get(callback.from_user.id, "")
     current_dttm = datetime.datetime.now().replace(microsecond=0)
 
-    to_archive = (
-        manager.start_data["status"] == config.TasksStatuses.CHECKED
-        or not manager.start_data["act"]
+    to_archive = any(
+        (
+            manager.start_data["status"] == config.TasksStatuses.CHECKED,
+            not manager.start_data["act"],
+            manager.start_data.get("simple_report"),
+        )
     )
     new_status = (
         config.TasksStatuses.ARCHIVE if to_archive else config.TasksStatuses.CHECKED
@@ -54,6 +61,7 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     task_keys = task_service.get_keys()
     data = {key: value for key, value in manager.start_data.items() if key in task_keys}
     task_service.update(**data)
+    await task_status_notification(**data)
 
     if new_status == config.TasksStatuses.ARCHIVE and manager.start_data.get("slave"):
         await closed_task_notification(

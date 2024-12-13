@@ -20,7 +20,7 @@ def get_one(con: Connection, userid: str | int) -> dict | None:
       FROM employees 
      WHERE userid = ?
     """
-    return con.execute(query, [userid]).fetchone()
+    return con.execute(query, [userid]).fetchone() or {}
 
 
 @connector

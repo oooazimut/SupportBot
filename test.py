@@ -10,3 +10,7 @@
 
 # customer_service.update(object=44, id=ROBERT_ID)
 
+from db.service import employee_service
+
+
+print(employee_service.get_one(10))

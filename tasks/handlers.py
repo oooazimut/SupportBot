@@ -21,7 +21,11 @@ from config import TasksStatuses
 from custom.bot import MyBot
 from db.service import employee_service, entity_service, journal_service, task_service
 from jobs import handle_description
-from notifications import check_work_execution, new_task_notification
+from notifications import (
+    check_work_execution,
+    new_task_notification,
+    task_status_notification,
+)
 from operators.states import OpCloseTaskSG, OpDelayingSG, OpRemoveTaskSG
 from performers import states as prf_states
 
@@ -174,6 +178,7 @@ async def on_confirm(clb: CallbackQuery, button: Button, manager: DialogManager)
         task_keys = task_service.get_keys()
         temp = {key: value for key, value in data.items() if key in task_keys}
         task = task_service.update(**temp)
+        await task_status_notification(**temp)
         await new_task_notification([task["slave"]], task["title"], task["taskid"])
 
         recdata.update(
@@ -277,10 +282,8 @@ async def accept_task(callback: CallbackQuery, button: Button, manager: DialogMa
                 pass
         return
 
-    task_service.update(
-        taskid=manager.dialog_data.get("task", {}).get("taskid"),
-        status=TasksStatuses.AT_WORK,
-    )
+    task.update(status=TasksStatuses.AT_WORK)
+    task_service.update(taskid=task["taskid"], status=task["status"])
 
     recdata = {
         "dttm": datetime.datetime.now().replace(microsecond=0),
@@ -322,10 +325,9 @@ async def on_perform(callback: CallbackQuery, button: Button, manager: DialogMan
 
 
 async def get_back(callback: CallbackQuery, button: Button, manager: DialogManager):
-    task_service.update(
-        taskid=manager.dialog_data.get("task", {}).get("taskid"),
-        status=TasksStatuses.AT_WORK,
-    )
+    task = manager.dialog_data.get("task", {})
+    task.update(status=TasksStatuses.AT_WORK)
+    task_service.update(taskid=task.get("taskid"), status=task.get("status"))
 
     user = employee_service.get_one(callback.from_user.id)
     recdata = {

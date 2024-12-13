@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from config import CHIEF_ID
 from custom.bot import MyBot
-from db.service import employee_service
+from db.service import customer_service, employee_service
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,15 @@ async def cust_task_isclosed_notification(customer_id: int | str, task_title: st
     text = f"Заявка '{task_title}' выполнена."
     await base_notification(customer_id, "", text)
 
+async def task_status_notification(**task):
+    customers = customer_service.get_by_filters(object=task.get('entity', ''))
+    title = task.get('title') or ''
+    status = task.get('status') or ''
+    messaga = f'Статус заявки <b><i>{title}</i></b> изменился:\n{status}'
+    for customer in customers:
+        await base_notification(customer['id'], '', messaga)
 
+    
 async def journal_reminder():
     message_text = "Не забываем отмечаться в журнале!"
     users = [user["userid"] for user in employee_service.get_all()]
