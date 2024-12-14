@@ -1,5 +1,5 @@
-from collections.abc import Callable
 import sqlite3 as sq
+from collections.abc import Callable
 from typing import Any
 
 from config import DB_NAME

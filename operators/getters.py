@@ -23,7 +23,7 @@ async def description_getter(dialog_manager: DialogManager, **kwargs):
     index = await dialog_manager.find("summary_media_scroll").get_page()
     media = (
         MediaAttachment(media_type[index], file_id=MediaId(media_id[index]))
-        if task.get('media_id')
+        if task.get("media_id")
         else None
     )
     pages = len(media_id)

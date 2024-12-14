@@ -1,14 +1,10 @@
-import datetime
-
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
-from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import config
 from db.service import employee_service, journal_service, task_service
-from notifications import confirmed_task_notification
+from notifications import confirmed_task_notification, task_status_notification
 from tasks import states as tsk_states
 
 
@@ -42,6 +38,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "status": config.TasksStatuses.PERFORMED,
     }
     task_service.update(**data)
+    await task_status_notification(**data)
 
     note = manager.dialog_data.get("note", "")
     perf_record = f"выполнено, {manager.start_data.get('username')}\n{note}".strip()
@@ -49,7 +46,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
         "dttm": manager.start_data.get("performed_time"),
         "task": manager.start_data.get("taskid"),
         "employee": manager.start_data.get("userid"),
-        'record': perf_record
+        "record": perf_record,
     }
     left_record = f"{manager.start_data.get('name')} Уехал"
     journal_service.new(**recdata)
@@ -58,7 +55,7 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
     if last_rec and left_record == last_rec.get("record"):
         journal_service.delete(last_rec.get("recordid"))
 
-    recdata['record'] = left_record
+    recdata["record"] = left_record
     journal_service.new(**recdata)
 
     operators_ids = [
@@ -73,9 +70,9 @@ async def on_close(callback: CallbackQuery, button, manager: DialogManager):
 
 
 async def on_cancel(clb, button, manager: DialogManager):
-    task_service.update(
-        taskid=manager.start_data.get("taskid"), status=config.TasksStatuses.AT_WORK
-    )
+    task = manager.start_data
+    task.update(status=config.TasksStatuses.AT_WORK)
+    task_service.update(taskid=task.get("taskid"), status=task.get("status"))
 
 
 async def pin_text(message: Message, message_input, manager: DialogManager):

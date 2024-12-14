@@ -7,9 +7,7 @@ from aiogram_dialog.widgets.kbd import (
     Button,
     Cancel,
     Group,
-    Next,
     NumberedPager,
-    Start,
     StubScroll,
     SwitchTo,
 )
