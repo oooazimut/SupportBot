@@ -104,7 +104,15 @@ async def task_status_notification(**task):
     for customer in customers:
         await base_notification(customer["id"], "", messaga)
 
+async def task_status_notification(**task):
+    customers = customer_service.get_by_filters(object=task.get('entity', ''))
+    title = task.get('title') or ''
+    status = task.get('status') or ''
+    messaga = f'Статус заявки <b><i>{title}</i></b> изменился:\n{status}'
+    for customer in customers:
+        await base_notification(customer['id'], '', messaga)
 
+    
 async def journal_reminder():
     message_text = "Не забываем отмечаться в журнале!"
     users = [user["userid"] for user in employee_service.get_all()]

@@ -45,9 +45,12 @@ async def on_close(callback: CallbackQuery, widget: Any, manager: DialogManager)
     operator = config.AGREEMENTERS.get(callback.from_user.id, "")
     current_dttm = datetime.datetime.now().replace(microsecond=0)
 
-    to_archive = (
-        manager.start_data["status"] == config.TasksStatuses.CHECKED
-        or not manager.start_data["act"]
+    to_archive = any(
+        (
+            manager.start_data["status"] == config.TasksStatuses.CHECKED,
+            not manager.start_data["act"],
+            manager.start_data.get("simple_report"),
+        )
     )
     new_status = (
         config.TasksStatuses.ARCHIVE if to_archive else config.TasksStatuses.CHECKED
