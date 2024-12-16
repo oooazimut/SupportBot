@@ -4,11 +4,13 @@ from aiogram_dialog.api.entities import MediaAttachment, MediaId
 from config import TasksStatuses
 from db.service import task_service
 
+
 async def main_getter(dialog_manager: DialogManager, **kwargs):
     userid = dialog_manager.event.from_user.id
     tasks = task_service.get_by_filters(status=TasksStatuses.PERFORMING, userid=userid)
-    
-    return {'unperformed_tasks': bool(tasks)}
+
+    return {"unperformed_tasks": bool(tasks)}
+
 
 async def task_entities_getter(dialog_manager: DialogManager, **kwargs):
     objects = dialog_manager.dialog_data["entities"]

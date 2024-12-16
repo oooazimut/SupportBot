@@ -1,7 +1,7 @@
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 
-from config import TasksStatuses, TasksTitles, AGREEMENTERS
+from config import AGREEMENTERS, TasksStatuses, TasksTitles
 from db.service import (
     customer_service,
     employee_service,
@@ -172,13 +172,11 @@ async def media(dialog_manager: DialogManager, **kwargs):
 
 
 async def statuses_getter(dialog_manager: DialogManager, **kwargs):
-    statuses = list(
-        [
-            value[:10]
-            for key, value in TasksStatuses.__dict__.items()
-            if not key.startswith("__")
-        ]
-    )
+    statuses = list([
+        value[:10]
+        for key, value in TasksStatuses.__dict__.items()
+        if not key.startswith("__")
+    ])
 
     return {"statuses": statuses}
 

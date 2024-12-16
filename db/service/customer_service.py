@@ -36,7 +36,7 @@ def get_all(con: Connection):
 def get_by_filters(con: Connection, **kwargs):
     """kwargs: name, phone, object"""
     sub_query = " AND ".join(f"{item} = :{item}" for item in kwargs)
-    query = f"SELECT * FROM employees WHERE {sub_query}"
+    query = f"SELECT * FROM customers WHERE {sub_query}"
     return con.execute(query, kwargs).fetchall()
 
 

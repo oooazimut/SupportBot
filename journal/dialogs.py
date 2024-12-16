@@ -133,9 +133,12 @@ search = Dialog(
             items="journal",
             when="journal",
         ),
-        Const("\nАвтомобили:", when='cars'),
+        Const("\nАвтомобили:", when="cars"),
         List(
-            Format("{item[dttm]}: {item[model]} {item[state_number]}", when=F["item"]["model"]),
+            Format(
+                "{item[dttm]}: {item[model]} {item[state_number]}",
+                when=F["item"]["model"],
+            ),
             items="cars",
             when="cars",
         ),
