@@ -10,8 +10,8 @@ class JrMainMenuSG(StatesGroup):
     pin_receipt = State()
     sel_car = State()
 
+
 class JrSearchSG(StatesGroup):
     datestamp = State()
     result = State()
     receipts = State()
-    
