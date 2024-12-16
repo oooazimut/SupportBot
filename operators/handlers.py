@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler, asyncio
 
 import config
 from db.service import customer_service, journal_service, task_service
+from db.service.task_service import update as update_task
 from jobs import handle_description
 from notifications import (
     closed_task_notification,
@@ -105,7 +106,7 @@ async def delay_handler(
 
     task_service.update(taskid=taskid, status=config.TasksStatuses.DELAYED)
     scheduler.add_job(
-        task_service.update,
+        update_task,
         trigger="date",
         run_date=datetime.datetime(year, month, day, 9, 0, 0),
         kwargs={"taskid": taskid, "status": delayed_status},

@@ -611,7 +611,7 @@ filtration = Dialog(
     Window(
         Const("Выбор даты"),
         CustomCalendar(id="calendar", on_click=handlers.on_date),
-        # Next(Const("Пропустить")),
+        Next(Const("Пропустить")),
         Back(Const("Назад")),
         Cancel(Const("Отмена")),
         state=states.FiltrationSG.datestamp,

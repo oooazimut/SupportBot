@@ -117,7 +117,7 @@ search = Dialog(
     Window(
         Const("Выбор даты"),
         CustomCalendar(id="cal", on_click=on_date),
-        Next(Const("Пропустить")),
+        # Next(Const("Пропустить")),
         Cancel(Const("Отмена")),
         state=states.JrSearchSG.datestamp,
     ),
