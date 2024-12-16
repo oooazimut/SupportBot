@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Dict
 
-import config
 from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, DialogManager, SubManager, Window
@@ -26,7 +25,9 @@ from aiogram_dialog.widgets.kbd import (
     Url,
 )
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Format, Jinja, List, Multi
+from aiogram_dialog.widgets.text import Const, Format, Jinja, List
+
+import config
 from custom.babel_calendar import CustomCalendar
 from db.service import employee_service, journal_service
 
@@ -427,26 +428,22 @@ tasks = Dialog(
                 Const("Редактировать"),
                 id="edit_task",
                 on_click=handlers.edit_task,
-                when=F["status"].not_in(
-                    [
-                        config.TasksStatuses.ARCHIVE,
-                        config.TasksStatuses.CHECKED,
-                        config.TasksStatuses.PERFORMED,
-                    ]
-                ),
+                when=F["status"].not_in([
+                    config.TasksStatuses.ARCHIVE,
+                    config.TasksStatuses.CHECKED,
+                    config.TasksStatuses.PERFORMED,
+                ]),
             ),
             Button(
                 Const("Отложить"),
                 id="delay_task",
                 on_click=handlers.on_delay,
-                when=F["status"].not_in(
-                    [
-                        config.TasksStatuses.DELAYED,
-                        config.TasksStatuses.CHECKED,
-                        config.TasksStatuses.ARCHIVE,
-                        config.TasksStatuses.PERFORMED,
-                    ]
-                ),
+                when=F["status"].not_in([
+                    config.TasksStatuses.DELAYED,
+                    config.TasksStatuses.CHECKED,
+                    config.TasksStatuses.ARCHIVE,
+                    config.TasksStatuses.PERFORMED,
+                ]),
             ),
             Button(
                 Const("Переместить в архив"),
@@ -458,25 +455,21 @@ tasks = Dialog(
                 Const("Вернуть в работу"),
                 id="return_to_work",
                 on_click=handlers.on_return,
-                when=F["status"].in_(
-                    [
-                        config.TasksStatuses.PERFORMED,
-                        config.TasksStatuses.ARCHIVE,
-                        config.TasksStatuses.CHECKED,
-                    ]
-                ),
+                when=F["status"].in_([
+                    config.TasksStatuses.PERFORMED,
+                    config.TasksStatuses.ARCHIVE,
+                    config.TasksStatuses.CHECKED,
+                ]),
             ),
             SwitchTo(
                 Const("Дополнить описание/медиа"),
                 id="add_media",
                 state=states.TasksSG.add_media,
-                when=F["status"].in_(
-                    [
-                        config.TasksStatuses.PERFORMED,
-                        config.TasksStatuses.ARCHIVE,
-                        config.TasksStatuses.CHECKED,
-                    ]
-                ),
+                when=F["status"].in_([
+                    config.TasksStatuses.PERFORMED,
+                    config.TasksStatuses.ARCHIVE,
+                    config.TasksStatuses.CHECKED,
+                ]),
             ),
             Button(
                 Const("Клонировать заявку"), id="clone_task", on_click=handlers.on_clone
@@ -501,14 +494,12 @@ tasks = Dialog(
                 Const("Выполнено"),
                 id="perform_task",
                 on_click=handlers.on_perform,
-                when=F["status"].not_in(
-                    [
-                        config.TasksStatuses.PERFORMED,
-                        config.TasksStatuses.ARCHIVE,
-                        config.TasksStatuses.CHECKED,
-                        config.TasksStatuses.ASSIGNED,
-                    ]
-                ),
+                when=F["status"].not_in([
+                    config.TasksStatuses.PERFORMED,
+                    config.TasksStatuses.ARCHIVE,
+                    config.TasksStatuses.CHECKED,
+                    config.TasksStatuses.ASSIGNED,
+                ]),
             ),
             Button(
                 Const("Переделать"),
@@ -620,7 +611,7 @@ filtration = Dialog(
     Window(
         Const("Выбор даты"),
         CustomCalendar(id="calendar", on_click=handlers.on_date),
-        Next(Const("Пропустить")),
+        # Next(Const("Пропустить")),
         Back(Const("Назад")),
         Cancel(Const("Отмена")),
         state=states.FiltrationSG.datestamp,

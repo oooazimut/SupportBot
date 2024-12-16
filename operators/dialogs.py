@@ -10,7 +10,6 @@ from aiogram_dialog.widgets.kbd import (
     Group,
     Next,
     NumberedPager,
-    Row,
     Select,
     Start,
     StubScroll,
@@ -23,10 +22,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import config
 from db.service import task_service
-from tasks import states as tsk_states
 from journal import states as jrn_states
+from tasks import states as tsk_states
 
-from . import handlers, states, getters
+from . import getters, handlers, states
 
 logger = logging.getLogger(__name__)
 

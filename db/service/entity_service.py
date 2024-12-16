@@ -1,9 +1,11 @@
 from sqlite3 import Connection
+
 from db.tools import connector
+
 
 @connector
 def get_all(con: Connection):
-    query = 'SELECT * FROM entities'
+    query = "SELECT * FROM entities"
     return con.execute(query).fetchall()
 
 

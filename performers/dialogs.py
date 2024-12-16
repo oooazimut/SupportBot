@@ -1,5 +1,4 @@
 from aiogram import F
-import config
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import MessageInput
@@ -12,10 +11,12 @@ from aiogram_dialog.widgets.kbd import (
     Start,
 )
 from aiogram_dialog.widgets.text import Const, Multi
+
+import config
 from journal import states as jrn_states
 from tasks import states as tsk_states
 
-from . import handlers, states, getters
+from . import getters, handlers, states
 
 main = Dialog(
     Window(
