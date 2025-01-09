@@ -1,3 +1,4 @@
+from datetime import datetime
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
@@ -33,9 +34,11 @@ async def pin_videoreport(message: Message, message_input, manager: DialogManage
 
 
 async def on_close(callback: CallbackQuery, button, manager: DialogManager):
+    created = datetime.now().replace(microsecond=0)
     data = {
         **{key: manager.start_data[key] for key in ("taskid", "resultid", "actid")},
         "status": config.TasksStatuses.PERFORMED,
+        "created": created,
     }
     task_service.update(**data)
     await task_status_notification(**data)
