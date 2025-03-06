@@ -1,5 +1,6 @@
-from aiogram import F
+from aiogram import F, Bot
 from aiogram.enums import ContentType
+from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
@@ -21,7 +22,7 @@ from apscheduler.executors.base import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import config
-from db.service import task_service
+from db.service import receipts_service, task_service
 from journal import states as jrn_states
 from tasks import states as tsk_states
 
@@ -34,6 +35,13 @@ async def on_start(any, manager: DialogManager):
     scheduler: AsyncIOScheduler = manager.middleware_data.get("scheduler")
     scheduler.print_jobs()
 
+async def download_receipts(callback: CallbackQuery, button, manager: DialogManager):
+    bot: Bot = manager.middleware_data['bot']
+    receipts = receipts_service.get_all()
+    for receipt in receipts:
+        file = await bot.get_file(receipt['receipt'])
+        file_path = file.file_path
+        await bot.download_file(file_path, f"images/{receipt['dttm'].strftime('%Y-%m-%d_%H:%M:%S')}_{receipt['caption']}.jpg")
 
 main = Dialog(
     Window(
@@ -41,6 +49,7 @@ main = Dialog(
         Start(Const("Заявки"), id="tasks", state=states.OpTasksSG.main),
         Start(Const("Журнал"), id="to_journal", state=jrn_states.JrMainMenuSG.main),
         WebApp(Const("Админка"), Const("https://azimut-asutp.ru/admin")),
+        Button(Const("Скачать все чеки"), id='download_receipts', on_click=download_receipts),
         state=states.OpMainMenuSG.main,
     ),
     on_start=on_start,
