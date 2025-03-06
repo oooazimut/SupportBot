@@ -41,3 +41,9 @@ def get_by_filters(con: Connection, **kwargs):
 def delete(con: Connection, userid):
     con.execute("DELETE FROM employees WHERE userid = ?", [userid])
     con.commit()
+
+
+@connector
+def change_position(con: Connection, userid):
+    con.execute("UPDATE employees SET position = 'operator' WHERE userid = ?", [userid])
+    con.commit()

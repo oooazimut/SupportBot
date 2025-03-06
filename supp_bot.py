@@ -78,31 +78,6 @@ async def main():
         "redis", jobs_key="example.jobs", run_times_key="example.run_times"
     )
     scheduler.start()
-    scheduler.add_job(
-        func=jobs.two_reports,
-        trigger="cron",
-        day_of_week="mon-sat",
-        hour=7,
-        id="gen_report",
-        replace_existing=True,
-    )
-    scheduler.add_job(
-        notifications.journal_reminder,
-        "cron",
-        day_of_week="mon-fri",
-        hour=8,
-        minute=30,
-        id="morning_reminder",
-        replace_existing=True,
-    )
-    scheduler.add_job(
-        notifications.journal_reminder,
-        "cron",
-        day_of_week="mon-fri",
-        hour=16,
-        id="evening_reminder",
-        replace_existing=True,
-    )
     setup_dialogs(dp)
     dp.update.outer_middleware(middlewares.DataMiddleware({"scheduler": scheduler}))
     dp.errors.register(
